@@ -40,10 +40,10 @@ def experiment(model="gpt2", revision="main", use_local_cache=False):
             # make sents
             sents = []
             try:
-                sents = generator(stimulus['text'], max_length=50, num_return_sequences=100)
+                sents = generator(stimulus['text'], max_length=50, num_return_sequences=100, do_sample=True)
             except:
                 for _ in tqdm(range(100)):
-                    sents.append(generator(stimulus['text'], max_length=50, num_return_sequences=1)[0])
+                    sents.append(generator(stimulus['text'], max_length=50, num_return_sequences=1, do_sample=True)[0])
             sents = ['.'.join(sent['generated_text'].split('.')[:2]) + '.' for sent in sents]
             log[stimulus['text']]['sentences'] = sents
 
