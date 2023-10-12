@@ -1,9 +1,9 @@
-from transformers import GPT2Config, GPT2Tokenizer, GPT2Model
 from transformers import pipeline, set_seed
 import torch
 from collections import defaultdict
 import argparse
 import json
+import os
 
 set_seed(42)
 
@@ -15,11 +15,8 @@ def get_bounds(text, needle):
 def experiment(model="gpt2", revision="main", use_local_cache=False):
     # load model
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    cache_dir = '../.huggingface_cache' if use_local_cache else None
-    if cache_dir:
-        generator = pipeline('text-generation', model=model, revision=revision, device=device, cache_dir=cache_dir)
-    else:
-        generator = pipeline('text-generation', model=model, revision=revision, device=device)
+    os.environ['TRANSFORMERS_CACHE'] = '../.huggingface_cache' if use_local_cache else '~/.cache/huggingface/hub'
+    generator = pipeline('text-generation', model=model, revision=revision, device=device)
     print("loaded model")
 
     # stimuli
