@@ -12,13 +12,14 @@ def get_bounds(text, needle):
     end = start + len(needle)
     return (start, end)
 
-def experiment(model="gpt2", revision="main"):
+def experiment(model="gpt2", revision="main", use_local_cache=False):
     # load model
-    if torch.cuda.is_available():
-        device = 'cuda:0'
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    cache_dir = '/nlp/scr/aryaman/.huggingface_cache' if use_local_cache else None
+    if cache_dir:
+        generator = pipeline('text-generation', model=model, revision=revision, device=device, cache_dir=cache_dir)
     else:
-        device = 'cpu'
-    generator = pipeline('text-generation', model=model, revision=revision, device=device)
+        generator = pipeline('text-generation', model=model, revision=revision, device=device)
     print("loaded model")
 
     # stimuli
@@ -61,6 +62,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='gpt2', help='name of model')
     parser.add_argument('--revision', default='main', help='revision of model')
+    parser.add_argument('--use-local-cache', action='store_true', help='use user cache on cluster')
     args = parser.parse_args()
     experiment(**vars(args))
 
