@@ -4,6 +4,7 @@ from collections import defaultdict
 import argparse
 import json
 import os
+from tqdm import tqdm
 
 set_seed(42)
 
@@ -37,7 +38,12 @@ def experiment(model="gpt2", revision="main", use_local_cache=False):
             log[stimulus['text']] = {}
 
             # make sents
-            sents = generator(stimulus['text'], max_length=50, num_return_sequences=100)
+            sents = []
+            try:
+                sents = generator(stimulus['text'], max_length=50, num_return_sequences=100)
+            except:
+                for _ in tqdm(range(100)):
+                    sents.append(generator(stimulus['text'], max_length=50, num_return_sequences=1)[0])
             sents = ['.'.join(sent['generated_text'].split('.')[:2]) + '.' for sent in sents]
             log[stimulus['text']]['sentences'] = sents
 
