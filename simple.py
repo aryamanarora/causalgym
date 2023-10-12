@@ -56,7 +56,7 @@ def experiment(model="gpt2", revision="main", use_local_cache=False):
             log[stimulus['text']]['counts'] = counts
 
     # dump log
-    with open(f'logs/{model}.json', 'w') as f:
+    with open(f'logs/{model.replace("/", "-")}.json', 'w') as f:
         json.dump(log, f, indent=4)
     
     return counts
