@@ -13,7 +13,12 @@ def get_bounds(text, needle):
     return (start, end)
 
 def experiment(model="gpt2", revision="main"):
-    generator = pipeline('text-generation', model=model, revision=revision, device='cpu')
+    # load model
+    if torch.cuda.is_available():
+        device = 'cuda:0'
+    else:
+        device = 'cpu'
+    generator = pipeline('text-generation', model=model, revision=revision, device=device)
     print("loaded model")
 
     # stimuli
