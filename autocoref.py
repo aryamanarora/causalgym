@@ -35,6 +35,7 @@ def autocoref():
 
             # run coref
             for key in data:
+                if key == 'metadata': continue
                 res[key] = {}
                 res[key]['counts'] = data[key]['counts']
                 res[key]['counts_resolved'] = {option: 0 for option in data[key]['counts']}
