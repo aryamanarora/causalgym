@@ -179,6 +179,36 @@
             }
         }
     },
+    "logs/sharpbai-alpaca-7b-merged.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 11
+            },
+            "counts_resolved": {
+                "John": 99,
+                "Bill": 13
+            },
+            "counts_resolved_pronoun": {
+                "John": 97,
+                "Bill": 2
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 6,
+                "Bill": 19
+            },
+            "counts_resolved": {
+                "John": 30,
+                "Bill": 97
+            },
+            "counts_resolved_pronoun": {
+                "John": 23,
+                "Bill": 77
+            }
+        }
+    },
     "logs/gpt2-large.json": {
         "John seized the comic from Bill. He": {
             "counts": {
