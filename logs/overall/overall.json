@@ -2,12 +2,128 @@
     "logs/EleutherAI-pythia-2.8b.json": {
         "John seized the comic from Bill. He": {
             "counts": {
+                "John": 0,
+                "Bill": 10
+            },
+            "counts_resolved": {
+                "John": 99,
+                "Bill": 19
+            },
+            "counts_resolved_pronoun": {
+                "John": 99,
+                "Bill": 1
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 9
+            },
+            "counts_resolved": {
+                "John": 19,
+                "Bill": 94
+            },
+            "counts_resolved_pronoun": {
+                "John": 16,
+                "Bill": 84
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 17
+            },
+            "counts_resolved": {
+                "John": 15,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 14,
+                "Bill": 85
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 4,
+                "Bill": 28
+            },
+            "counts_resolved": {
+                "John": 59,
+                "Bill": 80
+            },
+            "counts_resolved_pronoun": {
+                "John": 58,
+                "Bill": 42
+            }
+        }
+    },
+    "logs/gpt2-xl.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 35
+            },
+            "counts_resolved": {
+                "John": 99,
+                "Bill": 40
+            },
+            "counts_resolved_pronoun": {
+                "John": 99,
+                "Bill": 1
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 27
+            },
+            "counts_resolved": {
+                "John": 15,
+                "Bill": 98
+            },
+            "counts_resolved_pronoun": {
+                "John": 15,
+                "Bill": 84
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
                 "John": 1,
-                "Bill": 13
+                "Bill": 25
+            },
+            "counts_resolved": {
+                "John": 35,
+                "Bill": 90
+            },
+            "counts_resolved_pronoun": {
+                "John": 33,
+                "Bill": 67
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 7,
+                "Bill": 29
+            },
+            "counts_resolved": {
+                "John": 65,
+                "Bill": 70
+            },
+            "counts_resolved_pronoun": {
+                "John": 60,
+                "Bill": 40
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-410m.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 34
             },
             "counts_resolved": {
                 "John": 100,
-                "Bill": 20
+                "Bill": 37
             },
             "counts_resolved_pronoun": {
                 "John": 100,
@@ -17,135 +133,159 @@
         "John passed the comic to Bill. He": {
             "counts": {
                 "John": 0,
-                "Bill": 11
+                "Bill": 24
             },
             "counts_resolved": {
-                "John": 11,
-                "Bill": 96
+                "John": 22,
+                "Bill": 99
             },
             "counts_resolved_pronoun": {
-                "John": 11,
-                "Bill": 87
+                "John": 22,
+                "Bill": 76
             }
-        }
-    },
-    "logs/gpt2-xl.json": {
-        "John seized the comic from Bill. He": {
+        },
+        "John passed a comic to Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 29
-            },
-            "counts_resolved": {
-                "John": 98,
+                "John": 1,
                 "Bill": 35
             },
-            "counts_resolved_pronoun": {
-                "John": 97,
-                "Bill": 3
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 32
-            },
             "counts_resolved": {
-                "John": 26,
-                "Bill": 97
-            },
-            "counts_resolved_pronoun": {
-                "John": 26,
-                "Bill": 74
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-410m.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 48
-            },
-            "counts_resolved": {
-                "John": 97,
-                "Bill": 44
-            },
-            "counts_resolved_pronoun": {
-                "John": 97,
-                "Bill": 2
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 21
-            },
-            "counts_resolved": {
-                "John": 19,
+                "John": 31,
                 "Bill": 98
             },
             "counts_resolved_pronoun": {
-                "John": 19,
+                "John": 30,
+                "Bill": 69
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 34
+            },
+            "counts_resolved": {
+                "John": 55,
                 "Bill": 81
+            },
+            "counts_resolved_pronoun": {
+                "John": 53,
+                "Bill": 47
             }
         }
     },
     "logs/EleutherAI-pythia-70m.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 3,
+                "John": 5,
                 "Bill": 1
             },
             "counts_resolved": {
-                "John": 93,
-                "Bill": 7
+                "John": 91,
+                "Bill": 10
             },
             "counts_resolved_pronoun": {
-                "John": 92,
+                "John": 91,
                 "Bill": 6
             }
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 0,
+                "John": 1,
                 "Bill": 2
             },
             "counts_resolved": {
-                "John": 20,
-                "Bill": 83
+                "John": 19,
+                "Bill": 84
             },
             "counts_resolved_pronoun": {
-                "John": 20,
-                "Bill": 77
+                "John": 18,
+                "Bill": 80
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 1
+            },
+            "counts_resolved": {
+                "John": 25,
+                "Bill": 73
+            },
+            "counts_resolved_pronoun": {
+                "John": 25,
+                "Bill": 66
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 3,
+                "Bill": 2
+            },
+            "counts_resolved": {
+                "John": 69,
+                "Bill": 35
+            },
+            "counts_resolved_pronoun": {
+                "John": 69,
+                "Bill": 27
             }
         }
     },
     "logs/gpt2-medium.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 55
+                "John": 1,
+                "Bill": 50
             },
             "counts_resolved": {
-                "John": 99,
-                "Bill": 50
+                "John": 98,
+                "Bill": 54
             },
             "counts_resolved_pronoun": {
                 "John": 98,
-                "Bill": 1
+                "Bill": 2
             }
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 37
+                "John": 1,
+                "Bill": 33
             },
             "counts_resolved": {
-                "John": 19,
-                "Bill": 99
+                "John": 31,
+                "Bill": 96
             },
             "counts_resolved_pronoun": {
-                "John": 18,
-                "Bill": 81
+                "John": 31,
+                "Bill": 68
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 52
+            },
+            "counts_resolved": {
+                "John": 42,
+                "Bill": 98
+            },
+            "counts_resolved_pronoun": {
+                "John": 40,
+                "Bill": 59
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 66
+            },
+            "counts_resolved": {
+                "John": 70,
+                "Bill": 79
+            },
+            "counts_resolved_pronoun": {
+                "John": 66,
+                "Bill": 34
             }
         }
     },
@@ -156,56 +296,112 @@
                 "Bill": 24
             },
             "counts_resolved": {
-                "John": 98,
-                "Bill": 32
+                "John": 100,
+                "Bill": 25
             },
             "counts_resolved_pronoun": {
-                "John": 98,
-                "Bill": 1
+                "John": 100,
+                "Bill": 0
             }
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 15
+                "John": 3,
+                "Bill": 25
             },
             "counts_resolved": {
-                "John": 19,
+                "John": 21,
                 "Bill": 97
             },
             "counts_resolved_pronoun": {
-                "John": 18,
-                "Bill": 81
+                "John": 19,
+                "Bill": 79
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 22
+            },
+            "counts_resolved": {
+                "John": 21,
+                "Bill": 94
+            },
+            "counts_resolved_pronoun": {
+                "John": 21,
+                "Bill": 76
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 4,
+                "Bill": 35
+            },
+            "counts_resolved": {
+                "John": 64,
+                "Bill": 75
+            },
+            "counts_resolved_pronoun": {
+                "John": 64,
+                "Bill": 36
             }
         }
     },
     "logs/sharpbai-alpaca-7b-merged.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 2,
-                "Bill": 11
+                "John": 0,
+                "Bill": 12
             },
             "counts_resolved": {
                 "John": 99,
-                "Bill": 13
+                "Bill": 16
             },
             "counts_resolved_pronoun": {
-                "John": 97,
+                "John": 98,
                 "Bill": 2
             }
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 6,
-                "Bill": 19
+                "John": 10,
+                "Bill": 18
             },
             "counts_resolved": {
-                "John": 30,
+                "John": 28,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 19,
+                "Bill": 81
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 5,
+                "Bill": 9
+            },
+            "counts_resolved": {
+                "John": 22,
                 "Bill": 97
             },
             "counts_resolved_pronoun": {
-                "John": 23,
-                "Bill": 77
+                "John": 11,
+                "Bill": 87
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 10,
+                "Bill": 28
+            },
+            "counts_resolved": {
+                "John": 58,
+                "Bill": 82
+            },
+            "counts_resolved_pronoun": {
+                "John": 51,
+                "Bill": 49
             }
         }
     },
@@ -213,11 +409,69 @@
         "John seized the comic from Bill. He": {
             "counts": {
                 "John": 0,
+                "Bill": 17
+            },
+            "counts_resolved": {
+                "John": 99,
+                "Bill": 26
+            },
+            "counts_resolved_pronoun": {
+                "John": 99,
+                "Bill": 1
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 22
+            },
+            "counts_resolved": {
+                "John": 18,
+                "Bill": 98
+            },
+            "counts_resolved_pronoun": {
+                "John": 17,
+                "Bill": 82
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 23
+            },
+            "counts_resolved": {
+                "John": 28,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 27,
+                "Bill": 71
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 1,
                 "Bill": 42
             },
             "counts_resolved": {
-                "John": 95,
+                "John": 62,
+                "Bill": 78
+            },
+            "counts_resolved_pronoun": {
+                "John": 62,
                 "Bill": 38
+            }
+        }
+    },
+    "logs/gpt2.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 47
+            },
+            "counts_resolved": {
+                "John": 95,
+                "Bill": 51
             },
             "counts_resolved_pronoun": {
                 "John": 95,
@@ -226,88 +480,56 @@
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 18
-            },
-            "counts_resolved": {
-                "John": 17,
-                "Bill": 96
-            },
-            "counts_resolved_pronoun": {
-                "John": 17,
-                "Bill": 83
-            }
-        }
-    },
-    "logs/gpt2.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
                 "John": 2,
-                "Bill": 51
+                "Bill": 42
             },
             "counts_resolved": {
-                "John": 99,
-                "Bill": 51
+                "John": 47,
+                "Bill": 92
             },
             "counts_resolved_pronoun": {
-                "John": 97,
-                "Bill": 3
+                "John": 44,
+                "Bill": 55
             }
         },
-        "John passed the comic to Bill. He": {
+        "John passed a comic to Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 29
+                "John": 1,
+                "Bill": 46
             },
             "counts_resolved": {
-                "John": 44,
-                "Bill": 87
+                "John": 42,
+                "Bill": 92
             },
             "counts_resolved_pronoun": {
-                "John": 43,
-                "Bill": 55
+                "John": 41,
+                "Bill": 58
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 46
+            },
+            "counts_resolved": {
+                "John": 64,
+                "Bill": 82
+            },
+            "counts_resolved_pronoun": {
+                "John": 61,
+                "Bill": 39
             }
         }
     },
     "logs/EleutherAI-pythia-160m.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 1,
-                "Bill": 6
-            },
-            "counts_resolved": {
-                "John": 96,
-                "Bill": 21
-            },
-            "counts_resolved_pronoun": {
-                "John": 96,
-                "Bill": 3
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 3,
+                "John": 2,
                 "Bill": 3
             },
             "counts_resolved": {
-                "John": 15,
-                "Bill": 86
-            },
-            "counts_resolved_pronoun": {
-                "John": 12,
-                "Bill": 81
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-1b.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 25
-            },
-            "counts_resolved": {
-                "John": 98,
-                "Bill": 35
+                "John": 99,
+                "Bill": 16
             },
             "counts_resolved_pronoun": {
                 "John": 98,
@@ -316,16 +538,102 @@
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 31
+                "John": 2,
+                "Bill": 3
+            },
+            "counts_resolved": {
+                "John": 11,
+                "Bill": 95
+            },
+            "counts_resolved_pronoun": {
+                "John": 10,
+                "Bill": 89
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 4,
+                "Bill": 4
             },
             "counts_resolved": {
                 "John": 28,
-                "Bill": 97
+                "Bill": 78
             },
             "counts_resolved_pronoun": {
-                "John": 26,
-                "Bill": 73
+                "John": 24,
+                "Bill": 72
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 5,
+                "Bill": 4
+            },
+            "counts_resolved": {
+                "John": 64,
+                "Bill": 49
+            },
+            "counts_resolved_pronoun": {
+                "John": 58,
+                "Bill": 41
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-1b.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 29
+            },
+            "counts_resolved": {
+                "John": 94,
+                "Bill": 41
+            },
+            "counts_resolved_pronoun": {
+                "John": 94,
+                "Bill": 5
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 23
+            },
+            "counts_resolved": {
+                "John": 30,
+                "Bill": 95
+            },
+            "counts_resolved_pronoun": {
+                "John": 29,
+                "Bill": 70
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 26
+            },
+            "counts_resolved": {
+                "John": 36,
+                "Bill": 93
+            },
+            "counts_resolved_pronoun": {
+                "John": 35,
+                "Bill": 64
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 33
+            },
+            "counts_resolved": {
+                "John": 55,
+                "Bill": 82
+            },
+            "counts_resolved_pronoun": {
+                "John": 54,
+                "Bill": 45
             }
         }
     }
