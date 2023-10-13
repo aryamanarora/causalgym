@@ -16,11 +16,12 @@ def get_bounds(text, needle):
     end = start + len(needle)
     return (start, end)
 
+@torch.no_grad()
 def experiment(model="gpt2", revision="main", use_local_cache=False, sequential=False):
     # load model
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     os.environ['TRANSFORMERS_CACHE'] = '../.huggingface_cache' if use_local_cache else '~/.cache/huggingface/hub'
-    generator = pipeline('text-generation', model=model, revision=revision, device=device)
+    generator = pipeline('text-generation', model=model, revision=revision, device=device, torch_dtype=torch.bfloat16 if device == 'cuda:0' else torch.float32)
     print("loaded model")
 
     # stimuli

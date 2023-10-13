@@ -9,7 +9,7 @@ import pandas as pd
 from plotnine import ggplot, aes, facet_wrap, facet_grid, geom_bar, theme, element_text
 import argparse
 
-ORDER = ['EleutherAI-pythia-70m', 'gpt2', 'EleutherAI-pythia-160m', 'gpt2-medium', 'EleutherAI-pythia-410m', 'gpt2-large', 'EleutherAI-pythia-1b', 'gpt2-xl', 'EleutherAI-pythia-1.4b', 'EleutherAI-pythia-2.8b', 'sharpbai-alpaca-7b-merged']
+ORDER = ['EleutherAI-pythia-70m', 'gpt2', 'EleutherAI-pythia-160m', 'gpt2-medium', 'EleutherAI-pythia-410m', 'gpt2-large', 'EleutherAI-pythia-1b', 'EleutherAI-pythia-1.4b', 'gpt2-xl', 'EleutherAI-pythia-2.8b', 'sharpbai-alpaca-7b-merged']
 
 def autocoref():
     # make logs/overall directory
@@ -87,8 +87,8 @@ def plot():
 
     # plot
     plot = (ggplot(df, aes(x="model", y="count", fill="option"))
-            + geom_bar(stat="identity") + facet_grid("metric~sent")
-            + theme(figure_size=(10, 6), axis_text_x=element_text(rotation=45, hjust=1)))
+            + geom_bar(stat="identity") + facet_grid("metric~sent", scales='free_y')
+            + theme(figure_size=(15, 6), axis_text_x=element_text(rotation=45, hjust=1)))
     plot.save("logs/overall/plot.pdf")
 
 def main():
