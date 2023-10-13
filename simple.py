@@ -13,7 +13,7 @@ def get_bounds(text, needle):
     end = start + len(needle)
     return (start, end)
 
-def experiment(model="gpt2", revision="main", use_local_cache=False):
+def experiment(model="gpt2", revision="main", use_local_cache=False, sequential=False):
     # load model
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     os.environ['TRANSFORMERS_CACHE'] = '../.huggingface_cache' if use_local_cache else '~/.cache/huggingface/hub'
@@ -39,11 +39,12 @@ def experiment(model="gpt2", revision="main", use_local_cache=False):
 
             # make sents
             sents = []
-            try:
+            if not sequential:
                 sents = generator(stimulus['text'], max_length=50, num_return_sequences=100, do_sample=True)
-            except:
+            else:
                 for _ in tqdm(range(100)):
                     sents.append(generator(stimulus['text'], max_length=50, num_return_sequences=1, do_sample=True)[0])
+                    torch.cuda.empty_cache()
             sents = ['.'.join(sent['generated_text'].split('.')[:2]) + '.' for sent in sents]
             log[stimulus['text']]['sentences'] = sents
 
@@ -66,6 +67,7 @@ def main():
     parser.add_argument('--model', default='gpt2', help='name of model')
     parser.add_argument('--revision', default='main', help='revision of model')
     parser.add_argument('--use-local-cache', action='store_true', help='use user cache on cluster')
+    parser.add_argument('--sequential', action='store_true', help='run sequentially')
     args = parser.parse_args()
     experiment(**vars(args))
 
