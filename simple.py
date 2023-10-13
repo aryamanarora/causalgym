@@ -8,6 +8,8 @@ from tqdm import tqdm
 
 set_seed(42)
 
+MODELS = ['EleutherAI/pythia-70m', 'gpt2', 'EleutherAI/pythia-160m', 'gpt2-medium', 'EleutherAI/pythia-410m', 'gpt-large', 'EleutherAI/pythia-1b', 'gpt2-xl', 'EleutherAI/pythia-1.4b', 'EleutherAI/pythia-2.8b', 'sharpbai/alpaca-7b-merged']
+
 def get_bounds(text, needle):
     start = text.find(needle)
     end = start + len(needle)
@@ -24,6 +26,8 @@ def experiment(model="gpt2", revision="main", use_local_cache=False, sequential=
     stimuli = [
         {"text": "John seized the comic from Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
         {"text": "John passed the comic to Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
+        {"text": "John passed a comic to Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
+        {"text": "John was passing a comic to Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
     ]
 
     # log
@@ -69,7 +73,13 @@ def main():
     parser.add_argument('--use-local-cache', action='store_true', help='use user cache on cluster')
     parser.add_argument('--sequential', action='store_true', help='run sequentially')
     args = parser.parse_args()
-    experiment(**vars(args))
+
+    if args.model == 'all':
+        for model in ['gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl']:
+            args.model = model
+            experiment(**vars(args))
+    else:
+        experiment(**vars(args))
 
 if __name__ == '__main__':
     main()
