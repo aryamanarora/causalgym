@@ -29,23 +29,21 @@ for file in tqdm(glob.glob("logs/*.json")):
 
         # run coref
         for key in data:
-            second_sent_start = len(key.split('.')[0]) + 1
             res[key] = {}
             res[key]['counts'] = data[key]['counts']
             res[key]['counts_resolved'] = {option: 0 for option in data[key]['counts']}
             res[key]['counts_resolved_pronoun'] = {option: 0 for option in data[key]['counts']}
 
-            # resolve coref
-            doc = nlp(
-                data[key]['sentences'],
-                component_cfg={"fastcoref": {'resolve_text': True}}
-            )
-
             for sent in data[key]['sentences']:
-                resolved = sent._.resolved_text
+                # resolve coref
+                doc = nlp(
+                    sent,
+                    component_cfg={"fastcoref": {'resolve_text': True}}
+                )
+                resolved = doc._.resolved_text
                 for option in data[key]['counts']:
-                    res[key]['counts_resolved'][option] += (1 if option in resolved[second_sent_start:] else 0)
-                    res[key]['counts_resolved_pronoun'][option] += (1 if resolved[second_sent_start:].startswith(option) else 0)
+                    res[key]['counts_resolved'][option] += (1 if option in '.'.join(resolved.split('.')[1:]) else 0)
+                    res[key]['counts_resolved_pronoun'][option] += (1 if resolved.split('. ')[1].startswith(option) else 0)
         
         # save data
         final[file] = res
