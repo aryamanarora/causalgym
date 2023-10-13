@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 from tqdm import tqdm
+import datetime
 
 set_seed(42)
 
@@ -31,7 +32,12 @@ def experiment(model="gpt2", revision="main", use_local_cache=False, sequential=
     ]
 
     # log
-    log = {}
+    log = {'metadata': {
+        'model': model,
+        'revision': revision,
+        'num_parameters': generator.model.num_parameters(),
+        'timestamp': str(datetime.datetime.now())
+    }}
 
     # generate 100 continuations
     with torch.inference_mode():
@@ -40,6 +46,10 @@ def experiment(model="gpt2", revision="main", use_local_cache=False, sequential=
             pronoun = get_bounds(stimulus['text'], stimulus['pronoun'])
             options = [get_bounds(stimulus['text'], option) for option in stimulus['options']]
             log[stimulus['text']] = {}
+            log[stimulus['text']]['details'] = {
+                'pronoun': pronoun,
+                'options': options
+            }
 
             # make sents
             sents = []
