@@ -9,7 +9,7 @@ import datetime
 
 set_seed(42)
 
-MODELS = ['EleutherAI/pythia-70m', 'gpt2', 'EleutherAI/pythia-160m', 'gpt2-medium', 'EleutherAI/pythia-410m', 'gpt-large', 'EleutherAI/pythia-1b', 'gpt2-xl', 'EleutherAI/pythia-1.4b', 'EleutherAI/pythia-2.8b', 'sharpbai/alpaca-7b-merged']
+MODELS = ['EleutherAI/pythia-70m', 'gpt2', 'EleutherAI/pythia-160m', 'gpt2-medium', 'EleutherAI/pythia-410m', 'gpt2-large', 'EleutherAI/pythia-1b', 'gpt2-xl', 'EleutherAI/pythia-1.4b', 'EleutherAI/pythia-2.8b', 'sharpbai/alpaca-7b-merged']
 
 def get_bounds(text, needle):
     start = text.find(needle)
@@ -88,6 +88,7 @@ def main():
         for model in MODELS:
             args.model = model
             experiment(**vars(args))
+            torch.cuda.empty_cache()
     else:
         experiment(**vars(args))
 

@@ -9,7 +9,7 @@ import pandas as pd
 from plotnine import ggplot, aes, facet_wrap, facet_grid, geom_bar, theme, element_text
 import argparse
 
-ORDER = ['EleutherAI-pythia-70m', 'gpt2', 'EleutherAI-pythia-160m', 'gpt2-medium', 'EleutherAI-pythia-410m', 'gpt-large', 'EleutherAI-pythia-1b', 'gpt2-xl', 'EleutherAI-pythia-1.4b', 'EleutherAI-pythia-2.8b', 'sharpbai-alpaca-7b-merged']
+ORDER = ['EleutherAI-pythia-70m', 'gpt2', 'EleutherAI-pythia-160m', 'gpt2-medium', 'EleutherAI-pythia-410m', 'gpt2-large', 'EleutherAI-pythia-1b', 'gpt2-xl', 'EleutherAI-pythia-1.4b', 'EleutherAI-pythia-2.8b', 'sharpbai-alpaca-7b-merged']
 
 def autocoref():
     # make logs/overall directory
@@ -82,7 +82,7 @@ def plot():
     # df, set model order
     df = pd.DataFrame(rows)
     df['model'] = pd.Categorical(df['model'].astype(str))
-    print(df)
+    df['model'].cat.set_categories(ORDER, inplace=True)
 
     # plot
     plot = (ggplot(df, aes(x="model", y="count", fill="option"))
