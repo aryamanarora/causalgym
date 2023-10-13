@@ -75,7 +75,7 @@ def main():
     args = parser.parse_args()
 
     if args.model == 'all':
-        for model in ['gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl']:
+        for model in MODELS:
             args.model = model
             experiment(**vars(args))
     else:
