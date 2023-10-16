@@ -1,0 +1,50 @@
+[
+    {
+        "text": "John seized the comic from Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.846,
+            "Bill": 0.154
+        }
+    },
+    {
+        "text": "John passed the comic to Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.51,
+            "Bill": 0.49
+        }
+    },
+    {
+        "text": "John passed a comic to Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.57,
+            "Bill": 0.43
+        }
+    },
+    {
+        "text": "John was passing a comic to Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.87,
+            "Bill": 0.13
+        }
+    }
+]
