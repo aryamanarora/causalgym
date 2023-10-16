@@ -9,7 +9,8 @@
         "human": {
             "John": 0.846,
             "Bill": 0.154
-        }
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
     },
     {
         "text": "John passed the comic to Bill. He",
@@ -21,7 +22,34 @@
         "human": {
             "John": 0.51,
             "Bill": 0.49
-        }
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Joseph hit Patrick. He",
+        "options": [
+            "Joseph",
+            "Patrick"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Joseph": 0.846,
+            "Patrick": 0.154
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Patrick was hit by Joseph. He",
+        "options": [
+            "Joseph",
+            "Patrick"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Joseph": 0.51,
+            "Patrick": 0.49
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
     },
     {
         "text": "John passed a comic to Bill. He",
@@ -33,7 +61,8 @@
         "human": {
             "John": 0.57,
             "Bill": 0.43
-        }
+        },
+        "source": "Kehler and Rohde (2013)"
     },
     {
         "text": "John was passing a comic to Bill. He",
@@ -43,8 +72,35 @@
         ],
         "pronoun": "He",
         "human": {
-            "John": 0.87,
-            "Bill": 0.13
-        }
+            "John": 0.80,
+            "Bill": 0.20
+        },
+        "source": "Kehler and Rohde (2013)"
+    },
+    {
+        "text": "Amanda amazed Brittany. She",
+        "options": [
+            "Amanda",
+            "Brittany"
+        ],
+        "pronoun": "She",
+        "human": {
+            "Amanda": 0.77,
+            "Brittany": 0.23
+        },
+        "source": "Kehler and Rohde (2013)"
+    },
+    {
+        "text": "Brittany was amazed by Amanda. She",
+        "options": [
+            "Amanda",
+            "Brittany"
+        ],
+        "pronoun": "She",
+        "human": {
+            "Amanda": 0.42,
+            "Brittany": 0.58
+        },
+        "source": "Kehler and Rohde (2013)"
     }
 ]

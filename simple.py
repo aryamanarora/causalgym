@@ -17,20 +17,15 @@ def get_bounds(text, needle):
     return (start, end)
 
 @torch.no_grad()
-def experiment(model="gpt2", revision="main", use_local_cache=False, sequential=False):
+def experiment(model="gpt2", revision="main", sequential=False):
     # load model
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    os.environ['TRANSFORMERS_CACHE'] = '../.huggingface_cache' if use_local_cache else '~/.cache/huggingface/hub'
     generator = pipeline('text-generation', model=model, revision=revision, device=device, torch_dtype=torch.bfloat16 if device == 'cuda:0' else torch.float32)
     print("loaded model")
 
     # stimuli
-    stimuli = [
-        {"text": "John seized the comic from Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
-        {"text": "John passed the comic to Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
-        {"text": "John passed a comic to Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
-        {"text": "John was passing a comic to Bill. He", "options": ["John", "Bill"], "pronoun": "He"},
-    ]
+    with open('stimuli.json', 'r') as f:
+        stimuli = json.load(f)
 
     # log
     log = {'metadata': {
@@ -81,7 +76,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='gpt2', help='name of model')
     parser.add_argument('--revision', default='main', help='revision of model')
-    parser.add_argument('--use-local-cache', action='store_true', help='use user cache on cluster')
     parser.add_argument('--sequential', action='store_true', help='run sequentially')
     args = parser.parse_args()
 

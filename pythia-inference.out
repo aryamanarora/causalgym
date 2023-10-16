@@ -1,65 +1,0 @@
-slurm submission log: 2023-10-12 20:23:34.359891
-created following sbatch script: 
-
-###############################
-
-#!/bin/bash
-
-#SBATCH --account=nlp
-#SBATCH --cpus-per-task=2
-#SBATCH --gres=gpu:1
-#SBATCH --job-name=pythia-inference
-#SBATCH --mem=20G
-#SBATCH --open-mode=append
-#SBATCH --output=pythia-inference.out
-#SBATCH --partition=jag-standard
-#SBATCH --time=14-0
-
-# activate your desired anaconda environment
-
-
-# cd to working directory
-cd .
-
-# launch commands
-srun --unbuffered run_as_child_processes 'python simple.py --model EleutherAI/pythia-160m'
-
-###############################
-
-submission to slurm complete!
-
-
-###############################
-slurm submission output
-
-Submitted batch job 6785658
-
-
-
-###############################
-
-###############################
-start time: 2023-10-12 20:23:35.536508
-machine: jagupard37
-conda env: boundless
-###############################
-running following processes
-
-	python simple.py --model EleutherAI/pythia-160m
-
-
-###############################
-command outputs: 
-
-
-Downloading (…)lve/main/config.json:   0%|          | 0.00/569 [00:00<?, ?B/s]Downloading (…)lve/main/config.json: 100%|██████████| 569/569 [00:00<00:00, 148kB/s]
-Downloading model.safetensors:   0%|          | 0.00/375M [00:00<?, ?B/s]Downloading model.safetensors:   3%|▎         | 10.5M/375M [00:00<00:04, 76.5MB/s]Downloading model.safetensors:   6%|▌         | 21.0M/375M [00:00<00:04, 78.1MB/s]Downloading model.safetensors:   8%|▊         | 31.5M/375M [00:00<00:04, 78.9MB/s]Downloading model.safetensors:  11%|█         | 41.9M/375M [00:00<00:04, 76.4MB/s]Downloading model.safetensors:  14%|█▍        | 52.4M/375M [00:00<00:04, 72.7MB/s]Downloading model.safetensors:  17%|█▋        | 62.9M/375M [00:00<00:04, 69.2MB/s]Downloading model.safetensors:  20%|█▉        | 73.4M/375M [00:01<00:04, 66.8MB/s]Downloading model.safetensors:  22%|██▏       | 83.9M/375M [00:01<00:04, 64.8MB/s]Downloading model.safetensors:  25%|██▌       | 94.4M/375M [00:01<00:04, 62.7MB/s]Downloading model.safetensors:  28%|██▊       | 105M/375M [00:01<00:04, 60.8MB/s] Downloading model.safetensors:  31%|███       | 115M/375M [00:01<00:04, 59.5MB/s]Downloading model.safetensors:  34%|███▎      | 126M/375M [00:01<00:04, 57.3MB/s]Downloading model.safetensors:  36%|███▋      | 136M/375M [00:02<00:04, 55.6MB/s]Downloading model.safetensors:  39%|███▉      | 147M/375M [00:02<00:04, 53.6MB/s]Downloading model.safetensors:  42%|████▏     | 157M/375M [00:02<00:04, 51.4MB/s]Downloading model.safetensors:  45%|████▍     | 168M/375M [00:02<00:04, 49.2MB/s]Downloading model.safetensors:  48%|████▊     | 178M/375M [00:03<00:04, 47.8MB/s]Downloading model.safetensors:  50%|█████     | 189M/375M [00:03<00:04, 46.0MB/s]Downloading model.safetensors:  53%|█████▎    | 199M/375M [00:03<00:03, 44.6MB/s]Downloading model.safetensors:  56%|█████▌    | 210M/375M [00:03<00:03, 43.4MB/s]Downloading model.safetensors:  59%|█████▊    | 220M/375M [00:04<00:03, 42.4MB/s]Downloading model.safetensors:  62%|██████▏   | 231M/375M [00:04<00:03, 41.5MB/s]Downloading model.safetensors:  64%|██████▍   | 241M/375M [00:04<00:03, 40.8MB/s]Downloading model.safetensors:  67%|██████▋   | 252M/375M [00:04<00:03, 40.5MB/s]Downloading model.safetensors:  70%|██████▉   | 262M/375M [00:05<00:02, 39.3MB/s]Downloading model.safetensors:  73%|███████▎  | 273M/375M [00:05<00:02, 38.7MB/s]Downloading model.safetensors:  75%|███████▌  | 283M/375M [00:05<00:02, 38.5MB/s]Downloading model.safetensors:  78%|███████▊  | 294M/375M [00:05<00:02, 38.3MB/s]Downloading model.safetensors:  81%|████████  | 304M/375M [00:06<00:01, 37.8MB/s]Downloading model.safetensors:  84%|████████▍ | 315M/375M [00:06<00:01, 36.9MB/s]Downloading model.safetensors:  87%|████████▋ | 325M/375M [00:06<00:01, 35.9MB/s]Downloading model.safetensors:  89%|████████▉ | 336M/375M [00:07<00:01, 35.2MB/s]Downloading model.safetensors:  92%|█████████▏| 346M/375M [00:07<00:00, 34.6MB/s]Downloading model.safetensors:  95%|█████████▌| 357M/375M [00:07<00:00, 33.9MB/s]Downloading model.safetensors:  98%|█████████▊| 367M/375M [00:08<00:00, 33.6MB/s]Downloading model.safetensors: 100%|██████████| 375M/375M [00:08<00:00, 33.3MB/s]Downloading model.safetensors: 100%|██████████| 375M/375M [00:08<00:00, 44.6MB/s]
-Downloading (…)okenizer_config.json:   0%|          | 0.00/396 [00:00<?, ?B/s]Downloading (…)okenizer_config.json: 100%|██████████| 396/396 [00:00<00:00, 143kB/s]
-Downloading (…)/main/tokenizer.json:   0%|          | 0.00/2.11M [00:00<?, ?B/s]Downloading (…)/main/tokenizer.json: 100%|██████████| 2.11M/2.11M [00:00<00:00, 6.71MB/s]Downloading (…)/main/tokenizer.json: 100%|██████████| 2.11M/2.11M [00:00<00:00, 6.69MB/s]
-Downloading (…)cial_tokens_map.json:   0%|          | 0.00/99.0 [00:00<?, ?B/s]Downloading (…)cial_tokens_map.json: 100%|██████████| 99.0/99.0 [00:00<00:00, 241kB/s]loaded model
-
-Setting `pad_token_id` to `eos_token_id`:0 for open-end generation.
-Setting `pad_token_id` to `eos_token_id`:0 for open-end generation.
-###############################
-end time: 2023-10-12 20:24:35.589508
-elapsed time: 0:01:00.053000
