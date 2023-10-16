@@ -2,418 +2,12 @@
     "logs/EleutherAI-pythia-2.8b.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 10
-            },
-            "counts_resolved": {
-                "John": 99,
-                "Bill": 19
-            },
-            "counts_resolved_pronoun": {
-                "John": 99,
-                "Bill": 1
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 9
-            },
-            "counts_resolved": {
-                "John": 19,
-                "Bill": 94
-            },
-            "counts_resolved_pronoun": {
-                "John": 16,
-                "Bill": 84
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 17
-            },
-            "counts_resolved": {
-                "John": 15,
-                "Bill": 96
-            },
-            "counts_resolved_pronoun": {
-                "John": 14,
-                "Bill": 85
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 4,
-                "Bill": 28
-            },
-            "counts_resolved": {
-                "John": 59,
-                "Bill": 80
-            },
-            "counts_resolved_pronoun": {
-                "John": 58,
-                "Bill": 42
-            }
-        }
-    },
-    "logs/gpt2-xl.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 35
-            },
-            "counts_resolved": {
-                "John": 99,
-                "Bill": 40
-            },
-            "counts_resolved_pronoun": {
-                "John": 99,
-                "Bill": 1
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 27
-            },
-            "counts_resolved": {
-                "John": 15,
-                "Bill": 98
-            },
-            "counts_resolved_pronoun": {
-                "John": 15,
-                "Bill": 84
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 25
-            },
-            "counts_resolved": {
-                "John": 35,
-                "Bill": 90
-            },
-            "counts_resolved_pronoun": {
-                "John": 33,
-                "Bill": 67
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 7,
-                "Bill": 29
-            },
-            "counts_resolved": {
-                "John": 65,
-                "Bill": 70
-            },
-            "counts_resolved_pronoun": {
-                "John": 60,
-                "Bill": 40
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-410m.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 34
-            },
-            "counts_resolved": {
-                "John": 100,
-                "Bill": 37
-            },
-            "counts_resolved_pronoun": {
-                "John": 100,
-                "Bill": 0
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 24
-            },
-            "counts_resolved": {
-                "John": 22,
-                "Bill": 99
-            },
-            "counts_resolved_pronoun": {
-                "John": 22,
-                "Bill": 76
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 35
-            },
-            "counts_resolved": {
-                "John": 31,
-                "Bill": 98
-            },
-            "counts_resolved_pronoun": {
-                "John": 30,
-                "Bill": 69
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 34
-            },
-            "counts_resolved": {
-                "John": 55,
-                "Bill": 81
-            },
-            "counts_resolved_pronoun": {
-                "John": 53,
-                "Bill": 47
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-70m.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 5,
-                "Bill": 1
-            },
-            "counts_resolved": {
-                "John": 91,
-                "Bill": 10
-            },
-            "counts_resolved_pronoun": {
-                "John": 91,
-                "Bill": 6
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 2
-            },
-            "counts_resolved": {
-                "John": 19,
-                "Bill": 84
-            },
-            "counts_resolved_pronoun": {
-                "John": 18,
-                "Bill": 80
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 1
-            },
-            "counts_resolved": {
-                "John": 24,
-                "Bill": 74
-            },
-            "counts_resolved_pronoun": {
-                "John": 24,
-                "Bill": 67
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
                 "John": 3,
-                "Bill": 2
+                "Bill": 12
             },
             "counts_resolved": {
-                "John": 69,
-                "Bill": 35
-            },
-            "counts_resolved_pronoun": {
-                "John": 69,
-                "Bill": 27
-            }
-        }
-    },
-    "logs/mistralai-Mistral-7B-v0.1.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 21
-            },
-            "counts_resolved": {
-                "John": 100,
-                "Bill": 29
-            },
-            "counts_resolved_pronoun": {
-                "John": 100,
-                "Bill": 0
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 5,
-                "Bill": 50
-            },
-            "counts_resolved": {
-                "John": 50,
-                "Bill": 96
-            },
-            "counts_resolved_pronoun": {
-                "John": 48,
-                "Bill": 50
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 7,
-                "Bill": 39
-            },
-            "counts_resolved": {
-                "John": 52,
-                "Bill": 89
-            },
-            "counts_resolved_pronoun": {
-                "John": 48,
-                "Bill": 52
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 8,
+                "John": 99,
                 "Bill": 23
-            },
-            "counts_resolved": {
-                "John": 66,
-                "Bill": 72
-            },
-            "counts_resolved_pronoun": {
-                "John": 61,
-                "Bill": 38
-            }
-        }
-    },
-    "logs/gpt2-medium.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 50
-            },
-            "counts_resolved": {
-                "John": 98,
-                "Bill": 54
-            },
-            "counts_resolved_pronoun": {
-                "John": 98,
-                "Bill": 2
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 33
-            },
-            "counts_resolved": {
-                "John": 31,
-                "Bill": 96
-            },
-            "counts_resolved_pronoun": {
-                "John": 31,
-                "Bill": 68
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 52
-            },
-            "counts_resolved": {
-                "John": 42,
-                "Bill": 98
-            },
-            "counts_resolved_pronoun": {
-                "John": 40,
-                "Bill": 59
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 66
-            },
-            "counts_resolved": {
-                "John": 70,
-                "Bill": 79
-            },
-            "counts_resolved_pronoun": {
-                "John": 66,
-                "Bill": 34
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-1.4b.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 24
-            },
-            "counts_resolved": {
-                "John": 100,
-                "Bill": 25
-            },
-            "counts_resolved_pronoun": {
-                "John": 100,
-                "Bill": 0
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 3,
-                "Bill": 25
-            },
-            "counts_resolved": {
-                "John": 21,
-                "Bill": 97
-            },
-            "counts_resolved_pronoun": {
-                "John": 19,
-                "Bill": 79
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 22
-            },
-            "counts_resolved": {
-                "John": 21,
-                "Bill": 94
-            },
-            "counts_resolved_pronoun": {
-                "John": 21,
-                "Bill": 76
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 4,
-                "Bill": 35
-            },
-            "counts_resolved": {
-                "John": 64,
-                "Bill": 75
-            },
-            "counts_resolved_pronoun": {
-                "John": 64,
-                "Bill": 36
-            }
-        }
-    },
-    "logs/sharpbai-alpaca-7b-merged.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 3,
-                "Bill": 14
-            },
-            "counts_resolved": {
-                "John": 99,
-                "Bill": 19
             },
             "counts_resolved_pronoun": {
                 "John": 97,
@@ -422,56 +16,338 @@
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 8,
-                "Bill": 14
+                "John": 1,
+                "Bill": 6
             },
             "counts_resolved": {
-                "John": 29,
-                "Bill": 96
+                "John": 11,
+                "Bill": 99
             },
             "counts_resolved_pronoun": {
-                "John": 22,
-                "Bill": 78
+                "John": 10,
+                "Bill": 88
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 26
+            },
+            "counts_resolved": {
+                "Joseph": 76,
+                "Patrick": 77
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 75,
+                "Patrick": 25
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 25,
+                "Patrick": 5
+            },
+            "counts_resolved": {
+                "Joseph": 35,
+                "Patrick": 98
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 7,
+                "Patrick": 93
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 2
+            },
+            "counts_resolved": {
+                "Ken": 46,
+                "Geoff": 89
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 29,
+                "Geoff": 70
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 4
+            },
+            "counts_resolved": {
+                "Ken": 72,
+                "Geoff": 56
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 61,
+                "Geoff": 39
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 25
+            },
+            "counts_resolved": {
+                "Simon": 92,
+                "Richard": 61
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 91,
+                "Richard": 9
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 12
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 26
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 3
             }
         },
         "John passed a comic to Bill. He": {
             "counts": {
-                "John": 8,
-                "Bill": 12
+                "John": 0,
+                "Bill": 16
             },
             "counts_resolved": {
-                "John": 22,
-                "Bill": 98
+                "John": 18,
+                "Bill": 96
             },
             "counts_resolved_pronoun": {
-                "John": 11,
-                "Bill": 89
+                "John": 18,
+                "Bill": 82
             }
         },
         "John was passing a comic to Bill. He": {
             "counts": {
-                "John": 23,
-                "Bill": 32
+                "John": 4,
+                "Bill": 26
             },
             "counts_resolved": {
-                "John": 70,
-                "Bill": 83
+                "John": 49,
+                "Bill": 87
             },
             "counts_resolved_pronoun": {
-                "John": 52,
-                "Bill": 47
+                "John": 45,
+                "Bill": 54
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 8,
+                "Brittany": 10
+            },
+            "counts_resolved": {
+                "Amanda": 78,
+                "Brittany": 71
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 52,
+                "Brittany": 48
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 10,
+                "Brittany": 4
+            },
+            "counts_resolved": {
+                "Amanda": 87,
+                "Brittany": 58
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 59,
+                "Brittany": 40
             }
         }
     },
-    "logs/gpt2-large.json": {
+    "logs/gpt2-xl.json": {
         "John seized the comic from Bill. He": {
             "counts": {
                 "John": 0,
-                "Bill": 17
+                "Bill": 21
+            },
+            "counts_resolved": {
+                "John": 98,
+                "Bill": 31
+            },
+            "counts_resolved_pronoun": {
+                "John": 98,
+                "Bill": 2
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 29
+            },
+            "counts_resolved": {
+                "John": 25,
+                "Bill": 98
+            },
+            "counts_resolved_pronoun": {
+                "John": 23,
+                "Bill": 76
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 22
+            },
+            "counts_resolved": {
+                "Joseph": 71,
+                "Patrick": 71
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 70,
+                "Patrick": 28
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 18,
+                "Patrick": 10
+            },
+            "counts_resolved": {
+                "Joseph": 22,
+                "Patrick": 100
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 5,
+                "Patrick": 95
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 38
+            },
+            "counts_resolved": {
+                "Ken": 84,
+                "Geoff": 82
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 80,
+                "Geoff": 20
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 24
+            },
+            "counts_resolved": {
+                "Ken": 84,
+                "Geoff": 60
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 76,
+                "Geoff": 24
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 37
+            },
+            "counts_resolved": {
+                "Simon": 95,
+                "Richard": 69
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 94,
+                "Richard": 6
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 27
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 37
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 2
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 37
+            },
+            "counts_resolved": {
+                "John": 37,
+                "Bill": 94
+            },
+            "counts_resolved_pronoun": {
+                "John": 37,
+                "Bill": 62
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 12,
+                "Bill": 21
+            },
+            "counts_resolved": {
+                "John": 61,
+                "Bill": 73
+            },
+            "counts_resolved_pronoun": {
+                "John": 56,
+                "Bill": 44
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 7,
+                "Brittany": 18
+            },
+            "counts_resolved": {
+                "Amanda": 74,
+                "Brittany": 74
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 56,
+                "Brittany": 44
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 20,
+                "Brittany": 3
+            },
+            "counts_resolved": {
+                "Amanda": 86,
+                "Brittany": 82
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 26,
+                "Brittany": 74
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-410m.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 52
             },
             "counts_resolved": {
                 "John": 99,
-                "Bill": 26
+                "Bill": 44
             },
             "counts_resolved_pronoun": {
                 "John": 99,
@@ -480,52 +356,1694 @@
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 1,
-                "Bill": 22
+                "John": 0,
+                "Bill": 20
             },
             "counts_resolved": {
-                "John": 18,
+                "John": 21,
                 "Bill": 98
             },
             "counts_resolved_pronoun": {
-                "John": 17,
-                "Bill": 82
+                "John": 19,
+                "Bill": 81
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 29
+            },
+            "counts_resolved": {
+                "Joseph": 73,
+                "Patrick": 68
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 72,
+                "Patrick": 26
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 24,
+                "Patrick": 0
+            },
+            "counts_resolved": {
+                "Joseph": 32,
+                "Patrick": 97
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 7,
+                "Patrick": 93
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 27
+            },
+            "counts_resolved": {
+                "Ken": 89,
+                "Geoff": 68
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 87,
+                "Geoff": 12
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 22
+            },
+            "counts_resolved": {
+                "Ken": 83,
+                "Geoff": 53
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 75,
+                "Geoff": 25
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 14
+            },
+            "counts_resolved": {
+                "Simon": 94,
+                "Richard": 47
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 93,
+                "Richard": 7
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 17
+            },
+            "counts_resolved": {
+                "Simon": 99,
+                "Richard": 24
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 3
             }
         },
         "John passed a comic to Bill. He": {
             "counts": {
                 "John": 0,
-                "Bill": 23
+                "Bill": 25
             },
             "counts_resolved": {
-                "John": 28,
-                "Bill": 96
+                "John": 30,
+                "Bill": 94
             },
             "counts_resolved_pronoun": {
                 "John": 27,
-                "Bill": 71
+                "Bill": 70
             }
         },
         "John was passing a comic to Bill. He": {
             "counts": {
                 "John": 1,
-                "Bill": 42
+                "Bill": 41
             },
             "counts_resolved": {
-                "John": 62,
-                "Bill": 78
+                "John": 48,
+                "Bill": 81
             },
             "counts_resolved_pronoun": {
-                "John": 62,
-                "Bill": 38
+                "John": 47,
+                "Bill": 51
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 3,
+                "Brittany": 29
+            },
+            "counts_resolved": {
+                "Amanda": 62,
+                "Brittany": 80
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 44,
+                "Brittany": 54
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 35,
+                "Brittany": 2
+            },
+            "counts_resolved": {
+                "Amanda": 68,
+                "Brittany": 90
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 14,
+                "Brittany": 86
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-70m.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 1
+            },
+            "counts_resolved": {
+                "John": 94,
+                "Bill": 14
+            },
+            "counts_resolved_pronoun": {
+                "John": 94,
+                "Bill": 5
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 5,
+                "Bill": 4
+            },
+            "counts_resolved": {
+                "John": 20,
+                "Bill": 87
+            },
+            "counts_resolved_pronoun": {
+                "John": 17,
+                "Bill": 79
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 1
+            },
+            "counts_resolved": {
+                "Joseph": 74,
+                "Patrick": 31
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 73,
+                "Patrick": 21
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 0
+            },
+            "counts_resolved": {
+                "Joseph": 5,
+                "Patrick": 96
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 2,
+                "Patrick": 94
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 5,
+                "Geoff": 5
+            },
+            "counts_resolved": {
+                "Ken": 77,
+                "Geoff": 55
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 74,
+                "Geoff": 26
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 4
+            },
+            "counts_resolved": {
+                "Ken": 68,
+                "Geoff": 50
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 58,
+                "Geoff": 40
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 1
+            },
+            "counts_resolved": {
+                "Simon": 93,
+                "Richard": 25
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 90,
+                "Richard": 10
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 0
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 12
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 94,
+                "Richard": 5
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 3,
+                "Bill": 5
+            },
+            "counts_resolved": {
+                "John": 23,
+                "Bill": 83
+            },
+            "counts_resolved_pronoun": {
+                "John": 22,
+                "Bill": 77
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 6,
+                "Bill": 2
+            },
+            "counts_resolved": {
+                "John": 67,
+                "Bill": 40
+            },
+            "counts_resolved_pronoun": {
+                "John": 65,
+                "Bill": 32
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 0,
+                "Brittany": 1
+            },
+            "counts_resolved": {
+                "Amanda": 78,
+                "Brittany": 42
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 74,
+                "Brittany": 22
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 0,
+                "Brittany": 0
+            },
+            "counts_resolved": {
+                "Amanda": 62,
+                "Brittany": 68
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 40,
+                "Brittany": 59
+            }
+        }
+    },
+    "logs/mistralai-Mistral-7B-v0.1.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 14
+            },
+            "counts_resolved": {
+                "John": 98,
+                "Bill": 24
+            },
+            "counts_resolved_pronoun": {
+                "John": 98,
+                "Bill": 2
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 3,
+                "Bill": 34
+            },
+            "counts_resolved": {
+                "John": 45,
+                "Bill": 95
+            },
+            "counts_resolved_pronoun": {
+                "John": 43,
+                "Bill": 57
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 4,
+                "Patrick": 17
+            },
+            "counts_resolved": {
+                "Joseph": 73,
+                "Patrick": 65
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 67,
+                "Patrick": 32
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 21,
+                "Patrick": 9
+            },
+            "counts_resolved": {
+                "Joseph": 28,
+                "Patrick": 97
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 8,
+                "Patrick": 90
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 8,
+                "Geoff": 20
+            },
+            "counts_resolved": {
+                "Ken": 62,
+                "Geoff": 87
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 55,
+                "Geoff": 45
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 11,
+                "Geoff": 21
+            },
+            "counts_resolved": {
+                "Ken": 82,
+                "Geoff": 56
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 65,
+                "Geoff": 35
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 5,
+                "Richard": 39
+            },
+            "counts_resolved": {
+                "Simon": 97,
+                "Richard": 72
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 95,
+                "Richard": 5
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 6,
+                "Richard": 21
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 31
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 93,
+                "Richard": 7
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 8,
+                "Bill": 43
+            },
+            "counts_resolved": {
+                "John": 53,
+                "Bill": 91
+            },
+            "counts_resolved_pronoun": {
+                "John": 50,
+                "Bill": 50
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 11,
+                "Bill": 23
+            },
+            "counts_resolved": {
+                "John": 60,
+                "Bill": 73
+            },
+            "counts_resolved_pronoun": {
+                "John": 52,
+                "Bill": 47
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 7,
+                "Brittany": 15
+            },
+            "counts_resolved": {
+                "Amanda": 88,
+                "Brittany": 49
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 75,
+                "Brittany": 25
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 17,
+                "Brittany": 7
+            },
+            "counts_resolved": {
+                "Amanda": 85,
+                "Brittany": 53
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 54,
+                "Brittany": 46
+            }
+        }
+    },
+    "logs/gpt2-medium.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 43
+            },
+            "counts_resolved": {
+                "John": 98,
+                "Bill": 50
+            },
+            "counts_resolved_pronoun": {
+                "John": 98,
+                "Bill": 2
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 39
+            },
+            "counts_resolved": {
+                "John": 33,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 32,
+                "Bill": 68
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 41
+            },
+            "counts_resolved": {
+                "Joseph": 84,
+                "Patrick": 79
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 83,
+                "Patrick": 16
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 13,
+                "Patrick": 0
+            },
+            "counts_resolved": {
+                "Joseph": 16,
+                "Patrick": 98
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 2,
+                "Patrick": 98
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 22
+            },
+            "counts_resolved": {
+                "Ken": 66,
+                "Geoff": 87
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 62,
+                "Geoff": 37
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 12
+            },
+            "counts_resolved": {
+                "Ken": 77,
+                "Geoff": 72
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 61,
+                "Geoff": 38
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 50
+            },
+            "counts_resolved": {
+                "Simon": 92,
+                "Richard": 75
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 92,
+                "Richard": 7
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 38
+            },
+            "counts_resolved": {
+                "Simon": 100,
+                "Richard": 46
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 3
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 41
+            },
+            "counts_resolved": {
+                "John": 30,
+                "Bill": 100
+            },
+            "counts_resolved_pronoun": {
+                "John": 27,
+                "Bill": 72
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 77
+            },
+            "counts_resolved": {
+                "John": 73,
+                "Bill": 83
+            },
+            "counts_resolved_pronoun": {
+                "John": 69,
+                "Bill": 31
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 10,
+                "Brittany": 28
+            },
+            "counts_resolved": {
+                "Amanda": 75,
+                "Brittany": 81
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 56,
+                "Brittany": 43
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 41,
+                "Brittany": 3
+            },
+            "counts_resolved": {
+                "Amanda": 79,
+                "Brittany": 89
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 16,
+                "Brittany": 84
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-1.4b.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 23
+            },
+            "counts_resolved": {
+                "John": 99,
+                "Bill": 29
+            },
+            "counts_resolved_pronoun": {
+                "John": 99,
+                "Bill": 1
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 25
+            },
+            "counts_resolved": {
+                "John": 19,
+                "Bill": 95
+            },
+            "counts_resolved_pronoun": {
+                "John": 17,
+                "Bill": 81
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 34
+            },
+            "counts_resolved": {
+                "Joseph": 87,
+                "Patrick": 79
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 86,
+                "Patrick": 14
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 28,
+                "Patrick": 2
+            },
+            "counts_resolved": {
+                "Joseph": 30,
+                "Patrick": 97
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 3,
+                "Patrick": 96
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 14
+            },
+            "counts_resolved": {
+                "Ken": 58,
+                "Geoff": 81
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 54,
+                "Geoff": 45
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 14
+            },
+            "counts_resolved": {
+                "Ken": 81,
+                "Geoff": 50
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 74,
+                "Geoff": 25
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 42
+            },
+            "counts_resolved": {
+                "Simon": 89,
+                "Richard": 72
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 88,
+                "Richard": 12
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 20
+            },
+            "counts_resolved": {
+                "Simon": 99,
+                "Richard": 28
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 98,
+                "Richard": 1
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 17
+            },
+            "counts_resolved": {
+                "John": 22,
+                "Bill": 99
+            },
+            "counts_resolved_pronoun": {
+                "John": 20,
+                "Bill": 80
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 31
+            },
+            "counts_resolved": {
+                "John": 51,
+                "Bill": 84
+            },
+            "counts_resolved_pronoun": {
+                "John": 50,
+                "Bill": 49
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 30,
+                "Brittany": 4
+            },
+            "counts_resolved": {
+                "Amanda": 75,
+                "Brittany": 64
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 46,
+                "Brittany": 52
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 12,
+                "Brittany": 16
+            },
+            "counts_resolved": {
+                "Amanda": 84,
+                "Brittany": 66
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 47,
+                "Brittany": 51
+            }
+        }
+    },
+    "logs/sharpbai-alpaca-7b-merged.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 9
+            },
+            "counts_resolved": {
+                "John": 97,
+                "Bill": 16
+            },
+            "counts_resolved_pronoun": {
+                "John": 96,
+                "Bill": 4
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 8,
+                "Bill": 21
+            },
+            "counts_resolved": {
+                "John": 32,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 25,
+                "Bill": 75
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 7,
+                "Patrick": 14
+            },
+            "counts_resolved": {
+                "Joseph": 59,
+                "Patrick": 75
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 50,
+                "Patrick": 47
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 11,
+                "Patrick": 7
+            },
+            "counts_resolved": {
+                "Joseph": 18,
+                "Patrick": 100
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 4,
+                "Patrick": 95
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 4,
+                "Geoff": 14
+            },
+            "counts_resolved": {
+                "Ken": 54,
+                "Geoff": 97
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 43,
+                "Geoff": 57
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 5
+            },
+            "counts_resolved": {
+                "Ken": 76,
+                "Geoff": 58
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 60,
+                "Geoff": 40
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 52
+            },
+            "counts_resolved": {
+                "Simon": 96,
+                "Richard": 75
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 96,
+                "Richard": 3
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 26
+            },
+            "counts_resolved": {
+                "Simon": 99,
+                "Richard": 33
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 99,
+                "Richard": 0
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 11,
+                "Bill": 15
+            },
+            "counts_resolved": {
+                "John": 26,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 16,
+                "Bill": 83
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 12,
+                "Bill": 22
+            },
+            "counts_resolved": {
+                "John": 57,
+                "Bill": 77
+            },
+            "counts_resolved_pronoun": {
+                "John": 47,
+                "Bill": 50
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 16,
+                "Brittany": 6
+            },
+            "counts_resolved": {
+                "Amanda": 81,
+                "Brittany": 64
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 58,
+                "Brittany": 42
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 37,
+                "Brittany": 0
+            },
+            "counts_resolved": {
+                "Amanda": 92,
+                "Brittany": 73
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 31,
+                "Brittany": 69
+            }
+        }
+    },
+    "logs/gpt2-large.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 25
+            },
+            "counts_resolved": {
+                "John": 100,
+                "Bill": 35
+            },
+            "counts_resolved_pronoun": {
+                "John": 100,
+                "Bill": 0
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 20
+            },
+            "counts_resolved": {
+                "John": 14,
+                "Bill": 98
+            },
+            "counts_resolved_pronoun": {
+                "John": 13,
+                "Bill": 87
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 47
+            },
+            "counts_resolved": {
+                "Joseph": 86,
+                "Patrick": 76
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 86,
+                "Patrick": 14
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 11,
+                "Patrick": 1
+            },
+            "counts_resolved": {
+                "Joseph": 14,
+                "Patrick": 99
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 0,
+                "Patrick": 99
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 16
+            },
+            "counts_resolved": {
+                "Ken": 71,
+                "Geoff": 83
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 68,
+                "Geoff": 32
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 16
+            },
+            "counts_resolved": {
+                "Ken": 83,
+                "Geoff": 50
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 77,
+                "Geoff": 23
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 1,
+                "Richard": 51
+            },
+            "counts_resolved": {
+                "Simon": 96,
+                "Richard": 60
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 95,
+                "Richard": 5
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 44
+            },
+            "counts_resolved": {
+                "Simon": 99,
+                "Richard": 43
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 3
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 32
+            },
+            "counts_resolved": {
+                "John": 26,
+                "Bill": 99
+            },
+            "counts_resolved_pronoun": {
+                "John": 24,
+                "Bill": 76
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 26
+            },
+            "counts_resolved": {
+                "John": 54,
+                "Bill": 75
+            },
+            "counts_resolved_pronoun": {
+                "John": 51,
+                "Bill": 48
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 16,
+                "Brittany": 27
+            },
+            "counts_resolved": {
+                "Amanda": 83,
+                "Brittany": 70
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 66,
+                "Brittany": 34
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 28,
+                "Brittany": 5
+            },
+            "counts_resolved": {
+                "Amanda": 81,
+                "Brittany": 89
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 20,
+                "Brittany": 80
             }
         }
     },
     "logs/mistralai-Mistral-7B-Instruct-v0.1.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 2,
-                "Bill": 18
+                "John": 1,
+                "Bill": 25
+            },
+            "counts_resolved": {
+                "John": 96,
+                "Bill": 33
+            },
+            "counts_resolved_pronoun": {
+                "John": 95,
+                "Bill": 4
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 41
+            },
+            "counts_resolved": {
+                "John": 43,
+                "Bill": 93
+            },
+            "counts_resolved_pronoun": {
+                "John": 41,
+                "Bill": 59
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 23
+            },
+            "counts_resolved": {
+                "Joseph": 63,
+                "Patrick": 78
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 62,
+                "Patrick": 35
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 18,
+                "Patrick": 0
+            },
+            "counts_resolved": {
+                "Joseph": 21,
+                "Patrick": 100
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 2,
+                "Patrick": 98
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 27
+            },
+            "counts_resolved": {
+                "Ken": 70,
+                "Geoff": 93
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 69,
+                "Geoff": 31
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 19
+            },
+            "counts_resolved": {
+                "Ken": 79,
+                "Geoff": 60
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 67,
+                "Geoff": 32
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 43
+            },
+            "counts_resolved": {
+                "Simon": 100,
+                "Richard": 66
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 100,
+                "Richard": 0
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 37
+            },
+            "counts_resolved": {
+                "Simon": 99,
+                "Richard": 49
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 3
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 50
+            },
+            "counts_resolved": {
+                "John": 48,
+                "Bill": 97
+            },
+            "counts_resolved_pronoun": {
+                "John": 47,
+                "Bill": 52
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 64
+            },
+            "counts_resolved": {
+                "John": 73,
+                "Bill": 89
+            },
+            "counts_resolved_pronoun": {
+                "John": 71,
+                "Bill": 28
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 0,
+                "Brittany": 10
+            },
+            "counts_resolved": {
+                "Amanda": 81,
+                "Brittany": 38
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 73,
+                "Brittany": 27
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 33,
+                "Brittany": 2
+            },
+            "counts_resolved": {
+                "Amanda": 84,
+                "Brittany": 83
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 25,
+                "Brittany": 75
+            }
+        }
+    },
+    "logs/gpt2.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 22
+            },
+            "counts_resolved": {
+                "John": 96,
+                "Bill": 38
+            },
+            "counts_resolved_pronoun": {
+                "John": 96,
+                "Bill": 3
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 4,
+                "Bill": 23
+            },
+            "counts_resolved": {
+                "John": 41,
+                "Bill": 93
+            },
+            "counts_resolved_pronoun": {
+                "John": 35,
+                "Bill": 65
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 45
+            },
+            "counts_resolved": {
+                "Joseph": 79,
+                "Patrick": 73
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 79,
+                "Patrick": 21
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 20,
+                "Patrick": 0
+            },
+            "counts_resolved": {
+                "Joseph": 22,
+                "Patrick": 100
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 1,
+                "Patrick": 99
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 16
+            },
+            "counts_resolved": {
+                "Ken": 67,
+                "Geoff": 73
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 64,
+                "Geoff": 35
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 1,
+                "Geoff": 21
+            },
+            "counts_resolved": {
+                "Ken": 83,
+                "Geoff": 55
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 71,
+                "Geoff": 28
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 17
+            },
+            "counts_resolved": {
+                "Simon": 93,
+                "Richard": 56
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 90,
+                "Richard": 9
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 17
+            },
+            "counts_resolved": {
+                "Simon": 96,
+                "Richard": 32
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 93,
+                "Richard": 7
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 3,
+                "Bill": 19
+            },
+            "counts_resolved": {
+                "John": 36,
+                "Bill": 91
+            },
+            "counts_resolved_pronoun": {
+                "John": 34,
+                "Bill": 64
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 3,
+                "Bill": 37
+            },
+            "counts_resolved": {
+                "John": 61,
+                "Bill": 77
+            },
+            "counts_resolved_pronoun": {
+                "John": 59,
+                "Bill": 41
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 3,
+                "Brittany": 6
+            },
+            "counts_resolved": {
+                "Amanda": 71,
+                "Brittany": 59
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 59,
+                "Brittany": 38
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 25,
+                "Brittany": 0
+            },
+            "counts_resolved": {
+                "Amanda": 71,
+                "Brittany": 84
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 23,
+                "Brittany": 77
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-160m.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 7
+            },
+            "counts_resolved": {
+                "John": 96,
+                "Bill": 23
+            },
+            "counts_resolved_pronoun": {
+                "John": 96,
+                "Bill": 3
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 3
+            },
+            "counts_resolved": {
+                "John": 16,
+                "Bill": 89
+            },
+            "counts_resolved_pronoun": {
+                "John": 15,
+                "Bill": 84
+            }
+        },
+        "Joseph hit Patrick. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 2
+            },
+            "counts_resolved": {
+                "Joseph": 79,
+                "Patrick": 32
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 79,
+                "Patrick": 19
+            }
+        },
+        "Patrick was hit by Joseph. He": {
+            "counts": {
+                "Joseph": 0,
+                "Patrick": 1
+            },
+            "counts_resolved": {
+                "Joseph": 5,
+                "Patrick": 100
+            },
+            "counts_resolved_pronoun": {
+                "Joseph": 2,
+                "Patrick": 98
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 1,
+                "Geoff": 0
+            },
+            "counts_resolved": {
+                "Ken": 75,
+                "Geoff": 46
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 72,
+                "Geoff": 27
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 0,
+                "Geoff": 0
+            },
+            "counts_resolved": {
+                "Ken": 57,
+                "Geoff": 55
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 49,
+                "Geoff": 49
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 12
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 35
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 2
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 0,
+                "Richard": 3
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 17
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 96,
+                "Richard": 4
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 4
+            },
+            "counts_resolved": {
+                "John": 27,
+                "Bill": 80
+            },
+            "counts_resolved_pronoun": {
+                "John": 26,
+                "Bill": 73
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 3,
+                "Bill": 3
+            },
+            "counts_resolved": {
+                "John": 64,
+                "Bill": 45
+            },
+            "counts_resolved_pronoun": {
+                "John": 62,
+                "Bill": 35
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 0,
+                "Brittany": 0
+            },
+            "counts_resolved": {
+                "Amanda": 71,
+                "Brittany": 54
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 63,
+                "Brittany": 34
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 3,
+                "Brittany": 1
+            },
+            "counts_resolved": {
+                "Amanda": 54,
+                "Brittany": 88
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 17,
+                "Brittany": 82
+            }
+        }
+    },
+    "logs/EleutherAI-pythia-1b.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 16
             },
             "counts_resolved": {
                 "John": 97,
@@ -539,217 +2057,155 @@
         "John passed the comic to Bill. He": {
             "counts": {
                 "John": 0,
-                "Bill": 41
+                "Bill": 21
             },
             "counts_resolved": {
-                "John": 46,
-                "Bill": 92
-            },
-            "counts_resolved_pronoun": {
-                "John": 45,
-                "Bill": 55
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 56
-            },
-            "counts_resolved": {
-                "John": 59,
+                "John": 25,
                 "Bill": 94
             },
             "counts_resolved_pronoun": {
-                "John": 58,
-                "Bill": 41
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 54
-            },
-            "counts_resolved": {
-                "John": 70,
-                "Bill": 80
-            },
-            "counts_resolved_pronoun": {
-                "John": 67,
-                "Bill": 31
-            }
-        }
-    },
-    "logs/gpt2.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 0,
-                "Bill": 47
-            },
-            "counts_resolved": {
-                "John": 95,
-                "Bill": 51
-            },
-            "counts_resolved_pronoun": {
-                "John": 95,
-                "Bill": 5
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 42
-            },
-            "counts_resolved": {
-                "John": 47,
-                "Bill": 92
-            },
-            "counts_resolved_pronoun": {
-                "John": 44,
-                "Bill": 55
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 46
-            },
-            "counts_resolved": {
-                "John": 42,
-                "Bill": 92
-            },
-            "counts_resolved_pronoun": {
-                "John": 41,
-                "Bill": 58
-            }
-        },
-        "John was passing a comic to Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 46
-            },
-            "counts_resolved": {
-                "John": 64,
-                "Bill": 82
-            },
-            "counts_resolved_pronoun": {
-                "John": 61,
-                "Bill": 39
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-160m.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 3
-            },
-            "counts_resolved": {
-                "John": 99,
-                "Bill": 16
-            },
-            "counts_resolved_pronoun": {
-                "John": 98,
-                "Bill": 1
-            }
-        },
-        "John passed the comic to Bill. He": {
-            "counts": {
-                "John": 2,
-                "Bill": 3
-            },
-            "counts_resolved": {
-                "John": 11,
-                "Bill": 95
-            },
-            "counts_resolved_pronoun": {
-                "John": 10,
-                "Bill": 89
-            }
-        },
-        "John passed a comic to Bill. He": {
-            "counts": {
-                "John": 4,
-                "Bill": 4
-            },
-            "counts_resolved": {
-                "John": 28,
-                "Bill": 78
-            },
-            "counts_resolved_pronoun": {
                 "John": 24,
-                "Bill": 72
+                "Bill": 76
             }
         },
-        "John was passing a comic to Bill. He": {
+        "Joseph hit Patrick. He": {
             "counts": {
-                "John": 5,
-                "Bill": 4
+                "Joseph": 1,
+                "Patrick": 25
             },
             "counts_resolved": {
-                "John": 64,
-                "Bill": 49
+                "Joseph": 88,
+                "Patrick": 70
             },
             "counts_resolved_pronoun": {
-                "John": 58,
-                "Bill": 41
-            }
-        }
-    },
-    "logs/EleutherAI-pythia-1b.json": {
-        "John seized the comic from Bill. He": {
-            "counts": {
-                "John": 1,
-                "Bill": 29
-            },
-            "counts_resolved": {
-                "John": 94,
-                "Bill": 41
-            },
-            "counts_resolved_pronoun": {
-                "John": 94,
-                "Bill": 5
+                "Joseph": 88,
+                "Patrick": 11
             }
         },
-        "John passed the comic to Bill. He": {
+        "Patrick was hit by Joseph. He": {
             "counts": {
-                "John": 1,
-                "Bill": 23
+                "Joseph": 18,
+                "Patrick": 0
             },
             "counts_resolved": {
-                "John": 30,
-                "Bill": 95
+                "Joseph": 25,
+                "Patrick": 98
             },
             "counts_resolved_pronoun": {
-                "John": 29,
-                "Bill": 70
+                "Joseph": 2,
+                "Patrick": 98
+            }
+        },
+        "Ken admired Geoff. He": {
+            "counts": {
+                "Ken": 1,
+                "Geoff": 13
+            },
+            "counts_resolved": {
+                "Ken": 51,
+                "Geoff": 86
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 37,
+                "Geoff": 63
+            }
+        },
+        "Ken impressed Geoff. He": {
+            "counts": {
+                "Ken": 1,
+                "Geoff": 15
+            },
+            "counts_resolved": {
+                "Ken": 78,
+                "Geoff": 57
+            },
+            "counts_resolved_pronoun": {
+                "Ken": 64,
+                "Geoff": 36
+            }
+        },
+        "Simon ran towards Richard. He": {
+            "counts": {
+                "Simon": 1,
+                "Richard": 12
+            },
+            "counts_resolved": {
+                "Simon": 86,
+                "Richard": 52
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 84,
+                "Richard": 14
+            }
+        },
+        "Simon ran away from Richard. He": {
+            "counts": {
+                "Simon": 1,
+                "Richard": 11
+            },
+            "counts_resolved": {
+                "Simon": 98,
+                "Richard": 21
+            },
+            "counts_resolved_pronoun": {
+                "Simon": 97,
+                "Richard": 2
             }
         },
         "John passed a comic to Bill. He": {
             "counts": {
-                "John": 0,
+                "John": 1,
                 "Bill": 26
             },
             "counts_resolved": {
-                "John": 36,
-                "Bill": 93
+                "John": 32,
+                "Bill": 94
             },
             "counts_resolved_pronoun": {
-                "John": 35,
-                "Bill": 64
+                "John": 30,
+                "Bill": 70
             }
         },
         "John was passing a comic to Bill. He": {
             "counts": {
                 "John": 0,
-                "Bill": 33
+                "Bill": 40
             },
             "counts_resolved": {
-                "John": 55,
-                "Bill": 82
+                "John": 53,
+                "Bill": 88
             },
             "counts_resolved_pronoun": {
-                "John": 54,
-                "Bill": 45
+                "John": 53,
+                "Bill": 44
+            }
+        },
+        "Amanda amazed Brittany. She": {
+            "counts": {
+                "Amanda": 0,
+                "Brittany": 18
+            },
+            "counts_resolved": {
+                "Amanda": 60,
+                "Brittany": 77
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 42,
+                "Brittany": 58
+            }
+        },
+        "Brittany was amazed by Amanda. She": {
+            "counts": {
+                "Amanda": 9,
+                "Brittany": 8
+            },
+            "counts_resolved": {
+                "Amanda": 81,
+                "Brittany": 63
+            },
+            "counts_resolved_pronoun": {
+                "Amanda": 48,
+                "Brittany": 52
             }
         }
     }
