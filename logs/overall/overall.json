@@ -208,12 +208,12 @@
                 "Bill": 1
             },
             "counts_resolved": {
-                "John": 25,
-                "Bill": 73
+                "John": 24,
+                "Bill": 74
             },
             "counts_resolved_pronoun": {
-                "John": 25,
-                "Bill": 66
+                "John": 24,
+                "Bill": 67
             }
         },
         "John was passing a comic to Bill. He": {
@@ -228,6 +228,64 @@
             "counts_resolved_pronoun": {
                 "John": 69,
                 "Bill": 27
+            }
+        }
+    },
+    "logs/mistralai-Mistral-7B-v0.1.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 21
+            },
+            "counts_resolved": {
+                "John": 100,
+                "Bill": 29
+            },
+            "counts_resolved_pronoun": {
+                "John": 100,
+                "Bill": 0
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 5,
+                "Bill": 50
+            },
+            "counts_resolved": {
+                "John": 50,
+                "Bill": 96
+            },
+            "counts_resolved_pronoun": {
+                "John": 48,
+                "Bill": 50
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 7,
+                "Bill": 39
+            },
+            "counts_resolved": {
+                "John": 52,
+                "Bill": 89
+            },
+            "counts_resolved_pronoun": {
+                "John": 48,
+                "Bill": 52
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 8,
+                "Bill": 23
+            },
+            "counts_resolved": {
+                "John": 66,
+                "Bill": 72
+            },
+            "counts_resolved_pronoun": {
+                "John": 61,
+                "Bill": 38
             }
         }
     },
@@ -350,58 +408,58 @@
     "logs/sharpbai-alpaca-7b-merged.json": {
         "John seized the comic from Bill. He": {
             "counts": {
-                "John": 0,
-                "Bill": 12
+                "John": 3,
+                "Bill": 14
             },
             "counts_resolved": {
                 "John": 99,
-                "Bill": 16
+                "Bill": 19
             },
             "counts_resolved_pronoun": {
-                "John": 98,
+                "John": 97,
                 "Bill": 2
             }
         },
         "John passed the comic to Bill. He": {
             "counts": {
-                "John": 10,
-                "Bill": 18
+                "John": 8,
+                "Bill": 14
             },
             "counts_resolved": {
-                "John": 28,
+                "John": 29,
                 "Bill": 96
             },
             "counts_resolved_pronoun": {
-                "John": 19,
-                "Bill": 81
+                "John": 22,
+                "Bill": 78
             }
         },
         "John passed a comic to Bill. He": {
             "counts": {
-                "John": 5,
-                "Bill": 9
+                "John": 8,
+                "Bill": 12
             },
             "counts_resolved": {
                 "John": 22,
-                "Bill": 97
+                "Bill": 98
             },
             "counts_resolved_pronoun": {
                 "John": 11,
-                "Bill": 87
+                "Bill": 89
             }
         },
         "John was passing a comic to Bill. He": {
             "counts": {
-                "John": 10,
-                "Bill": 28
+                "John": 23,
+                "Bill": 32
             },
             "counts_resolved": {
-                "John": 58,
-                "Bill": 82
+                "John": 70,
+                "Bill": 83
             },
             "counts_resolved_pronoun": {
-                "John": 51,
-                "Bill": 49
+                "John": 52,
+                "Bill": 47
             }
         }
     },
@@ -460,6 +518,64 @@
             "counts_resolved_pronoun": {
                 "John": 62,
                 "Bill": 38
+            }
+        }
+    },
+    "logs/mistralai-Mistral-7B-Instruct-v0.1.json": {
+        "John seized the comic from Bill. He": {
+            "counts": {
+                "John": 2,
+                "Bill": 18
+            },
+            "counts_resolved": {
+                "John": 97,
+                "Bill": 28
+            },
+            "counts_resolved_pronoun": {
+                "John": 96,
+                "Bill": 4
+            }
+        },
+        "John passed the comic to Bill. He": {
+            "counts": {
+                "John": 0,
+                "Bill": 41
+            },
+            "counts_resolved": {
+                "John": 46,
+                "Bill": 92
+            },
+            "counts_resolved_pronoun": {
+                "John": 45,
+                "Bill": 55
+            }
+        },
+        "John passed a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 56
+            },
+            "counts_resolved": {
+                "John": 59,
+                "Bill": 94
+            },
+            "counts_resolved_pronoun": {
+                "John": 58,
+                "Bill": 41
+            }
+        },
+        "John was passing a comic to Bill. He": {
+            "counts": {
+                "John": 1,
+                "Bill": 54
+            },
+            "counts_resolved": {
+                "John": 70,
+                "Bill": 80
+            },
+            "counts_resolved_pronoun": {
+                "John": 67,
+                "Bill": 31
             }
         }
     },
