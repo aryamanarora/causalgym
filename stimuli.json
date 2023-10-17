@@ -46,21 +46,8 @@
         ],
         "pronoun": "He",
         "human": {
-            "Joseph": 0.234375,
-            "Patrick": 0.765625
-        },
-        "source": "Stevenson, Crawley & Kleinman (1994)"
-    },
-    {
-        "text": "Joseph hit Patrick. He",
-        "options": [
-            "Joseph",
-            "Patrick"
-        ],
-        "pronoun": "He",
-        "human": {
-            "Joseph": 0.5975,
-            "Patrick": 0.4025
+            "Patrick": 0.765625,
+            "Joseph": 0.234375
         },
         "source": "Stevenson, Crawley & Kleinman (1994)"
     },
@@ -163,8 +150,8 @@
         ],
         "pronoun": "She",
         "human": {
-            "Amanda": 0.42,
-            "Brittany": 0.58
+            "Brittany": 0.58,
+            "Amanda": 0.42
         },
         "source": "Kehler and Rohde (2013)"
     }
