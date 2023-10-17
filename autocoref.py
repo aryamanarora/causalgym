@@ -36,7 +36,7 @@ def autocoref():
     nlp = spacy.load("en_core_web_sm")
     nlp.add_pipe(
         "fastcoref", 
-        # config={'model_architecture': 'LingMessCoref', 'model_path': 'biu-nlp/lingmess-coref', 'device': 'cuda:0' if torch.cuda.is_available() else 'cpu'}
+        config={'model_architecture': 'LingMessCoref', 'model_path': 'biu-nlp/lingmess-coref', 'device': 'cuda:0' if torch.cuda.is_available() else 'cpu'}
     )
 
     final = {}
