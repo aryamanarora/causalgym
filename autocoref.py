@@ -115,7 +115,7 @@ def plot():
 
                     # calculate confidence interval for probs
                     count = data[key][sent][metric][option]
-                    lower, upper = binomial_confidence_interval(count, 100) if metric in ["counts", "counts_resolved_pronoun"] else [None, None]
+                    lower, upper = binomial_confidence_interval(count, len(data[key][sent]['results'])) if metric in ["counts", "counts_resolved_pronoun"] else [None, None]
 
                     # add model data
                     rows.append({
@@ -126,6 +126,7 @@ def plot():
                         "metric": metric,
                         "option": names[i],
                         "count": count,
+                        "prob": count / len(data[key][sent]['results']),
                         "lower": lower,
                         "upper": upper,
                         "params": params
@@ -146,7 +147,8 @@ def plot():
                 "sent": stimulus['text'],
                 "metric": "counts_resolved_pronoun",
                 "option": names[i],
-                "count": stimulus['human'][option] * 100,
+                "count": None,
+                "prob": stimulus['human'][option],
                 "lower": None,
                 "upper": None,
                 "params": None
@@ -170,7 +172,6 @@ def plot():
 
     # plot probs for counts_resolved_pronoun with error bars
     df_pron = df[df['metric'] == 'counts_resolved_pronoun']
-    df_pron["prob"] = df_pron["count"].map(lambda x: x / 100)
 
     # plot
     plot = (ggplot(df_pron[df_pron['model'] != 'human'], aes(x="params", y="prob", fill="type"))
@@ -186,13 +187,13 @@ def plot():
 
     # now do just counts
     df_counts = df[df['metric'] == 'counts']
-    df_counts["prob"] = df_counts["count"].map(lambda x: x / 100)
 
     # plot
-    plot = (ggplot(df_counts[df_counts['model'] != 'human'], aes(x="model", y="prob", fill="option"))
+    plot = (ggplot(df_counts[df_counts['model'] != 'human'], aes(x="params", y="prob", fill="type"))
             + scale_color_manual(values=["#0000FF00", "black"])
-            + geom_bar(stat="identity")
-            + geom_errorbar(aes(ymin="lower", ymax="upper"), width=0.2, color="black")
+            + geom_errorbar(aes(ymin="lower", ymax="upper"), alpha=0.5, width=0.05, color="black")
+            + scale_x_log10()
+            + geom_point(stat="identity")
             + facet_grid("option~sent", scales='free_y')
             + theme(figure_size=(25, 6), axis_text_x=element_text(rotation=45, hjust=1))
             + ggtitle("Is a participant mentioned by name?"))

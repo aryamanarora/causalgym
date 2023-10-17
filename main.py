@@ -33,7 +33,7 @@ def get_bounds(text, needle):
 
 
 @torch.no_grad()
-def experiment(model="gpt2", revision="main", sequential=False):
+def experiment(model="gpt2", revision="main", sequential=False, samples=100):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     generator = pipeline(
@@ -76,11 +76,11 @@ def experiment(model="gpt2", revision="main", sequential=False):
                 sents = generator(
                     stimulus["text"],
                     max_length=50,
-                    num_return_sequences=100,
+                    num_return_sequences=samples,
                     do_sample=True,
                 )
             else:
-                for _ in tqdm(range(100)):
+                for _ in tqdm(range(samples)):
                     sents.append(
                         generator(
                             stimulus["text"],
@@ -115,6 +115,7 @@ def main():
     parser.add_argument("--model", default="gpt2", help="name of model")
     parser.add_argument("--revision", default="main", help="revision of model")
     parser.add_argument("--sequential", action="store_true", help="run sequentially")
+    parser.add_argument("--samples", default=100, type=int, help="number of samples")
     args = parser.parse_args()
 
     if args.model == "all":
