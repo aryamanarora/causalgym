@@ -26,6 +26,8 @@ def binomial_confidence_interval(count, total, confidence=0.95):
     return lower, upper
 
 def autocoref():
+    """Run autocoref on all logs."""
+
     # make logs/overall directory
     if not os.path.exists('logs/overall'):
         os.makedirs('logs/overall')
@@ -34,7 +36,7 @@ def autocoref():
     nlp = spacy.load("en_core_web_sm")
     nlp.add_pipe(
         "fastcoref", 
-        config={'model_architecture': 'LingMessCoref', 'model_path': 'biu-nlp/lingmess-coref', 'device': 'cuda:0' if torch.cuda.is_available() else 'cpu'}
+        # config={'model_architecture': 'LingMessCoref', 'model_path': 'biu-nlp/lingmess-coref', 'device': 'cuda:0' if torch.cuda.is_available() else 'cpu'}
     )
 
     final = {}
@@ -47,6 +49,14 @@ def autocoref():
             # load data
             data = json.load(f)
             res = {}
+            sents = [[sent for sent in data[key]['sentences']] for key in data if key != 'metadata']
+            sents = [sent for sublist in sents for sent in sublist]
+
+            # batch process
+            docs = nlp.pipe(
+                sents,
+                component_cfg={"fastcoref": {'resolve_text': True}}
+            )
 
             # run coref
             for key in tqdm(data):
@@ -56,15 +66,12 @@ def autocoref():
                 res[key]['counts'] = data[key]['counts']
                 res[key]['counts_resolved'] = {option: 0 for option in data[key]['counts']}
                 res[key]['counts_resolved_pronoun'] = {option: 0 for option in data[key]['counts']}
-
-                # batch process
-                docs = nlp.pipe(
-                    [sent for sent in data[key]['sentences']],
-                    component_cfg={"fastcoref": {'resolve_text': True}}
-                )
+                
+                num_sents = len(data[key]['sentences'])
 
                 # get metrics
-                for i, doc in enumerate(docs):
+                for i in range(num_sents):
+                    doc = next(docs)
                     resolved = doc._.resolved_text
                     res[key]['results'].append({
                         "text": data[key]['sentences'][i],
@@ -82,7 +89,7 @@ def autocoref():
         json.dump(final, f, indent=4)
 
 def plot():
-    """Plot the results of autocoref"""
+    """Plot the results of autocoref."""
 
     with open('logs/overall/overall.json', 'r') as f:
         data = json.load(f)
@@ -102,11 +109,15 @@ def plot():
 
         for sent in data[key]:
             for metric in data[key][sent]:
+                if metric == 'results': continue
                 for option in data[key][sent][metric]:
                     i = 0 if sent.startswith(option) else 1
+
+                    # calculate confidence interval for probs
                     count = data[key][sent][metric][option]
                     lower, upper = binomial_confidence_interval(count, 100) if metric in ["counts", "counts_resolved_pronoun"] else [None, None]
 
+                    # add model data
                     rows.append({
                         "model": model,
                         "type": model.split('-')[0],
@@ -124,6 +135,7 @@ def plot():
     with open('stimuli.json', 'r') as f:
         stimuli = json.load(f)
 
+    # add human data
     for stimulus in stimuli:
         for option in stimulus['human']:
             i = 0 if stimulus['text'].startswith(option) else 1
