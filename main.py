@@ -32,7 +32,7 @@ def get_bounds(text, needle):
 
 
 @torch.no_grad()
-def experiment(model="gpt2", revision="main", sequential=False, samples=100, top_k=1000000, top_p=1.0):
+def experiment(model="gpt2", revision="main", sequential=False, samples=100, top_k=0, top_p=1.0):
     """Run experiment."""
 
     # load model
@@ -122,7 +122,7 @@ def main():
     parser.add_argument("--revision", default="main", help="revision of model")
     parser.add_argument("--sequential", action="store_true", help="run sequentially")
     parser.add_argument("--samples", default=100, type=int, help="number of samples")
-    parser.add_argument("--top_k", default=1e7, type=int, help="top k")
+    parser.add_argument("--top_k", default=0, type=int, help="top k")
     parser.add_argument("--top_p", default=1.0, type=float, help="top p")
     args = parser.parse_args()
     print(vars(args))
