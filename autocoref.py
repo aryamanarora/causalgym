@@ -25,12 +25,12 @@ def binomial_confidence_interval(count, total, confidence=0.95):
 
     return lower, upper
 
-def autocoref():
+def autocoref(folder="logs/new"):
     """Run autocoref on all logs."""
 
     # make logs/overall directory
-    if not os.path.exists('logs/overall'):
-        os.makedirs('logs/overall')
+    if not os.path.exists(f'{folder}/overall'):
+        os.makedirs(f'{folder}/overall')
 
     # load coref model
     nlp = spacy.load("en_core_web_sm")
@@ -42,14 +42,16 @@ def autocoref():
     final = {}
 
     # for each file
-    for file in glob.glob("logs/*.json"):
+    for file in glob.glob(f"{folder}/*.json"):
         with open(file, 'r') as f:
             print(file)
 
             # load data
             data = json.load(f)
+            metadata = data['metadata']
+            data = data['data']
             res = {}
-            sents = [[sent for sent in data[key]['sentences']] for key in data if key != 'metadata']
+            sents = [[sent for sent in data[key]['sentences']] for key in data]
             sents = [sent for sublist in sents for sent in sublist]
 
             # batch process
@@ -60,7 +62,6 @@ def autocoref():
 
             # run coref
             for key in tqdm(data):
-                if key == 'metadata': continue
                 res[key] = {}
                 res[key]['results'] = []
                 res[key]['counts'] = data[key]['counts']
@@ -82,16 +83,16 @@ def autocoref():
                         res[key]['counts_resolved_pronoun'][option] += (1 if resolved.split('. ')[1].startswith(option) else 0)
             
             # save data
-            final[file] = res
+            final[metadata[model]] = res
 
     # dump final
-    with open('logs/overall/overall.json', 'w') as f:
+    with open(f'{folder}/overall/overall.json', 'w') as f:
         json.dump(final, f, indent=4)
 
-def plot():
+def plot(folder="logs/new"):
     """Plot the results of autocoref."""
 
-    with open('logs/overall/overall.json', 'r') as f:
+    with open(f'{folder}/overall/overall.json', 'r') as f:
         data = json.load(f)
 
     # make order
@@ -100,7 +101,7 @@ def plot():
     # prepare pandas
     rows = []
     for key in data:
-        model = key[len('logs/'):-len('.json')]
+        model = key
 
         # get param nums
         with open(key, 'r') as f:
@@ -203,12 +204,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--autocoref", action="store_true", help="run autocoref")
     parser.add_argument("--plot", action="store_true", help="plot autocoref results")
+    parser.add_argument("--folder", default="logs/new", help="folder to use")
     args = parser.parse_args()
 
     if args.autocoref:
-        autocoref()
+        autocoref(folder=args.folder)
     if args.plot:
-        plot()
+        plot(folder=args.folder)
 
 if __name__ == "__main__":
     main()
