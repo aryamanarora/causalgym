@@ -32,7 +32,7 @@ def get_bounds(text, needle):
 
 
 @torch.no_grad()
-def experiment(model="gpt2", revision="main", sequential=False, samples=100, top_k=1e7, top_p=1.0):
+def experiment(model="gpt2", revision="main", sequential=False, samples=100, top_k=1000000, top_p=1.0):
     """Run experiment."""
 
     # load model
