@@ -60,7 +60,7 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
             "samples": samples,
             "top_k": top_k,
             "top_p": top_p,
-        }
+        },
         "data": {}
     }
 
