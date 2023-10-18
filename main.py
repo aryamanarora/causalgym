@@ -33,6 +33,8 @@ def get_bounds(text, needle):
 
 @torch.no_grad()
 def experiment(model="gpt2", revision="main", sequential=False, samples=100, top_k=1e7, top_p=1.0):
+    """Run experiment."""
+
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     generator = pipeline(
@@ -55,7 +57,11 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
             "revision": revision,
             "num_parameters": generator.model.num_parameters(),
             "timestamp": str(datetime.datetime.now()),
+            "samples": samples,
+            "top_k": top_k,
+            "top_p": top_p,
         }
+        "data": {}
     }
 
     # generate 100 continuations
@@ -66,8 +72,8 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
             options = [
                 get_bounds(stimulus["text"], option) for option in stimulus["options"]
             ]
-            log[stimulus["text"]] = {}
-            log[stimulus["text"]]["details"] = {"pronoun": pronoun, "options": options}
+            log["data"][stimulus["text"]] = {}
+            log["data"][stimulus["text"]]["details"] = {"pronoun": pronoun, "options": options}
 
             # make sents
             sents = []
@@ -82,21 +88,18 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
                 )
             else:
                 for _ in tqdm(range(samples)):
-                    sents.append(
-                        generator(
+                    sents.append(generator(
                             stimulus["text"],
                             top_k=top_k,
                             top_p=top_p,
                             max_length=50,
                             num_return_sequences=1,
                             do_sample=True,
-                        )[0]
-                    )
+                    )[0])
                     torch.cuda.empty_cache()
-            sents = [
-                ".".join(sent["generated_text"].split(".")[:2]) + "." for sent in sents
-            ]
-            log[stimulus["text"]]["sentences"] = sents
+
+            sents = [".".join(sent["generated_text"].split(".")[:2]) + "." for sent in sents]
+            log["data"][stimulus["text"]]["sentences"] = sents
 
             # get entities
             counts = defaultdict(int)
@@ -104,7 +107,7 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
                 check = sent[pronoun[1] :]
                 for option in stimulus["options"]:
                     counts[option] += check.count(option)
-            log[stimulus["text"]]["counts"] = counts
+            log["data"][stimulus["text"]]["counts"] = counts
 
     # dump log
     with open(f'logs/{model.replace("/", "-")}.json', "w") as f:
