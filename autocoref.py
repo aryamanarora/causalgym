@@ -83,7 +83,7 @@ def autocoref(folder="logs/new"):
                         res[key]['counts_resolved_pronoun'][option] += (1 if resolved.split('. ')[1].startswith(option) else 0)
             
             # save data
-            final[metadata[model]] = res
+            final[metadata['model']] = res
 
     # dump final
     with open(f'{folder}/overall/overall.json', 'w') as f:
