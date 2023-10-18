@@ -101,10 +101,10 @@ def plot(folder="logs/new"):
     # prepare pandas
     rows = []
     for key in data:
-        model = key
+        model = key.split('logs/')[-1].split('.json')[0] if key.endswith('.json') else key
 
         # get param nums
-        with open(key, 'r') as f:
+        with open(f'{folder}/{model.replace("/", "-")}.json', 'r') as f:
             params = json.load(f)["metadata"]["num_parameters"]
             order.append((params, model))
 
@@ -169,36 +169,34 @@ def plot(folder="logs/new"):
     plot = (ggplot(df[df['model'] != 'human'], aes(x="model", y="count", fill="option"))
             + geom_bar(stat="identity") + facet_grid("metric~sent", scales='free_y')
             + theme(figure_size=(15, 6), axis_text_x=element_text(rotation=45, hjust=1)))
-    plot.save("logs/overall/plot.pdf")
+    plot.save(f"{folder}/overall/plot.pdf")
 
     # plot probs for counts_resolved_pronoun with error bars
     df_pron = df[df['metric'] == 'counts_resolved_pronoun']
 
     # plot
-    plot = (ggplot(df_pron[df_pron['model'] != 'human'], aes(x="params", y="prob", fill="type"))
+    plot = (ggplot(df_pron[df_pron['model'] != 'human'], aes(x="model", y="prob", fill="option"))
             + scale_color_manual(values=["#0000FF00", "black"])
-            + geom_errorbar(aes(ymin="lower", ymax="upper"), alpha=0.5, width=0.05, color="black")
-            + geom_point(stat="identity")
-            + scale_x_log10()
+            + geom_bar(stat="identity")
+            + geom_errorbar(aes(ymin="lower", ymax="upper"), width=0.2, color="black")
             + facet_grid("option~sent", scales='free_y')
             + theme(figure_size=(25, 6), axis_text_x=element_text(rotation=45, hjust=1))
             + ggtitle("What does '(S)he' resolve to?")
             + geom_hline(df_pron[df_pron['model'] == 'human'], aes(yintercept="prob"), linetype="dashed", show_legend=True))
-    plot.save("logs/overall/plot_pron.pdf")
+    plot.save(f"{folder}/overall/plot_pron.pdf")
 
     # now do just counts
     df_counts = df[df['metric'] == 'counts']
 
     # plot
-    plot = (ggplot(df_counts[df_counts['model'] != 'human'], aes(x="params", y="prob", fill="type"))
+    plot = (ggplot(df_counts[df_counts['model'] != 'human'], aes(x="model", y="prob", fill="option"))
             + scale_color_manual(values=["#0000FF00", "black"])
-            + geom_errorbar(aes(ymin="lower", ymax="upper"), alpha=0.5, width=0.05, color="black")
-            + scale_x_log10()
-            + geom_point(stat="identity")
+            + geom_bar(stat="identity")
+            + geom_errorbar(aes(ymin="lower", ymax="upper"), width=0.2, color="black")
             + facet_grid("option~sent", scales='free_y')
             + theme(figure_size=(25, 6), axis_text_x=element_text(rotation=45, hjust=1))
             + ggtitle("Is a participant mentioned by name?"))
-    plot.save("logs/overall/plot_counts.pdf")
+    plot.save(f"{folder}/overall/plot_counts.pdf")
 
 def main():
     parser = argparse.ArgumentParser()
