@@ -7,7 +7,7 @@ from tqdm import tqdm
 import torch
 import pandas as pd
 from plotnine import ggplot, aes, facet_wrap, facet_grid, geom_bar, theme, element_text, geom_errorbar, ggtitle, geom_hline, geom_point
-from plotnine.scales import scale_color_manual, scale_x_log10
+from plotnine.scales import scale_color_manual, scale_x_log10, ylim
 import argparse
 import scipy.stats as stats
 
@@ -182,7 +182,8 @@ def plot(folder="logs/new"):
             + facet_grid("option~sent", scales='free_y')
             + theme(figure_size=(25, 6), axis_text_x=element_text(rotation=45, hjust=1))
             + ggtitle("What does '(S)he' resolve to?")
-            + geom_hline(df_pron[df_pron['model'] == 'human'], aes(yintercept="prob"), linetype="dashed", show_legend=True))
+            + geom_hline(df_pron[df_pron['model'] == 'human'], aes(yintercept="prob"), linetype="dashed", show_legend=True)
+            + ylim(0, 1))
     plot.save(f"{folder}/overall/plot_pron.pdf")
 
     # now do just counts
@@ -195,7 +196,8 @@ def plot(folder="logs/new"):
             + geom_errorbar(aes(ymin="lower", ymax="upper"), width=0.2, color="black")
             + facet_grid("option~sent", scales='free_y')
             + theme(figure_size=(25, 6), axis_text_x=element_text(rotation=45, hjust=1))
-            + ggtitle("Is a participant mentioned by name?"))
+            + ggtitle("Is a participant mentioned by name?")
+            + ylim(0, 1))
     plot.save(f"{folder}/overall/plot_counts.pdf")
 
 def main():
@@ -208,7 +210,11 @@ def main():
     if args.autocoref:
         autocoref(folder=args.folder)
     if args.plot:
-        plot(folder=args.folder)
+        if args.folder == "all":
+            for folder in glob.glob("logs/*"):
+                plot(folder=folder)
+        else:
+            plot(folder=args.folder)
 
 if __name__ == "__main__":
     main()
