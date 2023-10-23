@@ -47,6 +47,7 @@ def load_data():
 
 def main():
     kldivs = []
+    torch.cuda.empty_cache()
 
     # get data
     sentences = load_data()
@@ -62,18 +63,21 @@ def main():
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         tokenizer = AutoTokenizer.from_pretrained(name)
         tokenizer.pad_token = tokenizer.eos_token
-        model = AutoModelForCausalLM.from_pretrained(name).to(device)
+        model = AutoModelForCausalLM.from_pretrained(name, device=device, torch_dtype=torch.bfloat16 if device == "cuda:0" else torch.float32,)
 
         # generate next token distributions
         distribs = []
         sents = [x['sent'] for x in sentences]
         for batch in tqdm(range(0, len(sents), 200)):
             inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
-            logits = model(**inputs).logits.to("cpu")
-            probs = logsoftmax(logits)
+            logits = model(**inputs).logits
+            probs = logsoftmax(logits).to("cpu")
             for i in range(probs.shape[0]):
                 distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                 distribs.append(distrib)
+        
+        # free memory
+        del model
 
         # get kl divergence between distributions
         for _ in tqdm(range(100)):
