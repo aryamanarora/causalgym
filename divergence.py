@@ -71,7 +71,7 @@ def main():
         for batch in tqdm(range(0, len(sents), 200)):
             inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
             logits = model(**inputs).logits
-            probs = logsoftmax(logits).to("cpu")
+            probs = logsoftmax(logits)
             for i in range(probs.shape[0]):
                 distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                 distribs.append(distrib)
