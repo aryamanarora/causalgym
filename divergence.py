@@ -6,6 +6,8 @@ from plotnine import ggplot, aes, facet_wrap, facet_grid, geom_bar, theme, eleme
 from plotnine.scales import scale_color_manual, scale_x_log10, ylim
 import pandas as pd
 import argparse
+from tqdm import tqdm
+from main import MODELS
 
 def load_data():
     # read stimuli
@@ -41,49 +43,54 @@ def load_data():
     
     return sentences
 
-@torch.no_grad()
-def main(name="gpt2-medium"):
- 
-    # load model
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    tokenizer = AutoTokenizer.from_pretrained(name)
-    tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(name).to(device)
-
-    # get data
-    sentences = load_data()
-    random.shuffle(sentences)
-    print(len(sentences))
-
-    # generate next token distributions
-    distribs = []
-    sents = [x['sent'] for x in sentences]
-    for batch in range(0, len(sents), 200):
-        inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
-        logits = model(**inputs).logits
-        probs = torch.softmax(logits, dim=-1)
-        for i in range(200):
-            distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
-            distribs.append(distrib)
-
-    # get kl divergence between distributions
+@torch.inference_mode()
+def main():
     kldivs = []
-    for i in range(len(sents)):
-        for j in range(len(sents)):
-            if i == j: continue
-            kldiv = torch.nn.functional.kl_div(distribs[i].log(), distribs[j], reduction="sum")
-            label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
-            label = "".join(["T" if x else "F" for x in label])
-            kldivs.append({
-                "sent1": sents[i],
-                "sent2": sents[j],
-                "same": label,
-                "first": label[:2],
-                "second": label[2:],
-                "pronoun_gender1": sentences[i]["pronoun_gender"],
-                "pronoun_gender2": sentences[j]["pronoun_gender"],
-                "kldiv": kldiv.item()
-            })
+    
+    for name in tqdm(MODELS):
+        # free memory
+        torch.cuda.empty_cache()
+
+        # load model
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        tokenizer = AutoTokenizer.from_pretrained(name)
+        tokenizer.pad_token = tokenizer.eos_token
+        model = AutoModelForCausalLM.from_pretrained(name).to(device)
+
+        # get data
+        sentences = load_data()
+        random.shuffle(sentences)
+        print(len(sentences))
+
+        # generate next token distributions
+        distribs = []
+        sents = [x['sent'] for x in sentences]
+        for batch in tqdm(range(0, len(sents), 200)):
+            inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
+            logits = model(**inputs).logits
+            probs = torch.softmax(logits, dim=-1)
+            for i in range(200):
+                distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
+                distribs.append(distrib)
+
+        # get kl divergence between distributions
+        for i in range(len(sents)):
+            for j in range(len(sents)):
+                if i == j: continue
+                kldiv = torch.nn.functional.kl_div(distribs[i].log(), distribs[j], reduction="sum")
+                label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
+                label = "".join(["T" if x else "F" for x in label])
+                kldivs.append({
+                    "sent1": sents[i],
+                    "sent2": sents[j],
+                    "same": label,
+                    "first": label[:2],
+                    "second": label[2:],
+                    "model": name,
+                    "pronoun_gender1": sentences[i]["pronoun_gender"],
+                    "pronoun_gender2": sentences[j]["pronoun_gender"],
+                    "kldiv": kldiv.item()
+                })
     
     # dump
     with open("logs/kldivs.json", "w") as f:
@@ -103,7 +110,4 @@ def main(name="gpt2-medium"):
     # distribs.append(distrib)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, default="gpt2-medium")
-    args = parser.parse_args()
-    main(args.name)
+    main()
