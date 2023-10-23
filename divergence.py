@@ -45,7 +45,7 @@ def load_data():
     
     return sentences
 
-@torch.zero_grad()
+@torch.no_grad()
 def main(m: str, sentences: list=None):
     kldivs = []
     torch.cuda.empty_cache()
