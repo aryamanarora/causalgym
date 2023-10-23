@@ -75,7 +75,7 @@ def main():
                 distribs.append(distrib)
 
         # get kl divergence between distributions
-        for i in range(len(sents)):
+        for i in tqdm(range(len(sents))):
             for j in range(len(sents)):
                 if i == j: continue
                 kldiv = torch.nn.functional.kl_div(distribs[i].log(), distribs[j], reduction="sum")
