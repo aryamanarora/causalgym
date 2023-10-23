@@ -100,7 +100,7 @@ def main(m: str, sentences: list=None):
                 })
     
     # dump
-    with open(f"logs/{m}.json", "w") as f:
+    with open(f"logs/{m.replace('/', '-')}.json", "w") as f:
         json.dump(kldivs, f)
 
 if __name__ == "__main__":
