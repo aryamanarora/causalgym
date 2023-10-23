@@ -45,32 +45,31 @@ def load_data():
     
     return sentences
 
-def main():
+@torch.zero_grad()
+def main(m: str, sentences: list=None):
     kldivs = []
     torch.cuda.empty_cache()
 
     # get data
-    sentences = load_data()
-    random.shuffle(sentences)
-    print(len(sentences))
+    if sentences is None:
+        sentences = load_data()
+        random.shuffle(sentences)
+        print(len(sentences))
     
-    for name in tqdm(MODELS):
-        # free memory
-        torch.cuda.empty_cache()
-
+    with torch.inference_mode():
         # load model
-        print(name)
+        print(m)
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        tokenizer = AutoTokenizer.from_pretrained(name)
+        tokenizer = AutoTokenizer.from_pretrained(m)
         tokenizer.pad_token = tokenizer.eos_token
-        model = AutoModelForCausalLM.from_pretrained(name, torch_dtype=torch.bfloat16).to(device)
+        model = AutoModelForCausalLM.from_pretrained(m, torch_dtype=torch.bfloat16).to(device)
 
         # generate next token distributions
         distribs = []
         sents = [x['sent'] for x in sentences]
         for batch in tqdm(range(0, len(sents), 200)):
             inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
-            logits = model(**inputs).logits
+            logits = model(**inputs).logits.to("cpu")
             probs = logsoftmax(logits)
             for i in range(probs.shape[0]):
                 distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
@@ -94,28 +93,26 @@ def main():
                     "same": label,
                     "first": label[:2],
                     "second": label[2:],
-                    "model": name,
+                    "model": m,
                     "pronoun_gender1": sentences[i]["pronoun_gender"],
                     "pronoun_gender2": sentences[j]["pronoun_gender"],
                     "kldiv": kldiv.item()
                 })
     
     # dump
-    with open("logs/kldivs.json", "w") as f:
+    with open(f"logs/{m}.json", "w") as f:
         json.dump(kldivs, f)
-    
-    # plot
-    # df = pd.DataFrame(kldivs)
-    # plot = (ggplot(df, aes(x="same", y="kldiv")) + geom_violin())
-    # plot.save("kldiv.png", dpi=300)
-
-    # print top 10 tokens
-    # print(sent)
-    # for i in torch.argsort(distrib, descending=True)[:10]:
-    #     print(tokenizer.decode([i.item()]), distrib[i].item())
-    # print()
-
-    # distribs.append(distrib)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--m", default="gpt2", help="name of model")
+    args = parser.parse_args()
+    print(vars(args))
+
+    if args.model == "all":
+        for model in MODELS:
+            args.model = model
+            main(**vars(args))
+            torch.cuda.empty_cache()
+    else:
+        main(**vars(args))
