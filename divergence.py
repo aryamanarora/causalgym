@@ -46,21 +46,22 @@ def load_data():
 @torch.inference_mode()
 def main():
     kldivs = []
+
+    # get data
+    sentences = load_data()
+    random.shuffle(sentences)
+    print(len(sentences))
     
     for name in tqdm(MODELS):
         # free memory
         torch.cuda.empty_cache()
 
         # load model
+        print(name)
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         tokenizer = AutoTokenizer.from_pretrained(name)
         tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(name).to(device)
-
-        # get data
-        sentences = load_data()
-        random.shuffle(sentences)
-        print(len(sentences))
 
         # generate next token distributions
         distribs = []
@@ -69,7 +70,7 @@ def main():
             inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
             logits = model(**inputs).logits
             probs = torch.softmax(logits, dim=-1)
-            for i in range(200):
+            for i in range(probs.shape[0]):
                 distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                 distribs.append(distrib)
 
