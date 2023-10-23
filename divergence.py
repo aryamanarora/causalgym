@@ -77,8 +77,10 @@ def main():
                 distribs.append(distrib)
 
         # get kl divergence between distributions
-        for i in tqdm(range(len(sents))):
-            for j in range(len(sents)):
+        for _ in tqdm(range(100)):
+            for __ in range(100):
+                i = random.randint(0, len(sentences)-1)
+                j = random.randint(0, len(sentences)-1)
                 if i == j: continue
                 kldiv = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
                 label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
