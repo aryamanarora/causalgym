@@ -9,6 +9,8 @@ import argparse
 from tqdm import tqdm
 from main import MODELS
 
+logsoftmax = torch.nn.LogSoftmax(dim=-1)
+
 def load_data():
     # read stimuli
     with open("stimuli2.json", "r") as f:
@@ -69,7 +71,7 @@ def main():
         for batch in tqdm(range(0, len(sents), 200)):
             inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
             logits = model(**inputs).logits
-            probs = torch.softmax(logits, dim=-1)
+            probs = logsoftmax(logits, dim=-1)
             for i in range(probs.shape[0]):
                 distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                 distribs.append(distrib)
@@ -78,7 +80,7 @@ def main():
         for i in tqdm(range(len(sents))):
             for j in range(len(sents)):
                 if i == j: continue
-                kldiv = torch.nn.functional.kl_div(distribs[i].log(), distribs[j], reduction="sum")
+                kldiv = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
                 label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
                 label = "".join(["T" if x else "F" for x in label])
                 kldivs.append({
