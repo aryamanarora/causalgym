@@ -63,7 +63,7 @@ def main():
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         tokenizer = AutoTokenizer.from_pretrained(name)
         tokenizer.pad_token = tokenizer.eos_token
-        model = AutoModelForCausalLM.from_pretrained(name, device=device, torch_dtype=torch.bfloat16 if device == "cuda:0" else torch.float32,)
+        model = AutoModelForCausalLM.from_pretrained(name, torch_dtype=torch.bfloat16).to(device)
 
         # generate next token distributions
         distribs = []
