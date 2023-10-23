@@ -89,7 +89,7 @@ def autocoref(folder="logs/new"):
     with open(f'{folder}/overall/overall.json', 'w') as f:
         json.dump(final, f, indent=4)
 
-def plot(folder="logs/new"):
+def plot_individual(folder="logs/new"):
     """Plot the results of autocoref."""
 
     with open(f'{folder}/overall/overall.json', 'r') as f:
@@ -200,10 +200,85 @@ def plot(folder="logs/new"):
             + ylim(0, 1))
     plot.save(f"{folder}/overall/plot_counts.pdf")
 
+def plot_aggregate():
+    """Plot aggregate statistics across various settings."""
+
+    # get all data
+    data = {}
+    for folder in glob.glob("logs/*"):
+        overall = f"{folder}/overall/overall.json"
+        if not os.path.exists(overall): continue
+        with open(overall, 'r') as f:
+            cur = json.load(f)
+            data[folder[len("logs/"):]] = cur
+
+    rows = []
+    order = set()
+    for setting in data:
+        for model in data[setting]:
+
+            # get param nums
+            try:
+                with open(f'logs/plain_sampling/{model.replace("/", "-")}.json', 'r') as f:
+                    params = json.load(f)["metadata"]["num_parameters"]
+                    order.add((params, model))
+            except:
+                pass
+
+            # get data
+            for sent in data[setting][model]:
+                for generations in data[setting][model][sent]['results']:
+                    tokens = generations['text'][len(sent):].split(" ")
+                    resolution = None
+                    if len(tokens) == 1:
+                        token = ""
+                    else:
+                        token = tokens[1].strip()
+                        # if token in ['has', 'was', 'had']:
+                        #     token = ' '.join(tokens[1:3])
+                        token = token.strip(",.:?!'\"").replace("\n", "\\n").replace(" ", "_")
+                        for option in data[setting][model][sent]['counts']:
+                            if generations['resolved'].split(". ")[1].startswith(option):
+                                resolution = option
+                                break
+                    rows.append({
+                        "setting": setting,
+                        "model": model.split("/")[-1].split(".json")[0] if "logs/" in model else model.replace("/", "-"),
+                        "sent": sent,
+                        "token": token,
+                        "resolution": resolution
+                    })
+
+    df = pd.DataFrame(rows)
+
+    order = sorted(order, key=lambda x: x[0])
+    order = [x[1].replace("/", "-") for x in order]
+    df['model'] = pd.Categorical(df['model'].astype(str))
+    df['model'].cat.set_categories(order, inplace=True)
+
+    for setting in df['setting'].unique():
+        for sent in df['sent'].unique():
+            filtered = df[df['sent'] == sent]
+            filtered = filtered[filtered['setting'] == setting]
+            filtered = filtered.dropna()
+
+            # count up by token column and set token order by count
+            filtered = filtered.groupby(['token', 'model', 'resolution', 'sent', 'setting']).size().reset_index(name='count')
+
+            # print(len(df))
+            plot = (ggplot(filtered, aes(x='token', y='count', fill='resolution'))
+                    + geom_bar(stat='identity')
+                    + ggtitle(sent)
+                    + theme(axis_text_x=element_text(rotation=90, hjust=0.5, size=2), figure_size=(10, 25))
+                    + facet_wrap("model", ncol=1)
+                    )
+            plot.save(f"logs/{setting}/overall/{sent}.pdf")
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--autocoref", action="store_true", help="run autocoref")
     parser.add_argument("--plot", action="store_true", help="plot autocoref results")
+    parser.add_argument("--plot_agg", action="store_true", help="plot all autocoref results")
     parser.add_argument("--folder", default="logs/new", help="folder to use")
     args = parser.parse_args()
 
@@ -212,9 +287,11 @@ def main():
     if args.plot:
         if args.folder == "all":
             for folder in glob.glob("logs/*"):
-                plot(folder=folder)
+                plot_individual(folder=folder)
         else:
-            plot(folder=args.folder)
+            plot_individual(folder=args.folder)
+    if args.plot_agg:
+        plot_aggregate()
 
 if __name__ == "__main__":
     main()
