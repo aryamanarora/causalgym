@@ -109,9 +109,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(vars(args))
 
-    if args.model == "all":
+    if args.m == "all":
         for model in MODELS:
-            args.model = model
+            args.m = model
             main(**vars(args))
             torch.cuda.empty_cache()
     else:
