@@ -45,7 +45,6 @@ def load_data():
     
     return sentences
 
-@torch.inference_mode()
 def main():
     kldivs = []
 
@@ -70,7 +69,7 @@ def main():
         sents = [x['sent'] for x in sentences]
         for batch in tqdm(range(0, len(sents), 200)):
             inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
-            logits = model(**inputs).logits
+            logits = model(**inputs).logits.to("cpu")
             probs = logsoftmax(logits)
             for i in range(probs.shape[0]):
                 distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
