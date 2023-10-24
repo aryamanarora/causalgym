@@ -77,9 +77,6 @@ def main(m: str, all_sents: list=None):
                 for i in range(probs.shape[0]):
                     distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                     distribs.append(distrib)
-            
-            # free memory
-            del model
 
             # get kl divergence between distributions
             for _ in tqdm(range(100)):
