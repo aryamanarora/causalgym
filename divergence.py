@@ -100,7 +100,7 @@ def main(m: str, all_sents: list=None):
                     })
     
     # dump
-    with open(f"logs/new/{m.replace('/', '-')}.json", "w") as f:
+    with open(f"logs/kldiv/new/{m.replace('/', '-')}.json", "w") as f:
         json.dump(kldivs, f)
 
 if __name__ == "__main__":
