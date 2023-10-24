@@ -88,15 +88,16 @@ def main(m: str, all_sents: list=None):
                     label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
                     label = "".join(["T" if x else "F" for x in label])
                     kldivs.append({
-                        "sent1": sents[i],
-                        "sent2": sents[j],
-                        "same": label,
-                        "first": label[:2],
-                        "second": label[2:],
-                        "model": m,
-                        "pronoun_gender1": sentences[i]["pronoun_gender"],
-                        "pronoun_gender2": sentences[j]["pronoun_gender"],
-                        "kldiv": kldiv.item()
+                        "s1": sents[i],
+                        "s2": sents[j],
+                        "c": label,
+                        "f": label[:2],
+                        "s": label[2:],
+                        "m": m,
+                        "p1": sentences[i]["pronoun_gender"],
+                        "p2": sentences[j]["pronoun_gender"],
+                        "k": kldiv.item(),
+                        "i": key
                     })
     
     # dump
