@@ -47,15 +47,15 @@ def load_data():
     return sentences
 
 @torch.no_grad()
-def main(m: str, sentences: list=None):
+def main(m: str, all_sents: list=None):
     kldivs = []
     torch.cuda.empty_cache()
 
     # get data
-    if sentences is None:
-        sentences = load_data()
-        random.shuffle(sentences)
-        print(len(sentences))
+    if all_sents is None:
+        all_sents = load_data()
+        random.shuffle(all_sents)
+        print(len(all_sents))
     
     with torch.inference_mode():
         # load model
@@ -66,9 +66,10 @@ def main(m: str, sentences: list=None):
         model = AutoModelForCausalLM.from_pretrained(m, torch_dtype=torch.bfloat16).to(device)
 
         # generate next token distributions
-        for key in sentences:
+        for key in all_sents:
+            sentences = all_sents[key]
             distribs = []
-            sents = [x['sent'] for x in sentences[key]]
+            sents = [x['sent'] for x in sentences]
             for batch in tqdm(range(0, len(sents), 200)):
                 inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
                 logits = model(**inputs).logits.to("cpu")
