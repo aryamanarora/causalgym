@@ -23,6 +23,8 @@ def load_data():
     sentences = {}
     for i, stimulus in enumerate(stimuli['sentences']):
         sentences[i] = []
+
+        # replace components iteratively
         for name1 in names:
             subbed = stimulus.replace("<name1>", name1[0])
             for name2 in names:
@@ -38,11 +40,16 @@ def load_data():
                         "sent": subbed3,
                         "match_name1": name1[0] in referents,
                         "match_name2": name2[0] in referents,
+                        "name1": name1[0],
+                        "name2": name2[0],
                         "name1_gender": name1[1],
                         "name2_gender": name2[1],
                         "pronoun_gender": gender,
                         "stimulus": i
                     })
+        
+        # shuffle
+        random.shuffle(sentences[i])
     
     return sentences
 
@@ -54,8 +61,6 @@ def main(m: str, all_sents: list=None):
     # get data
     if all_sents is None:
         all_sents = load_data()
-        random.shuffle(all_sents)
-        print(len(all_sents))
     
     with torch.inference_mode():
         # load model
@@ -78,27 +83,28 @@ def main(m: str, all_sents: list=None):
                     distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                     distribs.append(distrib)
 
-            # get kl divergence between distributions
-            for _ in tqdm(range(100)):
-                for __ in range(100):
-                    i = random.randint(0, len(sentences)-1)
-                    j = random.randint(0, len(sentences)-1)
-                    if i == j: continue
-                    kldiv = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
-                    label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
-                    label = "".join(["T" if x else "F" for x in label])
-                    kldivs.append({
-                        "s1": sents[i],
-                        "s2": sents[j],
-                        "c": label,
-                        "f": label[:2],
-                        "s": label[2:],
-                        "m": m,
-                        "p1": sentences[i]["pronoun_gender"],
-                        "p2": sentences[j]["pronoun_gender"],
-                        "k": kldiv.item(),
-                        "i": key
-                    })
+            # get kl divergence between distributions, picking 1000 random pairs
+            for _ in tqdm(range(1000)):
+                i = random.randint(0, len(sentences)-1)
+                j = random.randint(0, len(sentences)-1)
+                if i == j: continue
+                kldiv = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
+                label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
+                label = "".join(["T" if x else "F" for x in label])
+                kldivs.append({
+                    "n11": sentences[i]["name1"],
+                    "n12": sentences[i]["name2"],
+                    "n21": sentences[j]["name1"],
+                    "n22": sentences[j]["name2"],
+                    "p1": sentences[i]["pronoun_gender"],
+                    "p2": sentences[j]["pronoun_gender"],
+                    "c": label,
+                    "f": label[:2],
+                    "s": label[2:],
+                    "m": m,
+                    "k": kldiv.item(),
+                    "i": key
+                })
     
     # dump
     with open(f"logs/kldiv/new/{m.replace('/', '-')}.json", "w") as f:
