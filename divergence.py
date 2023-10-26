@@ -10,6 +10,7 @@ from tqdm import tqdm
 from main import MODELS
 
 logsoftmax = torch.nn.LogSoftmax(dim=-1)
+softmax = torch.nn.Softmax(dim=-1)
 
 def load_data():
     # read stimuli
@@ -54,8 +55,36 @@ def load_data():
     return sentences
 
 @torch.no_grad()
-def main(m: str, all_sents: list=None):
-    kldivs = []
+def spectrum(m: str):
+    # load model
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    tokenizer = AutoTokenizer.from_pretrained(m)
+    tokenizer.pad_token = tokenizer.eos_token
+    model = AutoModelForCausalLM.from_pretrained(m, torch_dtype=torch.bfloat16).to(device)
+
+    # sents
+    sent1 = "Tom seized the comic from Anna. He"
+    sent2 = "Anna seized the comic from John. He"
+    sent3 = "Tom seized the comic from John. He"
+
+    inputs = tokenizer([sent1, sent2, sent3], return_tensors="pt", padding=True).to(device)
+    logits = model(**inputs).logits.to("cpu")
+    probs = softmax(logits)
+
+    ref1 = probs[0, inputs['attention_mask'][0] == 1][-1]
+    ref2 = probs[1, inputs['attention_mask'][1] == 1][-1]
+    pred = probs[2, inputs['attention_mask'][2] == 1][-1]
+
+    # mixtures
+    for i in range(11):
+        mix = i / 10.0
+        distrib = (ref1 * mix) + (ref2 * (1 - mix))
+        kldiv = torch.nn.functional.kl_div(distrib.log(), pred.log(), reduction="sum", log_target=True)
+        print(f"{mix:<5} {kldiv:.4f}")
+
+@torch.no_grad()
+def main(m: str, all_sents: list=None, metric_name: str="kl_div"):
+    results = []
     torch.cuda.empty_cache()
 
     # get data
@@ -77,7 +106,8 @@ def main(m: str, all_sents: list=None):
             sents = [x['sent'] for x in sentences]
             for batch in tqdm(range(0, len(sents), 200)):
                 inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
-                logits = model(**inputs).logits.to("cpu")
+                out = model(**inputs)
+                logits = out.logits.to("cpu")
                 probs = logsoftmax(logits)
                 for i in range(probs.shape[0]):
                     distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
@@ -88,10 +118,14 @@ def main(m: str, all_sents: list=None):
                 i = random.randint(0, len(sentences)-1)
                 j = random.randint(0, len(sentences)-1)
                 if i == j: continue
-                kldiv = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
+                metric = None
+                if metric_name == "kl_div":
+                    metric = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
+                elif metric_name == "cosine":
+                    metric = torch.nn.functional.cosine_similarity(distribs[i].unsqueeze(0), distribs[j].unsqueeze(0))
                 label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
                 label = "".join(["T" if x else "F" for x in label])
-                kldivs.append({
+                results.append({
                     "n11": sentences[i]["name1"],
                     "n12": sentences[i]["name2"],
                     "n21": sentences[j]["name1"],
@@ -102,20 +136,25 @@ def main(m: str, all_sents: list=None):
                     "f": label[:2],
                     "s": label[2:],
                     "m": m,
-                    "k": kldiv.item(),
+                    "k": metric.item(),
                     "i": key
                 })
     
     # dump
     with open(f"logs/kldiv/new/{m.replace('/', '-')}.json", "w") as f:
-        json.dump(kldivs, f)
+        json.dump(results, f)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--spectrum", action="store_true", help="run spectrum analysis")
     parser.add_argument("--m", default="gpt2", help="name of model")
     args = parser.parse_args()
     print(vars(args))
 
+    if args.spectrum:
+        spectrum(args.m)
+        exit(0)
+    
     if args.m == "all":
         for model in MODELS:
             args.m = model
