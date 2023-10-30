@@ -5,24 +5,9 @@ import argparse
 import json
 from tqdm import tqdm
 import datetime
+from models import MODELS, WEIGHTS
 
 set_seed(42)
-
-MODELS = [
-    "EleutherAI/pythia-70m",
-    "gpt2",
-    "EleutherAI/pythia-160m",
-    "gpt2-medium",
-    "EleutherAI/pythia-410m",
-    "gpt2-large",
-    "EleutherAI/pythia-1b",
-    "gpt2-xl",
-    "EleutherAI/pythia-1.4b",
-    "EleutherAI/pythia-2.8b",
-    "sharpbai/alpaca-7b-merged",
-    "mistralai/Mistral-7B-v0.1",
-    "mistralai/Mistral-7B-Instruct-v0.1"
-]
 
 
 def get_bounds(text, needle):
@@ -42,7 +27,7 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
         model=model,
         revision=revision,
         device=device,
-        torch_dtype=torch.bfloat16 if device == "cuda:0" else torch.float32,
+        torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32,
     )
     print("loaded model")
 

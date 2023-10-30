@@ -7,7 +7,7 @@ from plotnine.scales import scale_color_manual, scale_x_log10, ylim
 import pandas as pd
 import argparse
 from tqdm import tqdm
-from main import MODELS
+from main import MODELS, WEIGHTS
 
 logsoftmax = torch.nn.LogSoftmax(dim=-1)
 softmax = torch.nn.Softmax(dim=-1)
@@ -60,7 +60,10 @@ def spectrum(m: str):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(m)
     tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(m, torch_dtype=torch.bfloat16).to(device)
+    model = AutoModelForCausalLM.from_pretrained(
+        m,
+        torch_dtype=WEIGHTS.get(m, torch.bfloat16) if device == "cuda:0" else torch.float32
+    ).to(device)
 
     # sents
     sent1 = "Tom seized the comic from Anna. He"
@@ -97,7 +100,10 @@ def main(m: str, all_sents: list=None, metric_name: str="kl_div"):
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         tokenizer = AutoTokenizer.from_pretrained(m)
         tokenizer.pad_token = tokenizer.eos_token
-        model = AutoModelForCausalLM.from_pretrained(m, torch_dtype=torch.bfloat16).to(device)
+        model = AutoModelForCausalLM.from_pretrained(
+            m,
+            torch_dtype=WEIGHTS.get(m, torch.bfloat16) if device == "cuda:0" else torch.float32
+        ).to(device)
 
         # generate next token distributions
         for key in all_sents:
