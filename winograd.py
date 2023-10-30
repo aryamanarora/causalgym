@@ -62,16 +62,18 @@ def experiment(model="gpt2", batch_size=1):
         out1 = causal_model(**sent1)
         out2 = causal_model(**sent2)
         probs = [softmax(out1.logits), softmax(out2.logits)]
+        logits = [out1.logits, out2.logits]
         probs1 = [probs[0][0][-1][answer1], probs[0][0][-1][answer2]]
         probs2 = [probs[1][0][-1][answer1], probs[1][0][-1][answer2]]
 
         # print topk
-        # for i in range(2):
-        #     topk = torch.topk(probs[i][0][-1], 10)
-        #     for j in range(10):
-        #         print(f"{tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:.4%}")
-        #     print()
-
+        for i in range(2):
+            topk = torch.topk(logits[i][0][-1], 10)
+            for j in range(10):
+                print(f"{tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}")
+            print()
+        input()
+        
         # scores
         if probs1[0] > probs1[1]:
             score += 0.5
