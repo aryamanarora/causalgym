@@ -1,0 +1,158 @@
+[
+    {
+        "text": "John seized the comic from Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.846,
+            "Bill": 0.154
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "John passed the comic to Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.51,
+            "Bill": 0.49
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Joseph hit Patrick. He",
+        "options": [
+            "Joseph",
+            "Patrick"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Joseph": 0.5975,
+            "Patrick": 0.4025
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Patrick was hit by Joseph. He",
+        "options": [
+            "Joseph",
+            "Patrick"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Patrick": 0.765625,
+            "Joseph": 0.234375
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Ken admired Geoff. He",
+        "options": [
+            "Ken",
+            "Geoff"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Ken": 0.34375,
+            "Geoff": 0.65625
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Ken impressed Geoff. He",
+        "options": [
+            "Ken",
+            "Geoff"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Ken": 0.7775,
+            "Geoff": 0.2225
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Simon ran towards Richard. He",
+        "options": [
+            "Simon",
+            "Richard"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Simon": 0.84375,
+            "Richard": 0.15625
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "Simon ran away from Richard. He",
+        "options": [
+            "Simon",
+            "Richard"
+        ],
+        "pronoun": "He",
+        "human": {
+            "Simon": 0.81625,
+            "Richard": 0.18375
+        },
+        "source": "Stevenson, Crawley & Kleinman (1994)"
+    },
+    {
+        "text": "John passed a comic to Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.57,
+            "Bill": 0.43
+        },
+        "source": "Kehler and Rohde (2013)"
+    },
+    {
+        "text": "John was passing a comic to Bill. He",
+        "options": [
+            "John",
+            "Bill"
+        ],
+        "pronoun": "He",
+        "human": {
+            "John": 0.80,
+            "Bill": 0.20
+        },
+        "source": "Kehler and Rohde (2013)"
+    },
+    {
+        "text": "Amanda amazed Brittany. She",
+        "options": [
+            "Amanda",
+            "Brittany"
+        ],
+        "pronoun": "She",
+        "human": {
+            "Amanda": 0.77,
+            "Brittany": 0.23
+        },
+        "source": "Kehler and Rohde (2013)"
+    },
+    {
+        "text": "Brittany was amazed by Amanda. She",
+        "options": [
+            "Amanda",
+            "Brittany"
+        ],
+        "pronoun": "She",
+        "human": {
+            "Brittany": 0.58,
+            "Amanda": 0.42
+        },
+        "source": "Kehler and Rohde (2013)"
+    }
+]

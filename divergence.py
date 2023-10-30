@@ -14,7 +14,7 @@ softmax = torch.nn.Softmax(dim=-1)
 
 def load_data():
     # read stimuli
-    with open("stimuli2.json", "r") as f:
+    with open("data/stimuli2.json", "r") as f:
         stimuli = json.load(f)
     names = []
     for gender in stimuli['names']:

@@ -134,7 +134,7 @@ def plot_individual(folder="logs/new"):
                     })
     
     # read stimuli data
-    with open('stimuli.json', 'r') as f:
+    with open('data/stimuli.json', 'r') as f:
         stimuli = json.load(f)
 
     # add human data

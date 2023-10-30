@@ -47,7 +47,7 @@ def experiment(model="gpt2", revision="main", sequential=False, samples=100, top
     print("loaded model")
 
     # stimuli
-    with open("stimuli.json", "r") as f:
+    with open("data/stimuli.json", "r") as f:
         stimuli = json.load(f)
 
     # log
