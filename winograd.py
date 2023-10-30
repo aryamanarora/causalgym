@@ -72,7 +72,6 @@ def experiment(model="gpt2", batch_size=1):
             for j in range(10):
                 print(f"{tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}")
             print()
-        input()
         
         # scores
         if probs1[0] > probs1[1]:
