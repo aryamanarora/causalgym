@@ -48,13 +48,11 @@ def experiment(model="gpt2", verbose=False, fout=open("logs/winograd.txt", "w"))
 
     # generate
     for d in tqdm(data):
-        sent1 = ' '.join([d["sentence1"], d["question1"]])
-        sent2 = ' '.join([d["sentence2"], d["question2"]])
         if verbose:
             fout.write(f"{d}\n")
 
-        sent1 = tokenizer(sent1, return_tensors="pt").to(device)
-        sent2 = tokenizer(sent2, return_tensors="pt").to(device)
+        sent1 = tokenizer(d["sentence1"], return_tensors="pt").to(device)
+        sent2 = tokenizer(d["sentence2"], return_tensors="pt").to(device)
 
         answer1 = tokenizer([' ' + d["answer1"]], return_tensors="pt").input_ids.to(device)[0]
         answer2 = tokenizer([' ' + d["answer2"]], return_tensors="pt").input_ids.to(device)[0]
