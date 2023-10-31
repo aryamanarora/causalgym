@@ -60,6 +60,7 @@ def experiment(model="gpt2", batch_size=1):
 
         answer1 = tokenizer([' ' + d["answer1"]], return_tensors="pt").input_ids.to(device)[0][0]
         answer2 = tokenizer([' ' + d["answer2"]], return_tensors="pt").input_ids.to(device)[0][0]
+        fout.write(f"{answer1}, {answer2}\n")
 
         # inference
         out1 = causal_model(**sent1)
@@ -70,11 +71,11 @@ def experiment(model="gpt2", batch_size=1):
         probs2 = [probs[1][0][-1][answer1], probs[1][0][-1][answer2]]
 
         # print topk
-        # for i in range(2):
-        #     topk = torch.topk(logits[i][0][-1], 10)
-        #     for j in range(10):
-        #         fout.write(f"{tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}\n")
-        #     fout.write("\n")
+        for i in range(2):
+            topk = torch.topk(logits[i][0][-1], 10)
+            for j in range(10):
+                fout.write(f"{topk.indices[j]:>7} {tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}\n")
+            fout.write("\n")
         fout.write(f"{probs1}")
         fout.write(f"{probs2}")
         
