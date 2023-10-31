@@ -94,7 +94,6 @@ def experiment(model="gpt2", verbose=False, fout=open("logs/winograd.txt", "w"))
     fout.write(f"{model}\n")
     fout.write(f"Score: {(score / len(data)):.4%}\n")
     fout.write(f"Strict Score: {(score_strict / len(data)):.4%}\n\n")
-    fout.close()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -103,15 +102,16 @@ def main():
     args = parser.parse_args()
     print(vars(args))
 
+    fout = open("data/winograd_out.txt", "w")
+    args.fout = fout
     if args.model == "all":
-        fout = open("data/winograd_out.txt", "w")
         for model in MODELS:
             args.model = model
-            args.fout = fout
             experiment(**vars(args))
             torch.cuda.empty_cache()
     else:
         experiment(**vars(args))
+    fout.close()
 
 if __name__ == "__main__":
     main()
