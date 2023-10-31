@@ -58,8 +58,13 @@ def experiment(model="gpt2", batch_size=1):
         sent1 = tokenizer(sent1, return_tensors="pt").to(device)
         sent2 = tokenizer(sent2, return_tensors="pt").to(device)
 
-        answer1 = tokenizer([' ' + d["answer1"]], return_tensors="pt").input_ids.to(device)[0][0]
-        answer2 = tokenizer([' ' + d["answer2"]], return_tensors="pt").input_ids.to(device)[0][0]
+        answer1 = tokenizer([' ' + d["answer1"]], return_tensors="pt").input_ids.to(device)[0]
+        answer2 = tokenizer([' ' + d["answer2"]], return_tensors="pt").input_ids.to(device)[0]
+        for i in min(answer1.shape[0], answer2.shape[0]):
+            if answer1[i] != answer2[i]:
+                answer1 = answer1[i]
+                answer2 = answer2[i]
+                break
         fout.write(f"{answer1}, {answer2}\n")
 
         # inference
