@@ -21,21 +21,17 @@ def load_data():
             option1, option2 = options_regex.findall(sentence)[0]
 
             data.append({
-                "sentence1": options_regex.sub(option1, sentence),
-                "question1": options_regex.sub(option1, question) + (' The' if answers[0].islower() else ''),
+                "sentence1": options_regex.sub(option1, sentence) + " " + options_regex.sub(option1, question) + (' The' if answers[0].islower() else ''),
                 "answer1": answers[0],
-                "sentence2": options_regex.sub(option2, sentence),
-                "question2": options_regex.sub(option2, question) + (' The' if answers[0].islower() else ''),
+                "sentence2": options_regex.sub(option2, sentence) + " " + options_regex.sub(option2, question) + (' The' if answers[0].islower() else ''),
                 "answer2": answers[1],
             })
             
     return data
 
 @torch.no_grad()
-def experiment(model="gpt2", verbose=False):
+def experiment(model="gpt2", verbose=False, fout=open("logs/winograd.txt", "w")):
     data = load_data()
-    fout = open("data/winograd_out.txt", "w")
-    print(model)
 
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -97,8 +93,9 @@ def experiment(model="gpt2", verbose=False):
             score_strict += 1
     
     # output scores
-    print(f"Score: {(score / len(data)):.4%}")
-    print(f"Strict Score: {(score_strict / len(data)):.4%}")
+    fout.write(f"{model}\n")
+    fout.write(f"Score: {(score / len(data)):.4%}\n")
+    fout.write(f"Strict Score: {(score_strict / len(data)):.4%}\n\n")
     fout.close()
 
 def main():
@@ -109,8 +106,10 @@ def main():
     print(vars(args))
 
     if args.model == "all":
+        fout = open("data/winograd_out.txt", "w")
         for model in MODELS:
             args.model = model
+            args.fout = fout
             experiment(**vars(args))
             torch.cuda.empty_cache()
     else:

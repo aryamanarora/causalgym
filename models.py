@@ -1,19 +1,21 @@
 import torch
 
 MODELS = [
-    "EleutherAI/pythia-70m",
     "gpt2",
-    "EleutherAI/pythia-160m",
     "gpt2-medium",
-    "EleutherAI/pythia-410m",
     "gpt2-large",
-    "EleutherAI/pythia-1b",
     "gpt2-xl",
+    "EleutherAI/pythia-70m",
+    "EleutherAI/pythia-160m",
+    "EleutherAI/pythia-410m",
+    "EleutherAI/pythia-1b",
     "EleutherAI/pythia-1.4b",
     "EleutherAI/pythia-2.8b",
-    "sharpbai/alpaca-7b-merged",
-    "mistralai/Mistral-7B-v0.1",
-    "mistralai/Mistral-7B-Instruct-v0.1"
+    "EleutherAI/pythia-6.9b",
+    "EleutherAI/pythia-12b",
+    # "sharpbai/alpaca-7b-merged",
+    # "mistralai/Mistral-7B-v0.1",
+    # "mistralai/Mistral-7B-Instruct-v0.1"
 ]
 
 WEIGHTS = {
@@ -27,6 +29,8 @@ WEIGHTS = {
     "gpt2-xl": torch.float32,
     "EleutherAI/pythia-1.4b": torch.bfloat16,
     "EleutherAI/pythia-2.8b": torch.bfloat16,
+    "EleutherAI/pythia-6.9b": torch.bfloat16,
+    "EleutherAI/pythia-12b": torch.bfloat16,
     "sharpbai/alpaca-7b-merged": torch.bfloat16,
     "mistralai/Mistral-7B-v0.1": torch.bfloat16,
     "mistralai/Mistral-7B-Instruct-v0.1": torch.bfloat16
