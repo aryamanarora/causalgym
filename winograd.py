@@ -60,7 +60,7 @@ def experiment(model="gpt2", batch_size=1):
 
         answer1 = tokenizer([' ' + d["answer1"]], return_tensors="pt").input_ids.to(device)[0]
         answer2 = tokenizer([' ' + d["answer2"]], return_tensors="pt").input_ids.to(device)[0]
-        for i in min(answer1.shape[0], answer2.shape[0]):
+        for i in range(min(answer1.shape[0], answer2.shape[0])):
             if answer1[i] != answer2[i]:
                 answer1 = answer1[i]
                 answer2 = answer2[i]
