@@ -98,6 +98,10 @@ def experiment(model="gpt2", verbose=False, fout=open("logs/winograd.txt", "w"))
             score += 0.5
         if probs1[0] > probs1[1] and probs2[1] > probs2[0]:
             score_strict += 1
+
+        # clear cache
+        del out1, out2, probs, logits, probs1, probs2
+        torch.cuda.empty_cache()
     
     # output scores
     fout.write(f"{model}\n")
