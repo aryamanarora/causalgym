@@ -32,9 +32,10 @@ def load_data():
     return data
 
 @torch.no_grad()
-def experiment(model="gpt2", batch_size=1):
+def experiment(model="gpt2", verbose=False):
     data = load_data()
     fout = open("data/winograd_out.txt", "w")
+    print(model)
 
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -53,7 +54,8 @@ def experiment(model="gpt2", batch_size=1):
     for d in tqdm(data):
         sent1 = ' '.join([d["sentence1"], d["question1"]])
         sent2 = ' '.join([d["sentence2"], d["question2"]])
-        fout.write(f"{d}\n")
+        if verbose:
+            fout.write(f"{d}\n")
 
         sent1 = tokenizer(sent1, return_tensors="pt").to(device)
         sent2 = tokenizer(sent2, return_tensors="pt").to(device)
@@ -65,7 +67,8 @@ def experiment(model="gpt2", batch_size=1):
                 answer1 = answer1[i]
                 answer2 = answer2[i]
                 break
-        fout.write(f"{answer1}, {answer2}\n")
+        if verbose:
+            fout.write(f"{answer1}, {answer2}\n")
 
         # inference
         out1 = causal_model(**sent1)
@@ -76,13 +79,14 @@ def experiment(model="gpt2", batch_size=1):
         probs2 = [probs[1][0][-1][answer1], probs[1][0][-1][answer2]]
 
         # print topk
-        for i in range(2):
-            topk = torch.topk(logits[i][0][-1], 10)
-            for j in range(10):
-                fout.write(f"{topk.indices[j]:>7} {tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}\n")
-            fout.write("\n")
-        fout.write(f"{probs1}")
-        fout.write(f"{probs2}")
+        if verbose:
+            for i in range(2):
+                topk = torch.topk(logits[i][0][-1], 10)
+                for j in range(10):
+                    fout.write(f"{topk.indices[j]:>7} {tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}\n")
+                fout.write("\n")
+            fout.write(f"{probs1}")
+            fout.write(f"{probs2}")
         
         # scores
         if probs1[0] > probs1[1]:
@@ -93,13 +97,14 @@ def experiment(model="gpt2", batch_size=1):
             score_strict += 1
     
     # output scores
-    fout.write(f"Score: {(score / len(data)):.4%}\n")
-    fout.write(f"Strict Score: {(score_strict / len(data)):.4%}\n")
+    print(f"Score: {(score / len(data)):.4%}")
+    print(f"Strict Score: {(score_strict / len(data)):.4%}")
     fout.close()
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="gpt2", help="name of model")
+    parser.add_argument("--verbose", action="store_true", help="print more information")
     args = parser.parse_args()
     print(vars(args))
 
