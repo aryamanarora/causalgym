@@ -75,8 +75,8 @@ def experiment(model="gpt2", batch_size=1):
         #     for j in range(10):
         #         fout.write(f"{tokenizer.decode(topk.indices[j].unsqueeze(0)):<20} {topk.values[j]:>10.4} {probs[i][0][-1][topk.indices[j]]:>10.4%}\n")
         #     fout.write("\n")
-        fout.write(probs1)
-        fout.write(probs2)
+        fout.write(f"{probs1}")
+        fout.write(f"{probs2}")
         
         # scores
         if probs1[0] > probs1[1]:
