@@ -8,6 +8,15 @@ from models import MODELS, WEIGHTS
 options_regex = re.compile(r"\[(.*?)/(.*?)\]")
 softmax = torch.nn.Softmax(dim=-1)
 
+def make_prompt(context, question, answer):
+    return f"""Answer the question based on the context below. Keep your answer short.
+
+Context: "{context}"
+
+Question: "{question}"
+
+Answer: "{' The' if answer.islower() else ''}"""
+
 def load_data():
     data = []
     with open("data/winograd.txt", "r") as f:
@@ -21,9 +30,9 @@ def load_data():
             option1, option2 = options_regex.findall(sentence)[0]
 
             data.append({
-                "sentence1": options_regex.sub(option1, sentence) + " " + options_regex.sub(option1, question) + (' The' if answers[0].islower() else ''),
+                "sentence1": make_prompt(options_regex.sub(option1, sentence), options_regex.sub(option1, question), answers[0]),
                 "answer1": answers[0],
-                "sentence2": options_regex.sub(option2, sentence) + " " + options_regex.sub(option2, question) + (' The' if answers[0].islower() else ''),
+                "sentence2": make_prompt(options_regex.sub(option2, sentence), options_regex.sub(option2, question), answers[1]),
                 "answer2": answers[1],
             })
             
@@ -102,7 +111,7 @@ def main():
     args = parser.parse_args()
     print(vars(args))
 
-    fout = open("data/winograd_out.txt", "w")
+    fout = open("logs/winograd.txt", "w")
     args.fout = fout
     if args.model == "all":
         for model in MODELS:
