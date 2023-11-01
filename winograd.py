@@ -15,7 +15,7 @@ Context: "{context}"
 
 Question: {question}
 
-Answer:{' The' if answer.islower() else ' '}"""
+Answer:{' The' if answer.islower() else ''}"""
 
 def load_data():
     data = []
