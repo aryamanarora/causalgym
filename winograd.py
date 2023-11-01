@@ -13,9 +13,9 @@ def make_prompt(context, question, answer):
 
 Context: "{context}"
 
-Question: "{question}"
+Question: {question}
 
-Answer: "{' The' if answer.islower() else ''}"""
+Answer:{' The' if answer.islower() else ' '}"""
 
 def load_data():
     data = []
