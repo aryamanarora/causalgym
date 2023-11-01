@@ -164,7 +164,7 @@ if __name__ == "__main__":
     if args.m == "all":
         for model in MODELS:
             args.m = model
-            main(**vars(args))
+            main(m=args.m)
             torch.cuda.empty_cache()
     else:
-        main(**vars(args))
+        main(m=args.m)
