@@ -147,17 +147,20 @@ def main(
                     metric = (torch.nn.functional.kl_div(cur[0].log(), mixture.log(), reduction="sum", log_target=True) + torch.nn.functional.kl_div(cur[1].log(), mixture.log(), reduction="sum", log_target=True)) / 2.0
                 elif metric_name == "cosine":
                     metric = torch.nn.functional.cosine_similarity(cur[0].unsqueeze(0), cur[1].unsqueeze(0))
-                    
-                label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
+
+                first = sentences[i]
+                second = sentences[j] if not use_names else sentences2[j]
+                
+                label = [first["match_name1"], first["match_name2"], second["match_name1"], second["match_name2"]]
                 label = "".join(["T" if x else "F" for x in label])
                 
                 results.append({
-                    "n11": sentences[i]["name1"],
-                    "n12": sentences[i]["name2"],
-                    "n21": sentences[j]["name1"],
-                    "n22": sentences[j]["name2"],
-                    "p1": sentences[i]["pronoun_gender"],
-                    "p2": sentences[j]["pronoun_gender"],
+                    "n11": first["name1"],
+                    "n12": first["name2"],
+                    "n21": second["name1"],
+                    "n22": second["name2"],
+                    "p1": first["pronoun_gender"],
+                    "p2": second["pronoun_gender"],
                     "c": label,
                     "f": label[:2],
                     "s": label[2:],
@@ -179,7 +182,7 @@ if __name__ == "__main__":
     print(vars(args))
     
     if args.m == "all":
-        for model in MODELS:
+        for model in tqdm(MODELS):
             args.m = model
             main(**vars(args))
             torch.cuda.empty_cache()
