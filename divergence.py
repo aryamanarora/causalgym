@@ -117,6 +117,7 @@ def main(m: str, all_sents: list=None, metric_name: str="js_div"):
                 probs = softmax(logits)
                 for i in range(probs.shape[0]):
                     distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
+                    distrib += 1e-9
                     distribs.append(distrib)
 
             # get kl divergence between distributions, picking 1000 random pairs
