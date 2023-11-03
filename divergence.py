@@ -86,7 +86,7 @@ def spectrum(m: str):
         print(f"{mix:<5} {kldiv:.4f}")
 
 @torch.no_grad()
-def main(m: str, all_sents: list=None, metric_name: str="kl_div"):
+def main(m: str, all_sents: list=None, metric_name: str="js_div"):
     results = []
     torch.cuda.empty_cache()
 
@@ -114,7 +114,7 @@ def main(m: str, all_sents: list=None, metric_name: str="kl_div"):
                 inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
                 out = model(**inputs)
                 logits = out.logits.to("cpu")
-                probs = logsoftmax(logits)
+                probs = softmax(logits)
                 for i in range(probs.shape[0]):
                     distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
                     distribs.append(distrib)
@@ -126,7 +126,10 @@ def main(m: str, all_sents: list=None, metric_name: str="kl_div"):
                 if i == j: continue
                 metric = None
                 if metric_name == "kl_div":
-                    metric = torch.nn.functional.kl_div(distribs[i], distribs[j], reduction="sum", log_target=True)
+                    metric = torch.nn.functional.kl_div(distribs[i].log(), distribs[j].log(), reduction="sum", log_target=True)
+                elif metric_name == "js_div":
+                    mixture = (distribs[i] + distribs[j]) / 2
+                    metric = (torch.nn.functional.kl_div(distribs[i].log(), mixture.log(), reduction="sum", log_target=True) + torch.nn.functional.kl_div(distribs[j].log(), mixture.log(), reduction="sum", log_target=True)) / 2.0
                 elif metric_name == "cosine":
                     metric = torch.nn.functional.cosine_similarity(distribs[i].unsqueeze(0), distribs[j].unsqueeze(0))
                 label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
