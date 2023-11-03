@@ -157,6 +157,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--spectrum", action="store_true", help="run spectrum analysis")
     parser.add_argument("--m", default="gpt2", help="name of model")
+    parser.add_argument("--metric_name", default="js_div", help="metric to use")
     args = parser.parse_args()
     print(vars(args))
 
@@ -167,7 +168,7 @@ if __name__ == "__main__":
     if args.m == "all":
         for model in MODELS:
             args.m = model
-            main(m=args.m)
+            main(m=args.m, metric_name=args.metric_name)
             torch.cuda.empty_cache()
     else:
-        main(m=args.m)
+        main(m=args.m, metric_name=args.metric_name)
