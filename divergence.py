@@ -12,7 +12,7 @@ from main import MODELS, WEIGHTS
 logsoftmax = torch.nn.LogSoftmax(dim=-1)
 softmax = torch.nn.Softmax(dim=-1)
 
-def load_data():
+def load_data(referent="pronoun"):
     # read stimuli
     with open("data/stimuli2.json", "r") as f:
         stimuli = json.load(f)
@@ -32,22 +32,37 @@ def load_data():
                 if name2[0] == name1[0]: continue
                 genders = [name1[1], name2[1]]
                 subbed2 = subbed.replace("<name2>", name2[0])
-                for gender in set(genders):
-                    subbed3 = subbed2.replace("<pronoun>", gender)
-                    referents = []
-                    if name1[1] == gender: referents.append(name1[0])
-                    if name2[1] == gender: referents.append(name2[0])
-                    sentences[i].append({
-                        "sent": subbed3,
-                        "match_name1": name1[0] in referents,
-                        "match_name2": name2[0] in referents,
-                        "name1": name1[0],
-                        "name2": name2[0],
-                        "name1_gender": name1[1],
-                        "name2_gender": name2[1],
-                        "pronoun_gender": gender,
-                        "stimulus": i
-                    })
+                if referent == "pronoun":
+                    for gender in set(genders):
+                        subbed3 = subbed2.replace("<pronoun>", gender)
+                        referents = []
+                        if name1[1] == gender: referents.append(name1[0])
+                        if name2[1] == gender: referents.append(name2[0])
+                        sentences[i].append({
+                            "sent": subbed3,
+                            "match_name1": name1[0] in referents,
+                            "match_name2": name2[0] in referents,
+                            "name1": name1[0],
+                            "name2": name2[0],
+                            "name1_gender": name1[1],
+                            "name2_gender": name2[1],
+                            "pronoun_gender": gender,
+                            "stimulus": i
+                        })
+                elif referent == "name":
+                    for name in [name1[0], name2[0]]:
+                        subbed3 = subbed2.replace("<pronoun>", name)
+                        sentences[i].append({
+                            "sent": subbed3,
+                            "match_name1": name1[0] == name,
+                            "match_name2": name2[0] == name,
+                            "name1": name1[0],
+                            "name2": name2[0],
+                            "name1_gender": name1[1],
+                            "name2_gender": name2[1],
+                            "pronoun_gender": name,
+                            "stimulus": i
+                        })
         
         # shuffle
         random.shuffle(sentences[i])
@@ -55,44 +70,19 @@ def load_data():
     return sentences
 
 @torch.no_grad()
-def spectrum(m: str):
-    # load model
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    tokenizer = AutoTokenizer.from_pretrained(m)
-    tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(
-        m,
-        torch_dtype=WEIGHTS.get(m, torch.bfloat16) if device == "cuda:0" else torch.float32
-    ).to(device)
-
-    # sents
-    sent1 = "Tom seized the comic from Anna. He"
-    sent2 = "Anna seized the comic from John. He"
-    sent3 = "Tom seized the comic from John. He"
-
-    inputs = tokenizer([sent1, sent2, sent3], return_tensors="pt", padding=True).to(device)
-    logits = model(**inputs).logits.to("cpu")
-    probs = softmax(logits)
-
-    ref1 = probs[0, inputs['attention_mask'][0] == 1][-1]
-    ref2 = probs[1, inputs['attention_mask'][1] == 1][-1]
-    pred = probs[2, inputs['attention_mask'][2] == 1][-1]
-
-    # mixtures
-    for i in range(11):
-        mix = i / 10.0
-        distrib = (ref1 * mix) + (ref2 * (1 - mix))
-        kldiv = torch.nn.functional.kl_div(distrib.log(), pred.log(), reduction="sum", log_target=True)
-        print(f"{mix:<5} {kldiv:.4f}")
-
-@torch.no_grad()
-def main(m: str, all_sents: list=None, metric_name: str="js_div"):
+def main(
+    m: str,
+    metric_name: str="js_div",
+    use_names=False
+):
     results = []
     torch.cuda.empty_cache()
 
     # get data
-    if all_sents is None:
-        all_sents = load_data()
+    all_sents = load_data()
+    all_sents2 = None
+    if use_names:
+        all_sents2 = load_data(referent="name")
     
     with torch.inference_mode():
         # load model
@@ -106,11 +96,18 @@ def main(m: str, all_sents: list=None, metric_name: str="js_div"):
         ).to(device)
 
         # generate next token distributions
-        for key in all_sents:
+        for key in tqdm(all_sents):
+
+            # get data for this set of templates
             sentences = all_sents[key]
-            distribs = []
+            sentences2 = None
+            if use_names:
+                sentences2 = all_sents2[key]
+            distribs, distribs2 = [], []
+
+            # inference, get logits and smooth them with epsilon (avoid NaNs in metric)
             sents = [x['sent'] for x in sentences]
-            for batch in tqdm(range(0, len(sents), 200)):
+            for batch in range(0, len(sents), 200):
                 inputs = tokenizer(sents[batch:batch+200], return_tensors="pt", padding=True).to(device)
                 out = model(**inputs)
                 logits = out.logits.to("cpu")
@@ -120,21 +117,40 @@ def main(m: str, all_sents: list=None, metric_name: str="js_div"):
                     distrib += 1e-9
                     distribs.append(distrib)
 
+            # names separately
+            if use_names:
+                sents2 = [x['sent'] for x in sentences2]
+                for batch in range(0, len(sents2), 200):
+                    inputs = tokenizer(sents2[batch:batch+200], return_tensors="pt", padding=True).to(device)
+                    out = model(**inputs)
+                    logits = out.logits.to("cpu")
+                    probs = softmax(logits)
+                    for i in range(probs.shape[0]):
+                        distrib = probs[i, inputs['attention_mask'][i] == 1][-1]
+                        distrib += 1e-9
+                        distribs2.append(distrib)
+
             # get kl divergence between distributions, picking 1000 random pairs
-            for _ in tqdm(range(1000)):
+            for _ in range(1000):
                 i = random.randint(0, len(sentences)-1)
-                j = random.randint(0, len(sentences)-1)
+                j = random.randint(0, len(sentences)-1) if not use_names else random.randint(0, len(sentences)-1)
                 if i == j: continue
+
+                # compute metrics
+                cur = [distribs[i], distribs[j]] if not use_names else [distribs[i], distribs2[j]]
+                
                 metric = None
                 if metric_name == "kl_div":
-                    metric = torch.nn.functional.kl_div(distribs[i].log(), distribs[j].log(), reduction="sum", log_target=True)
+                    metric = torch.nn.functional.kl_div(cur[0].log(), cur[1].log(), reduction="sum", log_target=True)
                 elif metric_name == "js_div":
-                    mixture = (distribs[i] + distribs[j]) / 2
-                    metric = (torch.nn.functional.kl_div(distribs[i].log(), mixture.log(), reduction="sum", log_target=True) + torch.nn.functional.kl_div(distribs[j].log(), mixture.log(), reduction="sum", log_target=True)) / 2.0
+                    mixture = (cur[0] + cur[1]) / 2
+                    metric = (torch.nn.functional.kl_div(cur[0].log(), mixture.log(), reduction="sum", log_target=True) + torch.nn.functional.kl_div(cur[1].log(), mixture.log(), reduction="sum", log_target=True)) / 2.0
                 elif metric_name == "cosine":
-                    metric = torch.nn.functional.cosine_similarity(distribs[i].unsqueeze(0), distribs[j].unsqueeze(0))
+                    metric = torch.nn.functional.cosine_similarity(cur[0].unsqueeze(0), cur[1].unsqueeze(0))
+                    
                 label = [sentences[i]["match_name1"], sentences[i]["match_name2"], sentences[j]["match_name1"], sentences[j]["match_name2"]]
                 label = "".join(["T" if x else "F" for x in label])
+                
                 results.append({
                     "n11": sentences[i]["name1"],
                     "n12": sentences[i]["name2"],
@@ -156,20 +172,16 @@ def main(m: str, all_sents: list=None, metric_name: str="js_div"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--spectrum", action="store_true", help="run spectrum analysis")
     parser.add_argument("--m", default="gpt2", help="name of model")
-    parser.add_argument("--metric_name", default="js_div", help="metric to use")
+    parser.add_argument("--metric_name", default="kl_div", help="metric to use")
+    parser.add_argument("--use_names", action="store_true", help="compare pronouns with names")
     args = parser.parse_args()
     print(vars(args))
-
-    if args.spectrum:
-        spectrum(args.m)
-        exit(0)
     
     if args.m == "all":
         for model in MODELS:
             args.m = model
-            main(m=args.m, metric_name=args.metric_name)
+            main(**vars(args))
             torch.cuda.empty_cache()
     else:
-        main(m=args.m, metric_name=args.metric_name)
+        main(**vars(args))
