@@ -1,59 +1,189 @@
-# from transformers import pipeline, set_seed
-# import torch
-# import sys
+import torch
+import csv
+from collections import namedtuple
+import random
+from utils import MODELS, WEIGHTS
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import sys
+import pandas as pd
+from tqdm import tqdm
+import argparse
+from plotnine import ggplot, geom_tile, aes, facet_wrap, theme, element_text, \
+                     geom_bar, geom_hline, scale_y_log10
+from plotnine.scales import scale_x_continuous
 
-# sys.path.append("../align-transformers")
-# from models.utils import print_forward_hooks
-# from models.configuration_alignable_model import AlignableRepresentationConfig, AlignableConfig
-# from models.alignable_base import AlignableModel
-# from models.interventions import VanillaIntervention
-# from models.gpt2.modelings_alignable_gpt2 import create_gpt2
+# add align-transformers to path
+sys.path.append("../align-transformers/")
+from models.utils import embed_to_distrib, top_vals, format_token, lsm, sm
+from models.configuration_alignable_model import AlignableRepresentationConfig, AlignableConfig
+from models.alignable_base import AlignableModel
+from models.interventions import VanillaIntervention
+from models.gpt_neox.modelings_alignable_gpt_neox import create_gpt_neox
 
-# set_seed(42)
+# sentence helpers
+Sentence = namedtuple("Sentence", ["sentence", "verb", "name1", "name2", "connective"])
+names = {
+    "he": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
+    "she": ["Amanda", "Britney", "Catherine", "Dorothy", "Elizabeth", "Fiona", "Gina", "Helen", "Irene", "Jane"]
+}
+flattened_names = [(name, gender) for gender in names for name in names[gender]]
+connectives = ["because"]
 
-# # load gpt2
-# device = "cuda:0" if torch.cuda.is_available() else "cpu"
-# config, tokenizer, gpt = create_gpt2(cache_dir="/Users/aryamanarora/.cache/huggingface/hub")
-# prompt = "John seized the comic from Bill. He"
-# input_ids = tokenizer.encode(prompt, return_tensors="pt")
-# output = gpt.generate(input_ids, max_length = 50, num_beams=1)
-# output_text = tokenizer.decode(output[0], skip_special_tokens=True)
-# print(output_text)
+with open('data/ferstl.csv', 'r') as f:
+    reader = csv.reader(f)
+    verbs = list(reader)
 
-# # intervention config
-# def simple_position_config(model_type, intervention_type, layer):
-#     alignable_config = AlignableConfig(
-#         alignable_model_type=model_type,
-#         alignable_representations=[
-#             AlignableRepresentationConfig(
-#                 layer,             # layer
-#                 intervention_type, # intervention type
-#                 "pos",             # intervention unit
-#                 1                  # max number of unit
-#             ),
-#         ],
-#         alignable_interventions_type=VanillaIntervention,
-#     )
-#     return alignable_config
+def make_sentence(tokenizer: AutoTokenizer, name1=None, verb=None, name2=None, connective=None):
+    while name1 is None or name1 == name2:
+        test = random.choice(flattened_names)
+        if len(tokenizer(test[0])['input_ids']) == 1:
+            name1 = test
+    while name2 is None or name1 == name2:
+        test = random.choice(flattened_names)
+        if len(tokenizer(' ' + test[0])['input_ids']) == 1:
+            name2 = test
+    while verb is None:
+        test = random.choice(verbs)
+        if len(tokenizer(' ' + test[0])['input_ids']) == 1:
+            verb = test
+    while connective is None:
+        connective = random.choice(connectives)
+    sent = f"{name1[0]} {verb[0]} {name2[0]} {connective}"
+    return Sentence(
+        sentence=sent,
+        verb=verb,
+        name1=name1,
+        name2=name2,
+        connective=connective,
+    )
 
-# # intervention
-# alignable_config = simple_position_config(type(gpt), "mlp_output", 0)
-# alignable = AlignableModel(alignable_config, gpt)
+def simple_position_config(model_type, intervention_type, layer):
+    alignable_config = AlignableConfig(
+        alignable_model_type=model_type,
+        alignable_representations=[
+            AlignableRepresentationConfig(
+                layer,             # layer
+                intervention_type, # intervention type
+                "pos",             # intervention unit
+                1                  # max number of unit
+            ),
+        ],
+        alignable_interventions_type=VanillaIntervention,
+    )
+    return alignable_config
 
-# # setup
-# prompt = "John seized the comic from Bill. He"
-# base = tokenizer(prompt, return_tensors="pt")
-# prompt2 = "Tom seized the comic from Bill. He"
-# source = tokenizer(prompt2, return_tensors="pt")
+def kldiv(input, target):
+    return torch.nn.functional.kl_div(input, target, reduction="sum", log_target=True).cpu().detach().item()
 
-# # generate
-# base_outputs, counterfactual_outputs = alignable.generate(
-#     base,
-#     [source],
-#     {"sources->base": ([[[0]]], [[[0]]])},
-#     max_length = 50, num_beams=1
-# )
-# print(base_outputs)
-# print(counterfactual_outputs)
-# print(tokenizer.decode(base_outputs[0]))
-# print(tokenizer.decode(counterfactual_outputs[0]))
+@torch.no_grad()
+def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb"):
+    """Run experiment."""
+
+    # load model
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    tokenizer = AutoTokenizer.from_pretrained(model)
+    tokenizer.pad_token = tokenizer.eos_token
+    gpt = AutoModelForCausalLM.from_pretrained(
+        model,
+        revision=revision,
+        torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32
+    ).to(device)
+
+    # layers
+    nodes = []
+    for l in range(gpt.config.num_hidden_layers - 1, -1, -1):
+        nodes.append(f'f{l}')
+        nodes.append(f'a{l}')
+
+    # make stimuli
+    base = make_sentence(tokenizer, connective="because")
+    intervention = {
+        "tokenizer": tokenizer,
+        "name1": None if intervene == "name1" else base.name1,
+        "verb": None if intervene == "verb" else base.verb,
+        "name2": None if intervene == "name2" else base.name2,
+        "connective": None if intervene == "connective" else base.connective,
+    }
+    sources = [make_sentence(**intervention)]
+    print(base.sentence)
+    print(sources[0].sentence)
+
+    # tokenizer
+    base = tokenizer(base.sentence, return_tensors="pt")
+    base = {key: value.to(device) for key, value in base.items()}
+    sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources]
+    sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
+    print(len(base['input_ids'][0]))
+    print(len(sources[0]['input_ids'][0]))
+    input()
+
+    # get logits
+    base_logits = lsm(gpt(**base).logits)
+    sources_logits = [lsm(gpt(**x).logits) for x in sources]
+    top_vals(tokenizer, base_logits[0, -1], 10)
+    print('---')
+    top_vals(tokenizer, sources_logits[0][0, -1], 10)
+
+    # intervene on each layer
+    data = []
+    for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
+        alignable_config = simple_position_config(type(gpt), "mlp_output", layer_i)
+        alignable = AlignableModel(alignable_config, gpt)
+        for pos_i in range(len(base['input_ids'][0])):
+            _, counterfactual_outputs = alignable(
+                base,
+                sources,
+                {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+            )
+            logits = lsm(counterfactual_outputs.logits)
+            data.append({
+                'layer': f"f{layer_i}",
+                'pos': pos_i,
+                'type': "mlp_output",
+                'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
+                'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
+            })
+                
+        alignable_config = simple_position_config(type(gpt), "attention_input", layer_i)
+        alignable = AlignableModel(alignable_config, gpt)
+        for pos_i in range(len(base['input_ids'][0])):
+            _, counterfactual_outputs = alignable(
+                base,
+                sources,
+                {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+            )
+            logits = lsm(counterfactual_outputs.logits)
+            data.append({
+                'layer': f"a{layer_i}",
+                'pos': pos_i,
+                'type': "attention_input",
+                'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
+                'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
+            })
+
+    # make df
+    df = pd.DataFrame(data)
+    df['layer'] = df['layer'].astype('category')
+    df['layer'] = pd.Categorical(df['layer'], categories=nodes[::-1], ordered=True)
+
+    # plot
+    labels = [format_token(tokenizer, x) for x in base['input_ids'][0]]
+    g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
+        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
+        + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
+    
+    # save fig
+    g.save(f"figs/{model}-{intervene}.pdf")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", default="EleutherAI/pythia-70m", help="name of model")
+    parser.add_argument("--revision", default="main", help="revision of model")
+    parser.add_argument("--intervene", default="verb", help="what part of the sentence to intervene on")
+    args = parser.parse_args()
+    print(vars(args))
+    
+    experiment(**vars(args))
+
+if __name__ == "__main__":
+    experiment()

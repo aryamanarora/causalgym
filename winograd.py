@@ -3,7 +3,7 @@ import torch
 import re
 from tqdm import tqdm
 import argparse
-from models import MODELS, WEIGHTS
+from utils import MODELS, WEIGHTS
 
 options_regex = re.compile(r"\[(.*?)/(.*?)\]")
 softmax = torch.nn.Softmax(dim=-1)

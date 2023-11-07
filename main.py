@@ -5,7 +5,7 @@ import argparse
 import json
 from tqdm import tqdm
 import datetime
-from models import MODELS, WEIGHTS
+from utils import MODELS, WEIGHTS
 
 set_seed(42)
 
