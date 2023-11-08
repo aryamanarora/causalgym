@@ -4,3 +4,4 @@ __pycache__/
 *.ipynb
 logs/sampling
 logs/kldivs
+.ipynb_checkpoints/

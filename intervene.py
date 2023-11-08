@@ -32,7 +32,7 @@ connectives = ["because"]
 
 with open('data/ferstl.csv', 'r') as f:
     reader = csv.reader(f)
-    verbs = list(reader)
+    verbs = [tuple(x) for x in reader]
 
 def make_sentence(tokenizer: AutoTokenizer, name1=None, verb=None, name2=None, connective=None):
     while name1 is None or name1 == name2:
@@ -77,18 +77,19 @@ def kldiv(input, target):
     return torch.nn.functional.kl_div(input, target, reduction="sum", log_target=True).cpu().detach().item()
 
 @torch.inference_mode()
-def plot_next_token_map(gpt, tokenizer, sentences, model):
+def plot_next_token_map(gpt, tokenizer, sentences, model, device='cpu'):
     # run model, get distribs
     print(sentences[0])
     prompts = [s.sentence for s in sentences]
-    inputs = tokenizer(prompts, return_tensors="pt")
+    inputs = tokenizer(prompts, return_tensors="pt", padding=True)
+    inputs = {key: value.to(device) for key, value in inputs.items()}
     res = sm(gpt(**inputs).logits)
-    top_vals(tokenizer, res[0, -1], 10)
     mask = inputs['attention_mask']
+    top_vals(tokenizer, res[0][mask[0] == 1][-1], 10)
     distribs = []
     for i in range(len(prompts)):
-        distrib = res[i][mask[i] == 1][-1]
-        distribs.append(distrib)
+        distrib = res[i][mask[i] == 1]
+        distribs.append(distrib[-1].cpu().detach().type(torch.float32).numpy())
     
     # umap distribs
     umap = UMAP(n_components=2, random_state=42)
@@ -102,12 +103,12 @@ def plot_next_token_map(gpt, tokenizer, sentences, model):
     df['type'] = [s.verb[1] for s in sentences]
     df['p(he)'] = [d[tokenizer(' he').input_ids[0]].item() for d in distribs]
     df['p(she)'] = [d[tokenizer(' she').input_ids[0]].item() for d in distribs]
-    g = (ggplot(df) + geom_label(aes(x='x', y='y', label='verb', color='type'), alpha=0.5)
+    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', color='type'), alpha=0.5)
         + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
-    g.save(f"figs/next-token.pdf")
+    g.save(f"figs/{model.replace('/', '-')}-next-token-probs.pdf")
 
 @torch.inference_mode()
-def experiment(model="EleutherAI/pythia-160m", revision="main", intervene="verb"):
+def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb"):
     """Run experiment."""
 
     # load model
@@ -135,8 +136,14 @@ def experiment(model="EleutherAI/pythia-160m", revision="main", intervene="verb"
         "name2": None if intervene == "name2" else base.name2,
         "connective": None if intervene == "connective" else base.connective,
     }
-    others = [make_sentence(**intervention) for _ in tqdm(range(200))]
-    plot_next_token_map(gpt, tokenizer, others, model)
+    others = {}
+    for i in range(len(verbs)):
+        intervention['verb'] = verbs[i]
+        s = make_sentence(**intervention)
+        others[s.verb[0]] = s
+    others = list(others.values())
+    print(len(others))
+    plot_next_token_map(gpt, tokenizer, others, model, device)
     return
     sources = [make_sentence(**intervention)]
     print(base.sentence)
@@ -221,4 +228,4 @@ def main():
     experiment(**vars(args))
 
 if __name__ == "__main__":
-    experiment()
+    main()
