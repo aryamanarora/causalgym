@@ -95,19 +95,13 @@ def experiment(
         torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32
     ).to(device)
 
-    # layers
-    nodes = []
-    for l in range(gpt.config.num_hidden_layers - 1, -1, -1):
-        nodes.append(f'f{l}')
-        nodes.append(f'a{l}')
-
     # make stimuli
     options = get_options(tokenizer, token_length=1)
     base = make_sentence(
         options,
         name1=("Joseph", "he"),
         name2=("Elizabeth", "she"),
-        verb=("loved", "ExpStim"),
+        verb=("amazed", "ExpStim"),
         connective="because"
     )
     intervention = {
@@ -120,7 +114,7 @@ def experiment(
 
     # intervention time
     sources_orig = []
-    for _ in range(10):
+    for _ in range(20):
         sources_orig.append(make_sentence(**intervention))
     print(base.sentence)
     for s in sources_orig:
@@ -144,35 +138,41 @@ def experiment(
     sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources_orig]
     sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
 
+    # layers
+    nodes = []
+    for pos in range(len(base['input_ids'][0])):
+        for l in range(gpt.config.num_hidden_layers - 1, -1, -1):
+            nodes.append(f'f{l}.{pos}')
+            nodes.append(f'a{l}.{pos}')
+
     # get logits
     base_logits = lsm(gpt(**base).logits)
     sources_logits = [lsm(gpt(**x).logits) for x in sources]
 
     # intervene on each layer
     data = []
+    pos_i = 1
     for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
         for intervention_type in ["mlp_output", "attention_input"]:
             alignable_config = simple_position_config(type(gpt), intervention_type, layer_i)
             alignable = AlignableModel(alignable_config, gpt)
-            for pos_i in range(len(base['input_ids'][0])):
-                for i, source in enumerate(sources):
-                    _, counterfactual_outputs = alignable(
-                        source,
-                        [base],
-                        {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
-                    )
-                    logits = lsm(counterfactual_outputs.logits)
-                    data.append({
-                        'layer': f"f{layer_i}",
-                        'pos': pos_i,
-                        'type': intervention_type,
-                        'verb': sources_orig[i].verb[0],
-                        'verb_type': sources_orig[i].verb[1],
-                        'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].exp().item(),
-                        'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].exp().item(),
-                        'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
-                        'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
-                    })
+            # for pos_i in range(len(base['input_ids'][0])):
+            for i, source in enumerate(sources):
+                _, counterfactual_outputs = alignable(
+                    source,
+                    [base],
+                    {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+                )
+                logits = sm(counterfactual_outputs.logits)
+                data.append({
+                    'layer': f"f{layer_i}.{pos_i}" if intervention_type == "mlp_output" else f"a{layer_i}.{pos_i}",
+                    'type': intervention_type,
+                    'verb': sources_orig[i].verb[0],
+                    'verb_type': sources_orig[i].verb[1],
+                    'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
+                    'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
+                    # 'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
+                })
 
     # make df
     df = pd.DataFrame(data)
@@ -184,10 +184,10 @@ def experiment(
     # g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
     #     + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
     #     + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
-    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='layer'), alpha=0.3)
-        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
-        + facet_wrap('pos'))
-    g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}.pdf")
+    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='verb_type'), alpha=0.5)
+        + theme(axis_text_x=element_text(rotation=90), figure_size=(20, 20))
+        + facet_wrap('layer'))
+    g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}-{pos_i}.pdf")
 
 def main():
     parser = argparse.ArgumentParser()
