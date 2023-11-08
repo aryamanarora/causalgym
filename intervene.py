@@ -8,7 +8,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 import argparse
-from plotnine import ggplot, geom_tile, aes, facet_wrap, theme, element_text, \
+from plotnine import ggplot, geom_point, geom_label, geom_tile, aes, facet_wrap, theme, element_text, \
                      geom_bar, geom_hline, scale_y_log10
 from plotnine.scales import scale_x_continuous
 
@@ -19,6 +19,7 @@ from models.configuration_alignable_model import AlignableRepresentationConfig, 
 from models.alignable_base import AlignableModel
 from models.interventions import VanillaIntervention
 from models.gpt_neox.modelings_alignable_gpt_neox import create_gpt_neox
+from umap import UMAP
 
 # sentence helpers
 Sentence = namedtuple("Sentence", ["sentence", "verb", "name1", "name2", "connective"])
@@ -75,8 +76,38 @@ def simple_position_config(model_type, intervention_type, layer):
 def kldiv(input, target):
     return torch.nn.functional.kl_div(input, target, reduction="sum", log_target=True).cpu().detach().item()
 
-@torch.no_grad()
-def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb"):
+@torch.inference_mode()
+def plot_next_token_map(gpt, tokenizer, sentences, model):
+    # run model, get distribs
+    print(sentences[0])
+    prompts = [s.sentence for s in sentences]
+    inputs = tokenizer(prompts, return_tensors="pt")
+    res = sm(gpt(**inputs).logits)
+    top_vals(tokenizer, res[0, -1], 10)
+    mask = inputs['attention_mask']
+    distribs = []
+    for i in range(len(prompts)):
+        distrib = res[i][mask[i] == 1][-1]
+        distribs.append(distrib)
+    
+    # umap distribs
+    umap = UMAP(n_components=2, random_state=42)
+    umap.fit(distribs)
+    umap_distribs = umap.transform(distribs)
+
+    # make plot
+    df = pd.DataFrame(umap_distribs, columns=['x', 'y'])
+    df['prompt'] = prompts
+    df['verb'] = [s.verb[0] for s in sentences]
+    df['type'] = [s.verb[1] for s in sentences]
+    df['p(he)'] = [d[tokenizer(' he').input_ids[0]].item() for d in distribs]
+    df['p(she)'] = [d[tokenizer(' she').input_ids[0]].item() for d in distribs]
+    g = (ggplot(df) + geom_label(aes(x='x', y='y', label='verb', color='type'), alpha=0.5)
+        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
+    g.save(f"figs/next-token.pdf")
+
+@torch.inference_mode()
+def experiment(model="EleutherAI/pythia-160m", revision="main", intervene="verb"):
     """Run experiment."""
 
     # load model
@@ -96,7 +127,7 @@ def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb")
         nodes.append(f'a{l}')
 
     # make stimuli
-    base = make_sentence(tokenizer, connective="because")
+    base = make_sentence(tokenizer, name1=("Joseph", "he"), name2=("Elizabeth", "she"), connective="because")
     intervention = {
         "tokenizer": tokenizer,
         "name1": None if intervene == "name1" else base.name1,
@@ -104,6 +135,9 @@ def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb")
         "name2": None if intervene == "name2" else base.name2,
         "connective": None if intervene == "connective" else base.connective,
     }
+    others = [make_sentence(**intervention) for _ in tqdm(range(200))]
+    plot_next_token_map(gpt, tokenizer, others, model)
+    return
     sources = [make_sentence(**intervention)]
     print(base.sentence)
     print(sources[0].sentence)
@@ -111,6 +145,7 @@ def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb")
     # tokenizer
     base = tokenizer(base.sentence, return_tensors="pt")
     base = {key: value.to(device) for key, value in base.items()}
+    print(base)
     sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources]
     sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
     print(len(base['input_ids'][0]))
