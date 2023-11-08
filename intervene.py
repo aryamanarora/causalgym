@@ -129,8 +129,9 @@ def experiment(
 
     # plot
     plot_next_token_map(gpt, tokenizer, others, model, device)
-    return
-    sources = [make_sentence(**intervention)]
+
+    # intervention time
+    sources_orig = [make_sentence(**intervention) for _ in range(10)]
     print(base.sentence)
     print(sources[0].sentence)
 
@@ -138,7 +139,7 @@ def experiment(
     base = tokenizer(base.sentence, return_tensors="pt")
     base = {key: value.to(device) for key, value in base.items()}
     print(base)
-    sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources]
+    sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources_orig]
     sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
     print(len(base['input_ids'][0]))
     print(len(sources[0]['input_ids'][0]))
@@ -154,39 +155,28 @@ def experiment(
     # intervene on each layer
     data = []
     for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
-        alignable_config = simple_position_config(type(gpt), "mlp_output", layer_i)
-        alignable = AlignableModel(alignable_config, gpt)
-        for pos_i in range(len(base['input_ids'][0])):
-            _, counterfactual_outputs = alignable(
-                base,
-                sources,
-                {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
-            )
-            logits = lsm(counterfactual_outputs.logits)
-            data.append({
-                'layer': f"f{layer_i}",
-                'pos': pos_i,
-                'type': "mlp_output",
-                'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
-                'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
-            })
-                
-        alignable_config = simple_position_config(type(gpt), "attention_input", layer_i)
-        alignable = AlignableModel(alignable_config, gpt)
-        for pos_i in range(len(base['input_ids'][0])):
-            _, counterfactual_outputs = alignable(
-                base,
-                sources,
-                {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
-            )
-            logits = lsm(counterfactual_outputs.logits)
-            data.append({
-                'layer': f"a{layer_i}",
-                'pos': pos_i,
-                'type': "attention_input",
-                'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
-                'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
-            })
+        for intervention_type in ["mlp_output", "attention_input"]:
+            alignable_config = simple_position_config(type(gpt), intervention_type, layer_i)
+            alignable = AlignableModel(alignable_config, gpt)
+            for pos_i in range(len(base['input_ids'][0])):
+                for i, source in enumerate(sources):
+                    _, counterfactual_outputs = alignable(
+                        base,
+                        [source],
+                        {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+                    )
+                    logits = lsm(counterfactual_outputs.logits)
+                    data.append({
+                        'layer': f"f{layer_i}",
+                        'pos': pos_i,
+                        'type': intervention_type,
+                        'source': sources_orig[i].verb[0],
+                        'verb_type': sources_orig[i].verb[1],
+                        'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
+                        'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
+                        'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
+                        'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
+                    })
 
     # make df
     df = pd.DataFrame(data)
@@ -194,10 +184,13 @@ def experiment(
     df['layer'] = pd.Categorical(df['layer'], categories=nodes[::-1], ordered=True)
 
     # plot
-    labels = [format_token(tokenizer, x) for x in base['input_ids'][0]]
-    g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
-        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
-        + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
+    # labels = [format_token(tokenizer, x) for x in base['input_ids'][0]]
+    # g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
+    #     + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
+    #     + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
+    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', color='verb_type', fill='type'), alpha=0.5)
+        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
+    g.save(f"figs/{model.replace('/', '-')}-intervene.pdf")
     
     # save fig
     g.save(f"figs/{model}-{intervene}.pdf")
