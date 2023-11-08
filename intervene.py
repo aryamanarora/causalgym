@@ -1,8 +1,7 @@
 import torch
 import csv
-from collections import namedtuple
 import random
-from utils import MODELS, WEIGHTS
+from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import sys
 import pandas as pd
@@ -11,6 +10,7 @@ import argparse
 from plotnine import ggplot, geom_point, geom_label, geom_tile, aes, facet_wrap, theme, element_text, \
                      geom_bar, geom_hline, scale_y_log10
 from plotnine.scales import scale_x_continuous
+from typing import List
 
 # add align-transformers to path
 sys.path.append("../align-transformers/")
@@ -20,43 +20,6 @@ from models.alignable_base import AlignableModel
 from models.interventions import VanillaIntervention
 from models.gpt_neox.modelings_alignable_gpt_neox import create_gpt_neox
 from umap import UMAP
-
-# sentence helpers
-Sentence = namedtuple("Sentence", ["sentence", "verb", "name1", "name2", "connective"])
-names = {
-    "he": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
-    "she": ["Amanda", "Britney", "Catherine", "Dorothy", "Elizabeth", "Fiona", "Gina", "Helen", "Irene", "Jane"]
-}
-flattened_names = [(name, gender) for gender in names for name in names[gender]]
-connectives = ["because"]
-
-with open('data/ferstl.csv', 'r') as f:
-    reader = csv.reader(f)
-    verbs = [tuple(x) for x in reader]
-
-def make_sentence(tokenizer: AutoTokenizer, name1=None, verb=None, name2=None, connective=None):
-    while name1 is None or name1 == name2:
-        test = random.choice(flattened_names)
-        if len(tokenizer(test[0])['input_ids']) == 1:
-            name1 = test
-    while name2 is None or name1 == name2:
-        test = random.choice(flattened_names)
-        if len(tokenizer(' ' + test[0])['input_ids']) == 1:
-            name2 = test
-    while verb is None:
-        test = random.choice(verbs)
-        if len(tokenizer(' ' + test[0])['input_ids']) == 1:
-            verb = test
-    while connective is None:
-        connective = random.choice(connectives)
-    sent = f"{name1[0]} {verb[0]} {name2[0]} {connective}"
-    return Sentence(
-        sentence=sent,
-        verb=verb,
-        name1=name1,
-        name2=name2,
-        connective=connective,
-    )
 
 def simple_position_config(model_type, intervention_type, layer):
     alignable_config = AlignableConfig(
@@ -77,7 +40,13 @@ def kldiv(input, target):
     return torch.nn.functional.kl_div(input, target, reduction="sum", log_target=True).cpu().detach().item()
 
 @torch.inference_mode()
-def plot_next_token_map(gpt, tokenizer, sentences, model, device='cpu'):
+def plot_next_token_map(
+    gpt: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    sentences: List[Sentence],
+    model: str,
+    device: str='cpu'
+):
     # run model, get distribs
     print(sentences[0])
     prompts = [s.sentence for s in sentences]
@@ -106,9 +75,14 @@ def plot_next_token_map(gpt, tokenizer, sentences, model, device='cpu'):
     g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', color='type'), alpha=0.5)
         + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
     g.save(f"figs/{model.replace('/', '-')}-next-token-probs.pdf")
+    return df
 
 @torch.inference_mode()
-def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb"):
+def experiment(
+    model: str="EleutherAI/pythia-70m",
+    revision: str="main",
+    intervene: str="verb"
+):
     """Run experiment."""
 
     # load model
@@ -128,7 +102,14 @@ def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb")
         nodes.append(f'a{l}')
 
     # make stimuli
-    base = make_sentence(tokenizer, name1=("Joseph", "he"), name2=("Elizabeth", "she"), connective="because")
+    options = get_options()
+    base = make_sentence(
+        tokenizer,
+        options,
+        name1=("Joseph", "he"),
+        name2=("Elizabeth", "she"),
+        connective="because"
+    )
     intervention = {
         "tokenizer": tokenizer,
         "name1": None if intervene == "name1" else base.name1,
@@ -136,13 +117,17 @@ def experiment(model="EleutherAI/pythia-70m", revision="main", intervene="verb")
         "name2": None if intervene == "name2" else base.name2,
         "connective": None if intervene == "connective" else base.connective,
     }
+
+    # make others w intervention
     others = {}
-    for i in range(len(verbs)):
-        intervention['verb'] = verbs[i]
+    for i in range(len(options['verbs'])):
+        intervention['verb'] = options['verbs'][i]
         s = make_sentence(**intervention)
         others[s.verb[0]] = s
     others = list(others.values())
     print(len(others))
+
+    # plot
     plot_next_token_map(gpt, tokenizer, others, model, device)
     return
     sources = [make_sentence(**intervention)]

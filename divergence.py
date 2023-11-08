@@ -7,7 +7,7 @@ from plotnine.scales import scale_color_manual, scale_x_log10, ylim
 import pandas as pd
 import argparse
 from tqdm import tqdm
-from main import MODELS, WEIGHTS
+from utils import MODELS, WEIGHTS
 
 logsoftmax = torch.nn.LogSoftmax(dim=-1)
 softmax = torch.nn.Softmax(dim=-1)
