@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 import argparse
 from plotnine import ggplot, geom_point, geom_label, geom_tile, aes, facet_wrap, theme, element_text, \
-                     geom_bar, geom_hline, scale_y_log10
+                     geom_bar, geom_hline, scale_y_log10, ggtitle
 from plotnine.scales import scale_x_continuous
 from typing import List
 
@@ -102,21 +102,29 @@ def experiment(
         nodes.append(f'a{l}')
 
     # make stimuli
-    options = get_options()
+    options = get_options(tokenizer, token_length=1)
     base = make_sentence(
-        tokenizer,
         options,
         name1=("Joseph", "he"),
         name2=("Elizabeth", "she"),
+        verb=("loved", "ExpStim"),
         connective="because"
     )
     intervention = {
-        "tokenizer": tokenizer,
+        "options": options,
         "name1": None if intervene == "name1" else base.name1,
         "verb": None if intervene == "verb" else base.verb,
         "name2": None if intervene == "name2" else base.name2,
         "connective": None if intervene == "connective" else base.connective,
     }
+
+    # intervention time
+    sources_orig = []
+    for _ in range(10):
+        sources_orig.append(make_sentence(**intervention))
+    print(base.sentence)
+    for s in sources_orig:
+        print(s.sentence)
 
     # make others w intervention
     others = {}
@@ -130,27 +138,15 @@ def experiment(
     # plot
     plot_next_token_map(gpt, tokenizer, others, model, device)
 
-    # intervention time
-    sources_orig = [make_sentence(**intervention) for _ in range(10)]
-    print(base.sentence)
-    print(sources[0].sentence)
-
     # tokenizer
     base = tokenizer(base.sentence, return_tensors="pt")
     base = {key: value.to(device) for key, value in base.items()}
-    print(base)
     sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources_orig]
     sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
-    print(len(base['input_ids'][0]))
-    print(len(sources[0]['input_ids'][0]))
-    input()
 
     # get logits
     base_logits = lsm(gpt(**base).logits)
     sources_logits = [lsm(gpt(**x).logits) for x in sources]
-    top_vals(tokenizer, base_logits[0, -1], 10)
-    print('---')
-    top_vals(tokenizer, sources_logits[0][0, -1], 10)
 
     # intervene on each layer
     data = []
@@ -161,8 +157,8 @@ def experiment(
             for pos_i in range(len(base['input_ids'][0])):
                 for i, source in enumerate(sources):
                     _, counterfactual_outputs = alignable(
-                        base,
-                        [source],
+                        source,
+                        [base],
                         {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
                     )
                     logits = lsm(counterfactual_outputs.logits)
@@ -170,10 +166,10 @@ def experiment(
                         'layer': f"f{layer_i}",
                         'pos': pos_i,
                         'type': intervention_type,
-                        'source': sources_orig[i].verb[0],
+                        'verb': sources_orig[i].verb[0],
                         'verb_type': sources_orig[i].verb[1],
-                        'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
-                        'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
+                        'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].exp().item(),
+                        'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].exp().item(),
                         'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
                         'kldiv_source': kldiv(logits[0, -1], sources_logits[0][0, -1]),
                     })
@@ -188,12 +184,10 @@ def experiment(
     # g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
     #     + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
     #     + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
-    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', color='verb_type', fill='type'), alpha=0.5)
-        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
-    g.save(f"figs/{model.replace('/', '-')}-intervene.pdf")
-    
-    # save fig
-    g.save(f"figs/{model}-{intervene}.pdf")
+    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='layer'), alpha=0.3)
+        + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
+        + facet_wrap('pos'))
+    g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}.pdf")
 
 def main():
     parser = argparse.ArgumentParser()

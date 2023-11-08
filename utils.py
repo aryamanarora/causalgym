@@ -39,7 +39,7 @@ WEIGHTS = {
 Sentence = namedtuple("Sentence", ["sentence", "verb", "name1", "name2", "connective"])
 
 # data things
-def get_options():
+def get_options(tokenizer: AutoTokenizer=None, token_length: int=None):
     """Get options for experiment."""
 
     # verbs
@@ -57,6 +57,12 @@ def get_options():
     # connectives
     connectives = ["because"]
 
+    # filter
+    if token_length is not None:
+        verbs = [x for x in verbs if len(tokenizer(' ' + x[0])['input_ids']) == token_length]
+        flattened_names = [x for x in flattened_names if len(tokenizer(x[0])['input_ids']) == token_length]
+        connectives = [x for x in connectives if len(tokenizer(' ' + x)['input_ids']) == token_length]
+
     return {
         "verbs": verbs,
         "names": flattened_names,
@@ -64,26 +70,21 @@ def get_options():
     }
 
 def make_sentence(
-    tokenizer: AutoTokenizer,
     options: dict,
     name1=None,
     verb=None,
     name2=None,
-    connective=None,
-    token_length: int=1
+    connective=None
 ):
     """Make a sentence with the given tokenizer and options"""
 
     # set unset vars
     while name1 is None or name1 == name2:
-        test = random.choice(options['names'])
-        name1 = test if len(tokenizer(test[0])['input_ids']) == token_length else name1
+        name1 = random.choice(options['names'])
     while name2 is None or name1 == name2:
-        test = random.choice(options['names'])
-        name2 = test if len(tokenizer(' ' + test[0])['input_ids']) == token_length else name2
+        name2 = random.choice(options['names'])
     while verb is None:
-        test = random.choice(options['verbs'])
-        verb = test if len(tokenizer(' ' + test[0])['input_ids']) == token_length else verb
+        verb = random.choice(options['verbs'])
     while connective is None:
         connective = random.choice(options['connectives'])
 
