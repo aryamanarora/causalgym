@@ -32,7 +32,7 @@ def simple_position_config(model_type, intervention_type, layer):
                 1                  # max number of unit
             ),
         ],
-        alignable_interventions_type=VanillaIntervention,
+        alignable_interventions_type=VanillaIntervention
     )
     return alignable_config
 
@@ -81,7 +81,8 @@ def plot_next_token_map(
 def experiment(
     model: str="EleutherAI/pythia-70m",
     revision: str="main",
-    intervene: str="verb"
+    intervene: str="verb",
+    pos: int=0
 ):
     """Run experiment."""
 
@@ -101,7 +102,7 @@ def experiment(
         options,
         name1=("Joseph", "he"),
         name2=("Elizabeth", "she"),
-        verb=("amazed", "ExpStim"),
+        verb=("hated", "ExpStim"),
         connective="because"
     )
     intervention = {
@@ -140,9 +141,9 @@ def experiment(
 
     # layers
     nodes = ["none"]
-    for pos in range(len(base['input_ids'][0])):
+    for p in range(len(base['input_ids'][0])):
         for l in range(gpt.config.num_hidden_layers - 1, -1, -1):
-            nodes.append(f'{l}.{pos}')
+            nodes.append(f'{l}.{p}')
             # nodes.append(f'f{l}.{pos}')
             # nodes.append(f'a{l}.{pos}')
 
@@ -162,7 +163,7 @@ def experiment(
         })
 
     # intervene on each layer
-    pos_i = 3
+    pos_i = pos
     for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
         alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
         alignable = AlignableModel(alignable_config, gpt)
@@ -204,6 +205,7 @@ def main():
     parser.add_argument("--model", default="EleutherAI/pythia-70m", help="name of model")
     parser.add_argument("--revision", default="main", help="revision of model")
     parser.add_argument("--intervene", default="verb", help="what part of the sentence to intervene on")
+    parser.add_argument("--pos", default=0, help="intervention position", type=int)
     args = parser.parse_args()
     print(vars(args))
     
