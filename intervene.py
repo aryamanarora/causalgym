@@ -97,7 +97,7 @@ def experiment(
 
     # make stimuli
     options = get_options(tokenizer, token_length=1)
-    base = make_sentence(
+    base_orig = make_sentence(
         options,
         name1=("Joseph", "he"),
         name2=("Elizabeth", "she"),
@@ -106,17 +106,17 @@ def experiment(
     )
     intervention = {
         "options": options,
-        "name1": None if intervene == "name1" else base.name1,
-        "verb": None if intervene == "verb" else base.verb,
-        "name2": None if intervene == "name2" else base.name2,
-        "connective": None if intervene == "connective" else base.connective,
+        "name1": None if intervene == "name1" else base_orig.name1,
+        "verb": None if intervene == "verb" else base_orig.verb,
+        "name2": None if intervene == "name2" else base_orig.name2,
+        "connective": None if intervene == "connective" else base_orig.connective,
     }
 
     # intervention time
     sources_orig = []
-    for _ in range(20):
+    for _ in range(100):
         sources_orig.append(make_sentence(**intervention))
-    print(base.sentence)
+    print(base_orig.sentence)
     for s in sources_orig:
         print(s.sentence)
 
@@ -133,46 +133,56 @@ def experiment(
     plot_next_token_map(gpt, tokenizer, others, model, device)
 
     # tokenizer
-    base = tokenizer(base.sentence, return_tensors="pt")
+    base = tokenizer(base_orig.sentence, return_tensors="pt")
     base = {key: value.to(device) for key, value in base.items()}
     sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources_orig]
     sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
 
     # layers
-    nodes = []
+    nodes = ["none"]
     for pos in range(len(base['input_ids'][0])):
         for l in range(gpt.config.num_hidden_layers - 1, -1, -1):
-            nodes.append(f'f{l}.{pos}')
-            nodes.append(f'a{l}.{pos}')
+            nodes.append(f'{l}.{pos}')
+            # nodes.append(f'f{l}.{pos}')
+            # nodes.append(f'a{l}.{pos}')
 
     # get logits
-    base_logits = lsm(gpt(**base).logits)
-    sources_logits = [lsm(gpt(**x).logits) for x in sources]
+    data = []
+    base_logits = sm(gpt(**base).logits)
+    sources_logits = [sm(gpt(**x).logits) for x in sources]
+    for i in range(len(sources) + 1):
+        logits = sources_logits[i - 1] if i > 0 else base_logits
+        data.append({
+            'layer': f"none",
+            'verb': sources_orig[i - 1].verb[0] if i > 0 else base_orig.verb[0],
+            'verb_type': sources_orig[i - 1].verb[1] if i > 0 else base_orig.verb[1],
+            'is_base': i == 0,
+            'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
+            'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
+        })
 
     # intervene on each layer
-    data = []
-    pos_i = 1
+    pos_i = 3
     for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
-        for intervention_type in ["mlp_output", "attention_input"]:
-            alignable_config = simple_position_config(type(gpt), intervention_type, layer_i)
-            alignable = AlignableModel(alignable_config, gpt)
-            # for pos_i in range(len(base['input_ids'][0])):
-            for i, source in enumerate(sources):
-                _, counterfactual_outputs = alignable(
-                    source,
-                    [base],
-                    {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
-                )
-                logits = sm(counterfactual_outputs.logits)
-                data.append({
-                    'layer': f"f{layer_i}.{pos_i}" if intervention_type == "mlp_output" else f"a{layer_i}.{pos_i}",
-                    'type': intervention_type,
-                    'verb': sources_orig[i].verb[0],
-                    'verb_type': sources_orig[i].verb[1],
-                    'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
-                    'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
-                    # 'kldiv_base': kldiv(logits[0, -1], base_logits[0, -1]),
-                })
+        alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
+        alignable = AlignableModel(alignable_config, gpt)
+        # for pos_i in range(len(base['input_ids'][0])):
+        for i, source in enumerate(sources):
+            _, counterfactual_outputs = alignable(
+                source,
+                [base],
+                {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+            )
+            logits = sm(counterfactual_outputs.logits)
+            data.append({
+                'layer': f"{layer_i}.{pos_i}",
+                'verb': sources_orig[i].verb[0],
+                'verb_type': sources_orig[i].verb[1],
+                'is_base': False,
+                'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
+                'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
+                # 'kldiv_base': kldiv(logits[0, -1].log(), base_logits[0, -1].log()),
+            })
 
     # make df
     df = pd.DataFrame(data)
@@ -184,7 +194,7 @@ def experiment(
     # g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
     #     + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
     #     + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
-    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='verb_type'), alpha=0.5)
+    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='verb_type', boxstyle='is_base'), alpha=0.5)
         + theme(axis_text_x=element_text(rotation=90), figure_size=(20, 20))
         + facet_wrap('layer'))
     g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}-{pos_i}.pdf")
