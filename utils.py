@@ -50,7 +50,7 @@ def get_options(tokenizer: AutoTokenizer=None, token_length: int=None):
     # names
     names = {
         "he": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
-        "she": ["Amanda", "Britney", "Catherine", "Dorothy", "Elizabeth", "Fiona", "Gina", "Helen", "Irene", "Jane"]
+        "she": ["Sarah", "Mary", "Elizabeth", "Jane"]
     }
     flattened_names = [(name, gender) for gender in names for name in names[gender]]
 

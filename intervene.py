@@ -8,8 +8,8 @@ import pandas as pd
 from tqdm import tqdm
 import argparse
 from plotnine import ggplot, geom_point, geom_label, geom_tile, aes, facet_wrap, theme, element_text, \
-                     geom_bar, geom_hline, scale_y_log10, ggtitle
-from plotnine.scales import scale_x_continuous
+                     facet_grid, geom_bar, geom_hline, scale_y_log10, ggtitle
+from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse
 from typing import List
 
 # add align-transformers to path
@@ -81,8 +81,7 @@ def plot_next_token_map(
 def experiment(
     model: str="EleutherAI/pythia-70m",
     revision: str="main",
-    intervene: str="verb",
-    pos: int=0
+    intervene: str="verb"
 ):
     """Run experiment."""
 
@@ -98,114 +97,79 @@ def experiment(
 
     # make stimuli
     options = get_options(tokenizer, token_length=1)
-    base_orig = make_sentence(
-        options,
-        name1=("Joseph", "he"),
-        name2=("Elizabeth", "she"),
-        verb=("hated", "ExpStim"),
-        connective="because"
-    )
-    intervention = {
-        "options": options,
-        "name1": None if intervene == "name1" else base_orig.name1,
-        "verb": None if intervene == "verb" else base_orig.verb,
-        "name2": None if intervene == "name2" else base_orig.name2,
-        "connective": None if intervene == "connective" else base_orig.connective,
-    }
 
-    # intervention time
-    sources_orig = []
-    for _ in range(100):
-        sources_orig.append(make_sentence(**intervention))
-    print(base_orig.sentence)
-    for s in sources_orig:
-        print(s.sentence)
-
-    # make others w intervention
-    others = {}
-    for i in range(len(options['verbs'])):
-        intervention['verb'] = options['verbs'][i]
-        s = make_sentence(**intervention)
-        others[s.verb[0]] = s
-    others = list(others.values())
-    print(len(others))
-
-    # plot
-    plot_next_token_map(gpt, tokenizer, others, model, device)
-
-    # tokenizer
-    base = tokenizer(base_orig.sentence, return_tensors="pt")
-    base = {key: value.to(device) for key, value in base.items()}
-    sources = [tokenizer(s.sentence, return_tensors="pt") for s in sources_orig]
-    sources = [{key: value.to(device) for key, value in x.items()} for x in sources]
-
-    # layers
-    nodes = ["none"]
-    for p in range(len(base['input_ids'][0])):
-        for l in range(gpt.config.num_hidden_layers - 1, -1, -1):
-            nodes.append(f'{l}.{p}')
-            # nodes.append(f'f{l}.{pos}')
-            # nodes.append(f'a{l}.{pos}')
-
-    # get logits
+    # tokens to check
+    tokens = tokenizer.encode(" he she", return_tensors="pt")[0].to(device)
     data = []
-    base_logits = sm(gpt(**base).logits)
-    sources_logits = [sm(gpt(**x).logits) for x in sources]
-    for i in range(len(sources) + 1):
-        logits = sources_logits[i - 1] if i > 0 else base_logits
-        data.append({
-            'layer': f"none",
-            'verb': sources_orig[i - 1].verb[0] if i > 0 else base_orig.verb[0],
-            'verb_type': sources_orig[i - 1].verb[1] if i > 0 else base_orig.verb[1],
-            'is_base': i == 0,
-            'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
-            'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
-        })
 
-    # intervene on each layer
-    pos_i = pos
-    for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
-        alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
-        alignable = AlignableModel(alignable_config, gpt)
-        # for pos_i in range(len(base['input_ids'][0])):
-        for i, source in enumerate(sources):
-            _, counterfactual_outputs = alignable(
-                source,
-                [base],
-                {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
-            )
-            logits = sm(counterfactual_outputs.logits)
-            data.append({
-                'layer': f"{layer_i}.{pos_i}",
-                'verb': sources_orig[i].verb[0],
-                'verb_type': sources_orig[i].verb[1],
-                'is_base': False,
-                'p(he)': logits[0, -1, tokenizer(' he').input_ids[0]].item(),
-                'p(she)': logits[0, -1, tokenizer(' she').input_ids[0]].item(),
-                # 'kldiv_base': kldiv(logits[0, -1].log(), base_logits[0, -1].log()),
-            })
+
+    # interventions
+    for i in tqdm(range(20)):
+
+        # make base and source
+        base_orig = make_sentence(options, verb=("amazed", "idk"), connective="because")
+        intervention = {
+            'name1': base_orig.name1 if intervene != 'name1' else None,
+            'verb': base_orig.verb if intervene != 'verb' else None,
+            'name2': base_orig.name2 if intervene != 'name2' else None,
+            'connective': base_orig.connective if intervene != 'connective' else None,
+        }
+        intervention['options'] = options
+        source_orig = make_sentence(**intervention)
+        intervened = f"{getattr(base_orig, intervene)}/{getattr(source_orig, intervene)}"
+        base = tokenizer(base_orig.sentence, return_tensors="pt").to(device)
+        sources = [tokenizer(source_orig.sentence, return_tensors="pt").to(device)]
+        print(base_orig.sentence, source_orig.sentence)
+
+        # intervene on each layer
+        for layer_i in range(gpt.config.num_hidden_layers):
+
+            # make config
+            alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
+            alignable = AlignableModel(alignable_config, gpt)
+
+            # intervention time
+            for pos_i in range(len(base['input_ids'][0])):
+                _, counterfactual_outputs = alignable(
+                    base,
+                    sources,
+                    {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+                )
+                logits = sm(counterfactual_outputs.logits)
+                data.extend([{
+                    'layer': layer_i,
+                    'pos': pos_i,
+                    'base': base_orig.sentence,
+                    'source': source_orig.sentence,
+                    'genders': f"{base_orig.name1[1]}/{source_orig.name1[1]}, {base_orig.name2[1]}/{source_orig.name2[1]}",
+                    'intervened': intervened,
+                    'is_base': False,
+                    'token': format_token(tokenizer, token),
+                    'prob': logits[0, -1, token].item(),
+                } for token in tokens])
 
     # make df
     df = pd.DataFrame(data)
-    df['layer'] = df['layer'].astype('category')
-    df['layer'] = pd.Categorical(df['layer'], categories=nodes[::-1], ordered=True)
+    df['layer'] = df['layer'].astype('int')
+    df['pos'] = df['pos'].astype('int')
+    df['prob'] = df['prob'].astype('float')
 
     # plot
-    # labels = [format_token(tokenizer, x) for x in base['input_ids'][0]]
-    # g = (ggplot(df) + geom_tile(aes(x='pos', y='layer', fill='kldiv_base', color='kldiv_base'))
-    #     + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
-    #     + scale_x_continuous(breaks=list(range(len(labels))), labels=labels))
-    g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='verb_type', boxstyle='is_base'), alpha=0.5)
-        + theme(axis_text_x=element_text(rotation=90), figure_size=(20, 20))
-        + facet_wrap('layer'))
-    g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}-{pos_i}.pdf")
+    plot = (ggplot(df, aes(x="layer", y="pos")) + scale_y_reverse() + facet_grid("genders ~ token")
+            + geom_tile(aes(fill="prob")) + scale_fill_cmap("Purples") + theme(figure_size=(10, 20)))
+    plot.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}.pdf")
+
+    # plot
+    # g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='verb_type', boxstyle='is_base'), alpha=0.5)
+    #     + theme(axis_text_x=element_text(rotation=90), figure_size=(20, 20))
+    #     + facet_wrap('layer'))
+    # g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}-{pos_i}.pdf")
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="EleutherAI/pythia-70m", help="name of model")
     parser.add_argument("--revision", default="main", help="revision of model")
     parser.add_argument("--intervene", default="verb", help="what part of the sentence to intervene on")
-    parser.add_argument("--pos", default=0, help="intervention position", type=int)
     args = parser.parse_args()
     print(vars(args))
     
