@@ -107,7 +107,7 @@ def experiment(
     samples = []
     for i in range(num_samples):
         # make base and source
-        base_orig = make_sentence(options, verb=("amazed", "idk"), connective="because")
+        base_orig = make_sentence(options, connective="because")
         intervention = {
             'name1': base_orig.name1 if intervene != 'name1' else None,
             'verb': base_orig.verb if intervene != 'verb' else None,
@@ -119,18 +119,19 @@ def experiment(
         intervened = f"{getattr(base_orig, intervene)}/{getattr(source_orig, intervene)}"
         base = tokenizer(base_orig.sentence, return_tensors="pt").to(device)
         sources = [tokenizer(source_orig.sentence, return_tensors="pt").to(device)]
+        base_logits = sm(gpt(**base).logits)
         print(base_orig.sentence, source_orig.sentence)
-        samples.append((base_orig, source_orig, base, sources))
+        samples.append((base_orig, source_orig, base, sources, base_logits))
 
     # intervene on each layer
-    for layer_i in range(gpt.config.num_hidden_layers):
+    for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
 
         # make config
         alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
         alignable = AlignableModel(alignable_config, gpt)
 
-        for i in tqdm(range(num_samples)):
-            base_orig, source_orig, base, sources = samples[i]
+        for i in range(num_samples):
+            base_orig, source_orig, base, sources, base_logits = samples[i]
 
             # intervention time
             for pos_i in range(len(base['input_ids'][0])):
@@ -149,7 +150,7 @@ def experiment(
                     'intervened': intervened,
                     'is_base': False,
                     'token': format_token(tokenizer, token),
-                    'prob': logits[0, -1, token].item(),
+                    'prob': logits[0, -1, token].item() - base_logits[0, -1, token].item(),
                 } for token in tokens])
 
     # make df
@@ -160,7 +161,7 @@ def experiment(
 
     # plot
     plot = (ggplot(df, aes(x="layer", y="pos")) + scale_y_reverse() + facet_grid("genders ~ token")
-            + geom_tile(aes(fill="prob")) + scale_fill_cmap("Purples") + theme(figure_size=(10, 20)))
+            + geom_tile(aes(fill="prob")) + scale_fill_cmap("PuOr") + theme(figure_size=(10, 20)))
     plot.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}.pdf")
 
 def main():
