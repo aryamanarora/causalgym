@@ -81,7 +81,8 @@ def plot_next_token_map(
 def experiment(
     model: str="EleutherAI/pythia-70m",
     revision: str="main",
-    intervene: str="verb"
+    intervene: str="verb",
+    num_samples: int=20
 ):
     """Run experiment."""
 
@@ -102,10 +103,9 @@ def experiment(
     tokens = tokenizer.encode(" he she", return_tensors="pt")[0].to(device)
     data = []
 
-
-    # interventions
-    for i in tqdm(range(20)):
-
+    # make data
+    samples = []
+    for i in range(num_samples):
         # make base and source
         base_orig = make_sentence(options, verb=("amazed", "idk"), connective="because")
         intervention = {
@@ -120,13 +120,17 @@ def experiment(
         base = tokenizer(base_orig.sentence, return_tensors="pt").to(device)
         sources = [tokenizer(source_orig.sentence, return_tensors="pt").to(device)]
         print(base_orig.sentence, source_orig.sentence)
+        samples.append((base_orig, source_orig, base, sources))
 
-        # intervene on each layer
-        for layer_i in range(gpt.config.num_hidden_layers):
+    # intervene on each layer
+    for layer_i in range(gpt.config.num_hidden_layers):
 
-            # make config
-            alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
-            alignable = AlignableModel(alignable_config, gpt)
+        # make config
+        alignable_config = simple_position_config(type(gpt), "block_output", layer_i)
+        alignable = AlignableModel(alignable_config, gpt)
+
+        for i in tqdm(range(num_samples)):
+            base_orig, source_orig, base, sources = samples[i]
 
             # intervention time
             for pos_i in range(len(base['input_ids'][0])):
@@ -159,17 +163,12 @@ def experiment(
             + geom_tile(aes(fill="prob")) + scale_fill_cmap("Purples") + theme(figure_size=(10, 20)))
     plot.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}.pdf")
 
-    # plot
-    # g = (ggplot(df) + geom_label(aes(x='p(he)', y='p(she)', label='verb', fill='verb_type', boxstyle='is_base'), alpha=0.5)
-    #     + theme(axis_text_x=element_text(rotation=90), figure_size=(20, 20))
-    #     + facet_wrap('layer'))
-    # g.save(f"figs/{model.replace('/', '-')}-intervene-{intervene}-{pos_i}.pdf")
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="EleutherAI/pythia-70m", help="name of model")
     parser.add_argument("--revision", default="main", help="revision of model")
     parser.add_argument("--intervene", default="verb", help="what part of the sentence to intervene on")
+    parser.add_argument("--num_samples", default=20, type=int, help="number of samples to run")
     args = parser.parse_args()
     print(vars(args))
     
