@@ -22,14 +22,14 @@ from models.interventions import VanillaIntervention, RotatedSpaceIntervention
 from models.gpt_neox.modelings_alignable_gpt_neox import create_gpt_neox
 from umap import UMAP
 
-def rotated_space_intervention(dim):
+def rotated_space_intervention(num_dims):
     def func(args, proj_dim):
         intervention = RotatedSpaceIntervention(args)
-        intervention.set_interchange_dim(dim)
+        intervention.set_interchange_dim(num_dims)
         return intervention
     return func
 
-def intervention_config(model_type, intervention_type, layer, dims):
+def intervention_config(model_type, intervention_type, layer, num_dims):
     alignable_config = AlignableConfig(
         alignable_model_type=model_type,
         alignable_representations=[
@@ -40,7 +40,7 @@ def intervention_config(model_type, intervention_type, layer, dims):
                 1                  # max number of unit
             ),
         ],
-        alignable_interventions_type=rotated_space_intervention(dims)
+        alignable_interventions_type=rotated_space_intervention(num_dims)
     )
     return alignable_config
 
@@ -77,13 +77,16 @@ with torch.no_grad():
     top_vals(tokenizer, -(source_logits - base_logits)[0, -1], 10)
 
 # intervene on each layer
+# only intervening on layer 0, pos 1, dim 1
 data = []
-for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
+# for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
+for layer_i in [0]:
 
-    for pos_i in range(1, len(base.input_ids[0])):
+    # for pos_i in range(1, len(base.input_ids[0])):
+    for pos_i in [1]:
         
         # how many dims to intervene on
-        for num_dims in range(1, 10):
+        for num_dims in [1]:
 
             print(layer_i, pos_i, num_dims)
         
@@ -164,6 +167,7 @@ for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
                 alignable.set_temperature(temperature_schedule[total_step])
                 total_step += 1
             
+            # check top vals after trained intervention
             top_vals(tokenizer, sm(counterfactual_outputs.logits)[0, -1], 10)
 
                 # get stats
@@ -174,13 +178,13 @@ for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
                     #     "pos": pos_i
                     # })
 
-# make df
-df = pd.DataFrame(data)
-df['layer'] = df['layer'].astype('int')
-df['pos'] = df['pos'].astype('int')
-df['prob'] = df['prob'].astype('float')
+# # make df
+# df = pd.DataFrame(data)
+# df['layer'] = df['layer'].astype('int')
+# df['pos'] = df['pos'].astype('int')
+# df['prob'] = df['prob'].astype('float')
 
-# plot
-plot = (ggplot(df, aes(x="layer", y="pos")) + scale_y_reverse() + facet_grid("~token")
-        + geom_tile(aes(fill="prob")) + scale_fill_cmap("Purples"))
-print(plot)
+# # plot
+# plot = (ggplot(df, aes(x="layer", y="pos")) + scale_y_reverse() + facet_grid("~token")
+#         + geom_tile(aes(fill="prob")) + scale_fill_cmap("Purples"))
+# print(plot)
