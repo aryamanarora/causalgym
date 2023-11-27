@@ -231,27 +231,28 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000):
     plot.save("figs/prob.pdf")
 
     # test probe on a sentence
-    test = tokenizer("<|endoftext|>He is my girlfriend's brother and he wants to be a nurse.", return_tensors="pt")
-    neutrals = [tokenizer("<|endoftext|>John fell because", return_tensors="pt"), tokenizer("<|endoftext|>Jane fell because", return_tensors="pt")]
-    base_logits = [{}, {}]
+    with torch.no_grad():
+        test = tokenizer("<|endoftext|>He is my girlfriend's brother and he wants to be a nurse.", return_tensors="pt").to(device)
+        neutrals = [tokenizer("<|endoftext|>John fell because", return_tensors="pt"), tokenizer("<|endoftext|>Jane fell because", return_tensors="pt").to(device)]
+        base_logits = [{}, {}]
 
-    for i in range(len(neutrals)):
-        logits = gpt(**neutrals[i].to(device)).logits
-        for token in tokens:
-            base_logits[i][token] = logits[0, -1, token].item()
-
-    for pos_i in range(1, len(test.input_ids[0])):
-        for i, neutral in enumerate(neutrals):
-            _, counterfactual_outputs = alignable(
-                neutral,
-                [test],
-                {"sources->base": ([[[pos_i]]], [[[2]]])}
-            )
-
-            logits = counterfactual_outputs.logits[0, -1]
+        for i in range(len(neutrals)):
+            logits = gpt(**neutrals[i].to(device)).logits
             for token in tokens:
-                print(f"{pos_i:<5} {format_token(tokenizer, test.input_ids[0][pos_i]):<15} {format_token(tokenizer, token):<15} {logits[token].item() - base_logits[i][token]:>9.4f}")
-        print()
+                base_logits[i][token] = logits[0, -1, token].item()
+
+        for pos_i in range(1, len(test.input_ids[0])):
+            for i, neutral in enumerate(neutrals):
+                _, counterfactual_outputs = alignable(
+                    neutral,
+                    [test],
+                    {"sources->base": ([[[pos_i]]], [[[2]]])}
+                )
+
+                logits = counterfactual_outputs.logits[0, -1]
+                for token in tokens:
+                    print(f"{pos_i:<5} {format_token(tokenizer, test.input_ids[0][pos_i]):<15} {format_token(tokenizer, token):<15} {logits[token].item() - base_logits[i][token]:>9.4f}")
+            print()
 
     # # make df
     # df = pd.DataFrame(data)
