@@ -8,7 +8,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 import argparse
-from plotnine import ggplot, geom_point, geom_label, geom_tile, aes, facet_wrap, theme, element_text, \
+from plotnine import ggplot, geom_point, geom_label, geom_tile, geom_smooth, aes, facet_wrap, theme, element_text, \
                      facet_grid, geom_bar, geom_hline, scale_y_log10, ggtitle
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse
 from typing import List
@@ -46,7 +46,7 @@ def intervention_config(model_type, intervention_type, layer, num_dims):
     )
     return alignable_config
 
-def experiment(model="EleutherAI/pythia-70m"):
+def experiment(model="EleutherAI/pythia-70m", steps=1000):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
@@ -73,9 +73,15 @@ def experiment(model="EleutherAI/pythia-70m"):
     # tokenize
     tokens = tokenizer.encode(" she he") # token we want to maximize the probability of
 
+    # evalset
+    evalset = []
+    for i in range(20):
+        evalset.append(make_pair())
+
     # intervene on each layer
     # only intervening on layer 0, pos 1, dim 1
     data = []
+
     # for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
     for layer_i in [0]:
 
@@ -94,7 +100,7 @@ def experiment(model="EleutherAI/pythia-70m"):
                 alignable.disable_model_gradients()
 
                 # optimizer
-                t_total = 10000
+                t_total = steps
                 warm_up_steps = 0.1 * t_total
                 optimizer_params = []
                 for k, v in alignable.interventions.items():
@@ -156,18 +162,18 @@ def experiment(model="EleutherAI/pythia-70m"):
                     )
                     loss_str = round(loss.item(), 2)
 
+                    # print stats
                     stats = {'loss': loss_str}
                     distrib = sm(counterfactual_outputs.logits)[0, -1]
                     for tok in tokens:
                         prob = distrib[tok].item()
                         stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
-
                     hidden_state_size = gpt.config.hidden_size
                     for k, v in alignable.interventions.items():
                         stats["bound"] = f"{v[0].intervention_boundaries.sum() * v[0].embed_dim:.3f}"
-
                     iterator.set_postfix(stats)
 
+                    # gradient accumulation
                     if gradient_accumulation_steps > 1:
                         loss = loss / gradient_accumulation_steps
                     if total_step % gradient_accumulation_steps == 0:
@@ -178,19 +184,53 @@ def experiment(model="EleutherAI/pythia-70m"):
                             alignable.set_zero_grad()
                             alignable.set_temperature(temperature_schedule[total_step])
 
+                    # eval
+                    if step % 20 == 0:
+
+                        with torch.no_grad():
+                            boundary = None
+                            for k, v in alignable.interventions.items():
+                                boundary = v[0].intervention_boundaries.sum() * v[0].embed_dim
+                            boundary = boundary.item()
+
+                            for pair, label in evalset:
+                                _, counterfactual_outputs = alignable(
+                                    pair[0],
+                                    [pair[1]],
+                                    {"sources->base": ([[[pos_i]]], [[[pos_i]]])}
+                                )
+                                loss = calculate_loss(
+                                    counterfactual_outputs.logits,
+                                    tokenizer.encode(label)[0]
+                                )
+                                distrib = sm(counterfactual_outputs.logits)[0, -1]
+                                for tok in tokens:
+                                    prob = distrib[tok].item()
+                                    stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
+                                    data.append({
+                                        "step": step,
+                                        "label": label,
+                                        "loss": loss.item(),
+                                        "token": format_token(tokenizer, tok),
+                                        "prob": prob,
+                                        "bound": boundary,
+                                    })
+
                     total_step += 1
-                
-                # check top vals after trained intervention
-                top_vals(tokenizer, sm(counterfactual_outputs.logits)[0, -1], 10)
+    
+    # print plots
+    df = pd.DataFrame(data)
+    
+    plot = (ggplot(df, aes(x="step", y="bound")) + geom_smooth() + ggtitle("intervention boundary"))
+    plot.save("figs/bound.pdf")
 
-                    # get stats
-                        # data.append({
-                        #     "layer": layer_i,
-                        #     "token": format_token(tokenizer, tok),
-                        #     "prob": prob,
-                        #     "pos": pos_i
-                        # })
+    plot = (ggplot(df, aes(x="step", y="loss", color="factor(label)")) + geom_smooth() + ggtitle("per-label loss"))
+    plot.save("figs/loss.pdf")
 
+    plot = (ggplot(df, aes(x="step", y="prob", color="factor(label)")) + facet_grid("~token") + geom_smooth() + ggtitle("per-label probs"))
+    plot.save("figs/prob.pdf")
+
+    # test probe on a sentence
     test = tokenizer("<|endoftext|>He is my girlfriend's brother and he wants to be a nurse.", return_tensors="pt")
     neutrals = [tokenizer("<|endoftext|>John fell because", return_tensors="pt"), tokenizer("<|endoftext|>Jane fell because", return_tensors="pt")]
     base_logits = [{}, {}]
@@ -227,6 +267,7 @@ def experiment(model="EleutherAI/pythia-70m"):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
+    parser.add_argument("--steps", type=int, default=1000)
     args = parser.parse_args()
     experiment(args.model)
 
