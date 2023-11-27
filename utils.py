@@ -38,6 +38,11 @@ WEIGHTS = {
 # sentences
 Sentence = namedtuple("Sentence", ["sentence", "verb", "name1", "name2", "connective"])
 
+names = {
+    "he": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
+    "she": ["Sarah", "Mary", "Elizabeth", "Jane"]
+}
+
 # data things
 def get_options(tokenizer: AutoTokenizer=None, token_length: int=None):
     """Get options for experiment."""
@@ -48,10 +53,6 @@ def get_options(tokenizer: AutoTokenizer=None, token_length: int=None):
         verbs = [tuple(x) for x in reader]
     
     # names
-    names = {
-        "he": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
-        "she": ["Sarah", "Mary", "Elizabeth", "Jane"]
-    }
     flattened_names = [(name, gender) for gender in names for name in names[gender]]
 
     # connectives
