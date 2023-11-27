@@ -46,18 +46,6 @@ def intervention_config(model_type, intervention_type, layer, num_dims):
     )
     return alignable_config
 
-def make_pair():
-    gender1 = random.choice(["he", "she"])
-    gender2 = random.choice(["he", "she"])
-    he = random.choice(names[gender1])
-    she = random.choice(names[gender2])
-    completion = random.choice(completions)
-    pair = (
-        tokenizer(f"<|endoftext|>{he} {completion} because", return_tensors="pt"),
-        tokenizer(f"<|endoftext|>{she} {completion} because", return_tensors="pt"),
-    )
-    return pair, " " + gender2
-
 def experiment(model="EleutherAI/pythia-70m"):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -69,9 +57,20 @@ def experiment(model="EleutherAI/pythia-70m"):
         torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32
     ).to(device)
 
+    def make_pair():
+        gender1 = random.choice(["he", "she"])
+        gender2 = random.choice(["he", "she"])
+        he = random.choice(names[gender1])
+        she = random.choice(names[gender2])
+        completions = ["is tired", "went home", "walked", "ran", "works there", "joined the army"]
+        completion = random.choice(completions)
+        pair = (
+            tokenizer(f"<|endoftext|>{he} {completion} because", return_tensors="pt"),
+            tokenizer(f"<|endoftext|>{she} {completion} because", return_tensors="pt"),
+        )
+        return pair, " " + gender2
+
     # tokenize
-    pairs = []
-    completions = ["is tired", "went home", "walked", "ran", "works there", "joined the army"]
     tokens = tokenizer.encode(" she he") # token we want to maximize the probability of
 
     # intervene on each layer
