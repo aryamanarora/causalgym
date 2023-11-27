@@ -65,8 +65,8 @@ def experiment(model="EleutherAI/pythia-70m"):
         completions = ["is tired", "went home", "walked", "ran", "works there", "joined the army"]
         completion = random.choice(completions)
         pair = (
-            tokenizer(f"<|endoftext|>{he} {completion} because", return_tensors="pt"),
-            tokenizer(f"<|endoftext|>{she} {completion} because", return_tensors="pt"),
+            tokenizer(f"<|endoftext|>{he} {completion} because", return_tensors="pt").to(device),
+            tokenizer(f"<|endoftext|>{she} {completion} because", return_tensors="pt").to(device),
         )
         return pair, " " + gender2
 
