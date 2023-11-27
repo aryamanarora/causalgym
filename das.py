@@ -209,7 +209,7 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000):
 
                     # loss and backprop
                     loss = calculate_loss(
-                        counterfactual_outputs.logits, tokenizer.encode(label)[0]
+                        counterfactual_outputs.logits, tokenizer.encode(label)[0], step
                     )
                     loss_str = round(loss.item(), 2)
 
@@ -256,6 +256,7 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000):
                                 loss = calculate_loss(
                                     counterfactual_outputs.logits,
                                     tokenizer.encode(label)[0],
+                                    step
                                 )
                                 distrib = sm(counterfactual_outputs.logits)[0, -1]
                                 for tok in tokens:
