@@ -1,17 +1,15 @@
 import torch
-import csv
+import os
 import random
-from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
-from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
-from torch.nn import CrossEntropyLoss
 import sys
+import argparse
 import pandas as pd
 from tqdm import tqdm
-import argparse
+from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
+from torch.nn import CrossEntropyLoss
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse
-from utils import names
-import argparse
+from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence, names
 
 # add align-transformers to path
 sys.path.append("../align-transformers/")
@@ -64,8 +62,10 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
     ).to(device)
 
     def make_pair():
-        gender1 = random.choice(["he", "she"])
-        gender2 = random.choice(["he", "she"])
+        genders = ["he", "she"]
+        random.shuffle(genders)
+        gender1 = genders[0]
+        gender2 = genders[1]
         he = random.choice(names[gender1])
         she = random.choice(names[gender2])
         completions = [
@@ -250,15 +250,19 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
 
                 total_step += 1
 
+    # make das subdir
+    if not os.path.exists("figs/das"):
+        os.makedirs("figs/das")
+
     # print plots
     df = pd.DataFrame(data)
-
+    
     plot = (
         ggplot(df, aes(x="step", y="bound"))
         + geom_line()
         + ggtitle("intervention boundary")
     )
-    plot.save("figs/bound.pdf")
+    plot.save("figs/das/bound.pdf")
 
     plot = (
         ggplot(df, aes(x="step", y="loss", color="factor(label)"))
@@ -266,7 +270,7 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
         + ggtitle("per-label loss")
     )
-    plot.save("figs/loss.pdf")
+    plot.save("figs/das/loss.pdf")
 
     plot = (
         ggplot(df, aes(x="step", y="prob", color="factor(label)"))
@@ -275,7 +279,7 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
         + ggtitle("per-label probs")
     )
-    plot.save("figs/prob.pdf")
+    plot.save("figs/das/prob.pdf")
 
     # test probe on a sentence
     with torch.no_grad():
@@ -283,30 +287,59 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
             "<|endoftext|>He is my girlfriend's brother and he wants to be a nurse.",
             return_tensors="pt",
         ).to(device)
-        neutrals = [
-            tokenizer("<|endoftext|>John fell because", return_tensors="pt"),
-            tokenizer("<|endoftext|>Jane fell because", return_tensors="pt").to(device),
-        ]
-        base_logits = [{}, {}]
 
-        for i in range(len(neutrals)):
-            logits = gpt(**neutrals[i].to(device)).logits
+        scores = []
+        for (pair, label, base_label) in tqdm(evalset):
+            base_logits = gpt(**pair[0]).logits[0, -1]
+            _, counterfactual_outputs = alignable(
+                pair[0],
+                [pair[1]],
+                {"sources->base": ([[[1]]], [[[1]]])},
+            )
+            logits = counterfactual_outputs.logits[0, -1]
+            token_ranges = {}
             for token in tokens:
-                base_logits[i][token] = logits[0, -1, token].item()
-
-        for pos_i in range(1, len(test.input_ids[0])):
-            for i, neutral in enumerate(neutrals):
-                _, counterfactual_outputs = alignable(
-                    neutral, [test], {"sources->base": ([[[pos_i]]], [[[2]]])}
+                token_ranges[token] = (
+                    base_logits[token].item(),
+                    logits[token].item(),
                 )
-
+            print(token_ranges)
+            
+            for pos_i in range(1, len(test.input_ids[0])):
+                _, counterfactual_outputs = alignable(
+                    pair[0], [test], {"sources->base": ([[[pos_i]]], [[[1]]])}
+                )
                 logits = counterfactual_outputs.logits[0, -1]
-                probs = logits.softmax(dim=-1)
                 for token in tokens:
-                    print(
-                        f"{pos_i:<5} {format_token(tokenizer, test.input_ids[0][pos_i]):<15} {format_token(tokenizer, token):<15} {logits[token].item() - base_logits[i][token]:>9.4f}  {probs[token].item():>9.4%}"
-                    )
-            print()
+                    score = (logits[token].item() - token_ranges[token][0]) / abs(token_ranges[token][1] - token_ranges[token][0])
+                    scores.append({
+                        "pos": pos_i,
+                        "token": format_token(tokenizer, token),
+                        "score": score,
+                        "label": label,
+                        "base_label": base_label,
+                    })
+
+        # print avg score per pos, token
+        for pos_i in range(1, len(test.input_ids[0])):
+            print(f"pos {pos_i}: {format_token(tokenizer, test.input_ids[0][pos_i])}")
+            for label in [" he", " she"]:
+                print(label)
+                df = pd.DataFrame(scores)
+                df = df[df["pos"] == pos_i]
+                df = df[df["label"] == label]
+                df = df.groupby(["label", "base_label", "token"]).mean(numeric_only=True)
+                df = df.reset_index()
+
+                # convert df to dict where key is label
+                data = {}
+                for _, row in df.iterrows():
+                    data[row["token"]] = row["score"]
+                
+                # print
+                for label in data:
+                    print(f"{label:>5}: {data[label]:>15.3%}")
+            print("\n")
 
     # # make df
     # df = pd.DataFrame(data)
