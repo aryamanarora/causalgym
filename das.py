@@ -50,7 +50,12 @@ def intervention_config(model_type, intervention_type, layer, num_dims):
     return alignable_config
 
 
-def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
+def experiment(
+    model: str="EleutherAI/pythia-70m",
+    steps: int=1000,
+    num_dims: int=-1,
+    warmup: bool=False,
+):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
@@ -110,7 +115,7 @@ def experiment(model="EleutherAI/pythia-70m", steps=1000, num_dims=-1):
 
             # optimizer
             t_total = steps
-            warm_up_steps = 0.1 * t_total
+            warm_up_steps = 0.1 * t_total if warmup else 0
             optimizer_params = []
             for k, v in alignable.interventions.items():
                 optimizer_params += [{"params": v[0].rotate_layer.parameters()}]
@@ -358,8 +363,9 @@ def main():
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
     parser.add_argument("--steps", type=int, default=5000)
     parser.add_argument("--num_dims", type=int, default=-1)
+    parser.add_argument("--warmup", action="store_true")
     args = parser.parse_args()
-    experiment(args.model, args.steps)
+    experiment(args.model, args.steps, args.num_dims, args.warmup)
 
 
 if __name__ == "__main__":
