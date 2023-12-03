@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
 from torch.nn import CrossEntropyLoss
-from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle
+from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse
 from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
 
@@ -35,11 +35,15 @@ def rotated_space_intervention(num_dims):
         intervention = RotatedSpaceIntervention(args)
         intervention.set_interchange_dim(num_dims)
         return intervention
-
     return func
 
-
-def intervention_config(model_type, intervention_type, layer, num_dims):
+def intervention_config(model_type, intervention_type, layer, num_dims, intervention_obj=None):
+    if intervention_obj is None:
+        intervention_obj = BoundlessRotatedSpaceIntervention if num_dims == -1 else rotated_space_intervention(num_dims)
+    else:
+        def func(args, proj_dim):
+            return intervention_obj
+        intervention_obj = func
     alignable_config = AlignableConfig(
         alignable_model_type=model_type,
         alignable_representations=[
@@ -50,7 +54,7 @@ def intervention_config(model_type, intervention_type, layer, num_dims):
                 1,  # max number of unit
             ),
         ],
-        alignable_interventions_type=BoundlessRotatedSpaceIntervention if num_dims == -1 else rotated_space_intervention(num_dims),
+        alignable_interventions_type=intervention_obj,
     )
     return alignable_config
 
@@ -61,6 +65,7 @@ def experiment(
     num_dims: int=-1,
     warmup: bool=False,
     eval_steps: int=20,
+    grad_steps: int=4
 ):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -71,6 +76,7 @@ def experiment(
         revision="main",
         torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32,
     ).to(device)
+    print(gpt.config.num_hidden_layers)
 
     # filter names
     for key in names:
@@ -85,7 +91,7 @@ def experiment(
         he = random.choice(names[gender1])
         she = random.choice(names[gender2])
         completions = [
-            "walked"
+            "walked",
             # "is tired", "is excited", "is ready", "went home", "walked", "is walking",
             # "ran", "is running", "works there", "joined the army", "plays soccer",
             # "likes playing games", "said no to me"
@@ -97,10 +103,9 @@ def experiment(
         )
         return pair, " " + gender2, " " + gender1
 
-    # tokenize
     tokens = tokenizer.encode(" she he")  # token we want to maximize the probability of
 
-    # evalset
+    # make evalset
     evalset = []
     for i in range(20):
         evalset.append(make_pair())
@@ -108,11 +113,14 @@ def experiment(
     # intervene on each layer
     # only intervening on layer 0, pos 1, dim 1
     data = []
+    layer_objs = {}
 
-    # for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
-    for layer_i in [0]:
+    for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
+    # for layer_i in [0]:
+
         # for pos_i in range(1, len(base.input_ids[0])):
         for pos_i in [1]:
+
             # set up alignable model
             alignable_config = intervention_config(
                 type(gpt), "block_output", layer_i, num_dims
@@ -146,7 +154,6 @@ def experiment(
                 num_training_steps=t_total,
             )
 
-            gradient_accumulation_steps = 4
             total_step = 0
             temperature_start = 50.0
             temperature_end = 0.1
@@ -182,6 +189,7 @@ def experiment(
                 pair, label, _ = make_pair()
 
                 # inference
+                if step == 0: print(pos_i)
                 _, counterfactual_outputs = alignable(
                     pair[0],
                     [pair[1]],
@@ -195,7 +203,7 @@ def experiment(
                 total_loss += loss
 
                 # gradient accumulation
-                if total_step % gradient_accumulation_steps == 0:
+                if total_step % grad_steps == 0:
                     # print stats
                     stats = {"loss": f"{total_loss.item():.3f}"}
                     distrib = sm(counterfactual_outputs.logits)[0, -1]
@@ -211,7 +219,7 @@ def experiment(
                         pass
                     iterator.set_postfix(stats)
 
-                    if not (gradient_accumulation_steps > 1 and total_step == 0):
+                    if not (grad_steps > 1 and total_step == 0):
                         total_loss.backward()
                         total_loss = torch.tensor(0.0).to(device)
                         optimizer.step()
@@ -227,10 +235,9 @@ def experiment(
                             for k, v in alignable.interventions.items():
                                 boundary = (
                                     v[0].intervention_boundaries.sum() * v[0].embed_dim
-                                )
+                                ).item()
                         except:
                             pass
-                        boundary = boundary.item()
 
                         for pair, label, base_label in evalset:
                             _, counterfactual_outputs = alignable(
@@ -255,13 +262,20 @@ def experiment(
                                         "label": label + " > " + base_label,
                                         "loss": loss.item(),
                                         "token": format_token(tokenizer, tok),
+                                        "label_token": label + " > " + base_label + " " + format_token(tokenizer, tok),
                                         "prob": prob,
                                         "bound": boundary,
                                         "temperature": temperature_schedule[total_step],
+                                        "layer": layer_i,
+                                        "pos": pos_i,
                                     }
                                 )
 
                 total_step += 1
+            if layer_i not in layer_objs:
+                layer_objs[layer_i] = (alignable, loss.item(), pos_i)
+            elif loss.item() < layer_objs[layer_i][1]:
+                layer_objs[layer_i] = (alignable, loss.item(), pos_i)
 
     # make das subdir
     if not os.path.exists("figs/das"):
@@ -271,7 +285,7 @@ def experiment(
     df = pd.DataFrame(data)
     
     plot = (
-        ggplot(df, aes(x="step", y="bound"))
+        ggplot(df, aes(x="step", y="bound", color="factor(layer)"))
         + geom_line()
         + ggtitle("intervention boundary")
     )
@@ -279,6 +293,7 @@ def experiment(
 
     plot = (
         ggplot(df, aes(x="step", y="loss", color="factor(label)"))
+        + facet_grid("~layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
         + ggtitle("per-label loss")
@@ -286,8 +301,8 @@ def experiment(
     plot.save("figs/das/loss.pdf")
 
     plot = (
-        ggplot(df, aes(x="step", y="prob", color="factor(label)"))
-        + facet_grid("~token")
+        ggplot(df, aes(x="step", y="prob", color="factor(label_token)"))
+        + facet_grid("~layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
         + ggtitle("per-label probs")
@@ -297,46 +312,78 @@ def experiment(
     # test probe on a sentence
     with torch.no_grad():
         test = tokenizer(
-            "<|endoftext|>Spain is a beautiful, cute, and handsome country. My buddy John is my girlfriend's brother and he wants to be a nurse.",
+            "<|endoftext|>My buddy John is my girlfriend's brother and he wants to be a nurse.",
+            #  Spain is a beautiful, cute, and handsome country.
             return_tensors="pt",
         ).to(device)
 
         scores = []
-        for (pair, label, base_label) in tqdm(evalset):
-            base_logits = gpt(**pair[0]).logits[0, -1]
-            _, counterfactual_outputs = alignable(
-                pair[0],
-                [pair[1]],
-                {"sources->base": ([[[1]]], [[[1]]])},
-            )
-            logits = counterfactual_outputs.logits[0, -1]
-            token_ranges = {}
-            for token in tokens:
-                token_ranges[token] = (
-                    base_logits[token].item(),
-                    logits[token].item(),
-                )
-            print(token_ranges)
-            
-            for pos_i in range(1, len(test.input_ids[0])):
+        for layer_i in layer_objs:
+            for (pair, label, base_label) in tqdm(evalset):
+                base_logits = gpt(**pair[0]).logits[0, -1]
+                # alignable_config = intervention_config(
+                #     type(gpt), "block_output", layer_i, -1, layer_objs[layer_i]
+                # )
+                alignable = layer_objs[layer_i][0]
+                pos_base = layer_objs[layer_i][2]
+                alignable.set_device(device)
                 _, counterfactual_outputs = alignable(
-                    pair[0], [test], {"sources->base": ([[[pos_i]]], [[[1]]])}
+                    pair[0],
+                    [pair[1]],
+                    {"sources->base": ([[[pos_base]]], [[[pos_base]]])},
                 )
                 logits = counterfactual_outputs.logits[0, -1]
-                partial_probs = logits.softmax(dim=-1)[tokens]
-                partial_probs = partial_probs / partial_probs.sum()
-                for i, token in enumerate(tokens):
-                    score = (logits[token].item() - token_ranges[token][0]) / abs(token_ranges[token][1] - token_ranges[token][0])
-                    scores.append({
-                        "pos": pos_i,
-                        "token": format_token(tokenizer, token),
-                        "score": score,
-                        "prob": partial_probs[i].item(),
-                        "logit": logits[token].item(),
-                        "layer": layer_i,
-                        "label": label,
-                        "base_label": base_label,
-                    })
+                token_ranges = {}
+                for token in tokens:
+                    token_ranges[token] = (
+                        base_logits[token].item(),
+                        logits[token].item(),
+                    )
+                # print(token_ranges)
+                
+                for pos_i in range(1, len(test.input_ids[0])):
+                    _, counterfactual_outputs = alignable(
+                        pair[0], [test], {"sources->base": ([[[pos_i]]], [[[pos_base]]])}
+                    )
+                    logits = counterfactual_outputs.logits[0, -1]
+                    partial_probs = logits.softmax(dim=-1)[tokens]
+                    partial_probs = partial_probs / partial_probs.sum()
+                    for i, token in enumerate(tokens):
+                        score = 0.0
+                        try:
+                            score = (logits[token].item() - token_ranges[token][0]) / abs(token_ranges[token][1] - token_ranges[token][0])
+                        except:
+                            pass
+                        scores.append({
+                            "pos": pos_i,
+                            "token": format_token(tokenizer, token),
+                            "score": score,
+                            "prob": partial_probs[i].item(),
+                            "logit": logits[token].item(),
+                            "logitdiff": logits[token].item() - logits[tokens[1 - i]].item(),
+                            "layer": layer_i,
+                            "label": label,
+                            "base_label": base_label,
+                        })
+        
+        # plot
+        df = pd.DataFrame(scores)
+        ticks = list(range(len(test.input_ids[0])))
+        labels = [format_token(tokenizer, test.input_ids[0][i]) for i in ticks]
+        plot = (ggplot(df, aes(x="pos", y="layer", fill="prob"))
+                + facet_grid("label ~ token") + geom_tile()
+                + scale_x_continuous(breaks=ticks, labels=labels)
+                + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5)
+                + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
+        plot.save("figs/das/prob_per_pos.pdf")
+        
+        # plot
+        plot = (ggplot(df, aes(x="pos", y="layer", fill="logitdiff"))
+                + facet_grid("label ~ token") + geom_tile()
+                + scale_x_continuous(breaks=ticks, labels=labels)
+                + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0)
+                + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
+        plot.save("figs/das/logitdiff_per_pos.pdf")
 
         # print avg score per pos, token
         for pos_i in range(1, len(test.input_ids[0])):
@@ -367,6 +414,7 @@ def main():
     parser.add_argument("--num_dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
     parser.add_argument("--eval_steps", type=int, default=20)
+    parser.add_argument("--grad_steps", type=int, default=4)
     args = parser.parse_args()
     experiment(**vars(args))
 
