@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
 from torch.nn import CrossEntropyLoss
-from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text
+from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
 from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
 
@@ -28,15 +28,16 @@ from models.interventions import (
 from models.layers import LowRankRotateLayer
 
 names = {
-    "he": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
-    "she": ["Sarah", "Mary", "Elizabeth", "Jane"]
+    "He": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
+    "She": ["Sarah", "Mary", "Elizabeth", "Jane", "Kate", "Jennifer", "Susan", "Karen", "Nancy", "Lisa"]
 }
 
 completions = [
-    "walked",
-    # "is tired", "is excited", "is ready", "went home", "is walking",
-    # "ran", "is running", "works there", "joined the army", "plays soccer",
-    # "likes playing games", "said no to me"
+    "walked.",
+    "is tired.", "is excited.", "is ready.", "went home.",
+    "is walking.", "ran.", "is running.", "works there.",
+    "joined the army.", "plays soccer.", "likes playing games.",
+    "said no to me."
 ]
 
 class LowRankRotatedSpaceIntervention(TrainbleIntervention):
@@ -91,6 +92,10 @@ def intervention_config(model_type, intervention_type, layer, num_dims, interven
     )
     return alignable_config
 
+def get_last_token(logits, attention_mask):
+    last_token_indices = attention_mask.sum(1) - 1
+    batch_indices = torch.arange(logits.size(0)).unsqueeze(1)
+    return logits[batch_indices, last_token_indices.unsqueeze(1)].squeeze(1)
 
 def experiment(
     model: str,
@@ -118,29 +123,33 @@ def experiment(
     print(names)
 
     def make_pair(batch_size: int=1):
-        base, src, labels, base_labels = [], [], [], []
+        base, src, labels, base_labels, pos_i = [], [], [], [], []
 
         # make sentences
         for _ in range(batch_size):
-            genders = ["he", "she"]
-            random.shuffle(genders)
-            he = random.choice(names[genders[0]])
-            she = random.choice(names[genders[1]])
+            output = list(names.keys())
+            random.shuffle(output)
+            choices = [random.choice(names[output[0]]), random.choice(names[output[1]])]
             completion = random.choice(completions)
-            base.append(f"<|endoftext|>{he} {completion} because")
-            src.append(f"<|endoftext|>{she} {completion} because")
-            labels.append(tokenizer.encode(" " + genders[1])[0])
-            base_labels.append(tokenizer.encode(" " + genders[0])[0])
+            base.append(f"<|endoftext|>{choices[0]} {completion}")
+            src.append(f"<|endoftext|>{choices[1]} {completion}")
+            labels.append(tokenizer.encode(" " + output[1])[0])
+            base_labels.append(tokenizer.encode(" " + output[0])[0])
 
         # tokenize
         pair = [
-            tokenizer(base, return_tensors="pt").to(device),
-            tokenizer(src, return_tensors="pt").to(device),
+            tokenizer(base, return_tensors="pt", padding=True).to(device),
+            tokenizer(src, return_tensors="pt", padding=True).to(device),
         ]
 
-        return pair, torch.tensor(labels), torch.tensor(base_labels)
+        # get pos_i
+        for i in range(batch_size):
+            pos_i.append([1, len(pair[0].input_ids[i]) - 1])
 
-    tokens = tokenizer.encode(" she he")  # token we want to maximize the probability of
+        return pair, torch.tensor(labels), torch.tensor(base_labels), [pos_i,]
+
+    # tokens to log
+    tokens = tokenizer.encode(" " + " ".join(list(names.keys())))
 
     # make evalset
     evalset = []
@@ -148,14 +157,11 @@ def experiment(
         evalset.append(make_pair())
 
     # intervene on each layer
-    # only intervening on layer 0, pos 1, dim 1
     data = []
+    stats = {}
     layer_objs = {}
 
     for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
-
-        # for pos_i in range(1, len(base.input_ids[0])):
-        pos_i = [1, 3]
 
         # set up alignable model
         alignable_config = intervention_config(
@@ -197,9 +203,8 @@ def experiment(
 
         # loss fxn: cross entropy between logits and a single target label
         def calculate_loss(logits, label, step):
-            shift_logits = logits[..., :, :].contiguous()
+            shift_logits = logits.contiguous()
             loss_fct = CrossEntropyLoss()
-            shift_logits = shift_logits[:, -1]
             shift_labels = label
             shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
@@ -217,39 +222,33 @@ def experiment(
         # train
         iterator = tqdm(range(t_total))
         total_loss = torch.tensor(0.0).to(device)
+
         for step in iterator:
+
             # make pair
-            pair, label, _ = make_pair(batch_size=batch_size)
+            pair, label, _, pos_i = make_pair(batch_size=batch_size)
 
             # inference
-            if total_step == 0: print(pos_i)
             _, counterfactual_outputs = alignable(
                 pair[0],
                 [pair[1]],
-                {"sources->base": ([[pos_i for _ in range(batch_size)]], [[pos_i for _ in range(batch_size)]])},
+                {"sources->base": (pos_i, pos_i)},
             )
 
+            # get last token logits
+            logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
+
             # loss and backprop
-            loss = calculate_loss(
-                counterfactual_outputs.logits, label, step
-            )
+            loss = calculate_loss(logits, label, step)
             total_loss += loss
 
             # gradient accumulation
             if total_step % grad_steps == 0:
                 # print stats
-                stats = {"loss": f"{total_loss.item():.3f}"}
-                distrib = sm(counterfactual_outputs.logits)[0, -1]
-                for tok in tokens:
-                    prob = distrib[tok].item()
-                    stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
-                try:
+                stats["loss"] = f"{total_loss.item():.3f}"
+                if num_dims == -1:
                     for k, v in alignable.interventions.items():
-                        stats[
-                            "bound"
-                        ] = f"{v[0].intervention_boundaries.sum() * v[0].embed_dim:.3f}"
-                except:
-                    pass
+                        stats["bound"] = f"{v[0].intervention_boundaries.sum() * v[0].embed_dim:.3f}"
                 iterator.set_postfix(stats)
 
                 if not (grad_steps > 1 and total_step == 0):
@@ -263,27 +262,34 @@ def experiment(
             # eval
             if step % eval_steps == 0:
                 with torch.no_grad():
-                    boundary = num_dims
-                    try:
-                        for k, v in alignable.interventions.items():
-                            boundary = (
-                                v[0].intervention_boundaries.sum() * v[0].embed_dim
-                            ).item()
-                    except:
-                        pass
 
-                    for pair, label, base_label in evalset:
+                    # get boundary
+                    eval_loss = 0.0
+                    boundary = num_dims
+                    if num_dims == -1:
+                        for k, v in alignable.interventions.items():
+                            boundary = (v[0].intervention_boundaries.sum() * v[0].embed_dim).item()
+
+                    for (pair, label, base_label, pos_i) in evalset:
+                        
+                        # inference
                         _, counterfactual_outputs = alignable(
                             pair[0],
                             [pair[1]],
-                            {"sources->base": ([[pos_i]], [[pos_i]])},
+                            {"sources->base": (pos_i, pos_i)},
                         )
-                        loss = calculate_loss(counterfactual_outputs.logits, label, step)
-                        distrib = sm(counterfactual_outputs.logits)[0, -1]
+
+                        # get last token probs
+                        logits = counterfactual_outputs.logits[:, -1]
+                        loss = calculate_loss(logits, label, step)
+                        eval_loss += loss.item()
+                        probs = logits.softmax(-1)
+
+                        # store stats
                         label = format_token(tokenizer, label)
                         base_label = format_token(tokenizer, base_label)
                         for tok in tokens:
-                            prob = distrib[tok].item()
+                            prob = probs[0, tok].item()
                             stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
                             data.append(
                                 {
@@ -301,12 +307,16 @@ def experiment(
                                     "pos": pos_i,
                                 }
                             )
+                    
+                    # update iterator
+                    stats["eval_loss"] = f"{eval_loss / len(evalset):.3f}"
+                    iterator.set_postfix(stats)
 
             total_step += 1
         if layer_i not in layer_objs:
-            layer_objs[layer_i] = (alignable, loss.item(), pos_i)
+            layer_objs[layer_i] = (alignable, loss.item())
         elif loss.item() < layer_objs[layer_i][1]:
-            layer_objs[layer_i] = (alignable, loss.item(), pos_i)
+            layer_objs[layer_i] = (alignable, loss.item())
 
     # make das subdir
     if not os.path.exists("figs/das"):
@@ -324,7 +334,7 @@ def experiment(
 
     plot = (
         ggplot(df, aes(x="step", y="loss", color="factor(label)"))
-        + facet_grid("~layer")
+        + facet_wrap("layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
         + ggtitle("per-label loss")
@@ -333,7 +343,7 @@ def experiment(
 
     plot = (
         ggplot(df, aes(x="step", y="prob", color="factor(label_token)"))
-        + facet_grid("~layer")
+        + facet_wrap("layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
         + ggtitle("per-label probs")
@@ -349,57 +359,41 @@ def experiment(
         ).to(device)
 
         scores = []
-        for layer_i in layer_objs:
-            for (pair, label, base_label) in tqdm(evalset):
-                base_logits = gpt(**pair[0]).logits[0, -1]
+        for layer_i in tqdm(layer_objs):
+            for (pair, label, base_label, pos_base) in evalset[:1]:
                 label = format_token(tokenizer, label[0])
                 base_label = format_token(tokenizer, base_label[0])
 
-                # get interventions and run them
+                # get interventions
                 alignable = layer_objs[layer_i][0]
-                pos_base = layer_objs[layer_i][2]
                 alignable.set_device(device)
-                _, counterfactual_outputs = alignable(
-                    pair[0],
-                    [pair[1]],
-                    {"sources->base": ([[pos_base]], [[pos_base]])},
-                )
-                logits = counterfactual_outputs.logits[0, -1]
-
-                # store token ranges
-                token_ranges = {}
-                for token in tokens:
-                    token_ranges[token] = (
-                        base_logits[token].item(),
-                        logits[token].item(),
-                    )
                 
-                for pos_i in range(1, len(test.input_ids[0])):
-                    _, counterfactual_outputs = alignable(
-                        pair[0], [test], {"sources->base": ([[[pos_i for _ in range(len(pos_base))]]], [[pos_base]])}
-                    )
-                    logits = counterfactual_outputs.logits[0, -1]
-                    probs = logits.softmax(dim=-1)
-                    partial_probs = probs[tokens]
-                    partial_probs = partial_probs / partial_probs.sum()
-                    for i, token in enumerate(tokens):
-                        score = 0.0
-                        try:
-                            score = (logits[token].item() - token_ranges[token][0]) / abs(token_ranges[token][1] - token_ranges[token][0])
-                        except:
-                            pass
-                        scores.append({
-                            "pos": pos_i,
-                            "token": format_token(tokenizer, token),
-                            "score": score,
-                            "partial_prob": partial_probs[i].item(),
-                            "prob": probs[token].item(),
-                            "logit": logits[token].item(),
-                            "logitdiff": logits[token].item() - logits[tokens[1 - i]].item(),
-                            "layer": layer_i,
-                            "label": label,
-                            "base_label": base_label,
-                        })
+                # run per-pos
+                for pair_i in range(2):
+                    base_logits = gpt(**pair[pair_i]).logits[0, -1]
+                    for pos_i in range(1, len(test.input_ids[0])):
+                        location = torch.zeros_like(torch.tensor(pos_base)) + pos_i
+                        _, counterfactual_outputs = alignable(
+                            pair[pair_i], [test], {"sources->base": (location, pos_base)}
+                        )
+                        logits = counterfactual_outputs.logits[0, -1]
+                        probs = logits.softmax(dim=-1)
+                        partial_probs = probs[tokens]
+                        partial_probs = partial_probs / partial_probs.sum()
+                        for i, token in enumerate(tokens):
+                            scores.append({
+                                "pos": pos_i,
+                                "token": format_token(tokenizer, token),
+                                "partial_prob": partial_probs[i].item(),
+                                "prob": probs[token].item(),
+                                "iit": 1.0 if partial_probs[i] > partial_probs[1 - i] else 0.0,
+                                "logit": logits[token].item(),
+                                "logitdiff": logits[token].item() - base_logits[token].item(),
+                                "layer": layer_i,
+                                "label": label,
+                                "base_label": base_label,
+                            })
+                    label, base_label = base_label, label
         
         # plot
         df = pd.DataFrame(scores)
@@ -423,7 +417,7 @@ def experiment(
         # print avg score per pos, token
         for pos_i in range(1, len(test.input_ids[0])):
             print(f"pos {pos_i}: {format_token(tokenizer, test.input_ids[0][pos_i])}")
-            for label in ["_he", "_she"]:
+            for label in df["label"].unique():
                 print(label)
                 df = pd.DataFrame(scores)
                 df = df[df["pos"] == pos_i]
@@ -434,11 +428,11 @@ def experiment(
                 # convert df to dict where key is label
                 data = {}
                 for _, row in df.iterrows():
-                    data[row["token"]] = (row["score"], row["prob"], row["logit"])
+                    data[row["token"]] = (row["prob"], row["logitdiff"])
                 
                 # print
                 for label in data:
-                    print(f"{label:>5}: {data[label][0]:>15.3%} {data[label][1]:>15.3%}")
+                    print(f"{label:>5}: {data[label][0]:>15.3%} {data[label][1]:>15.3}")
             print("\n")
 
 
@@ -448,7 +442,7 @@ def main():
     parser.add_argument("--steps", type=int, default=250)
     parser.add_argument("--num_dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
-    parser.add_argument("--eval_steps", type=int, default=20)
+    parser.add_argument("--eval_steps", type=int, default=50)
     parser.add_argument("--grad_steps", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=4)
     args = parser.parse_args()
