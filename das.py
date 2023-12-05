@@ -8,7 +8,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
 from torch.nn import CrossEntropyLoss
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text
-from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2
+from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
 from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
 
 # add align-transformers to path
@@ -53,6 +53,9 @@ class LowRankRotatedSpaceIntervention(TrainbleIntervention):
         self.interchange_dim = interchange_dim
 
     def forward(self, base, source):
+        batch_size = base.shape[0]
+        base = base.reshape(batch_size, -1, self.embed_dim)
+        source = source.reshape(batch_size, -1, self.embed_dim)
         rotated_base = self.rotate_layer(base)
         low_rank_approx_base = base - torch.matmul(rotated_base, self.rotate_layer.weight.T)
         rotated_source = self.rotate_layer(source)
@@ -60,6 +63,7 @@ class LowRankRotatedSpaceIntervention(TrainbleIntervention):
         inv_value = rotated_source
         # inverse base
         output = torch.matmul(inv_value, self.rotate_layer.weight.T) + low_rank_approx_base
+        output = output.reshape(batch_size, -1)
         return output.to(base.dtype)
     
     def __str__(self):
@@ -151,7 +155,7 @@ def experiment(
     for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
 
         # for pos_i in range(1, len(base.input_ids[0])):
-        pos_i = 1
+        pos_i = [1, 3]
 
         # set up alignable model
         alignable_config = intervention_config(
@@ -222,7 +226,7 @@ def experiment(
             _, counterfactual_outputs = alignable(
                 pair[0],
                 [pair[1]],
-                {"sources->base": ([[[pos_i] for _ in range(batch_size)]], [[[pos_i] for _ in range(batch_size)]])},
+                {"sources->base": ([[pos_i for _ in range(batch_size)]], [[pos_i for _ in range(batch_size)]])},
             )
 
             # loss and backprop
@@ -272,7 +276,7 @@ def experiment(
                         _, counterfactual_outputs = alignable(
                             pair[0],
                             [pair[1]],
-                            {"sources->base": ([[[pos_i]]], [[[pos_i]]])},
+                            {"sources->base": ([[pos_i]], [[pos_i]])},
                         )
                         loss = calculate_loss(counterfactual_outputs.logits, label, step)
                         distrib = sm(counterfactual_outputs.logits)[0, -1]
@@ -339,7 +343,7 @@ def experiment(
     # test probe on a sentence
     with torch.no_grad():
         test = tokenizer(
-            "<|endoftext|>My buddy John is my girlfriend's brother and he wants to be a nurse.",
+            "<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse.",
             #  Spain is a beautiful, cute, and handsome country.
             return_tensors="pt",
         ).to(device)
@@ -358,7 +362,7 @@ def experiment(
                 _, counterfactual_outputs = alignable(
                     pair[0],
                     [pair[1]],
-                    {"sources->base": ([[[pos_base]]], [[[pos_base]]])},
+                    {"sources->base": ([[pos_base]], [[pos_base]])},
                 )
                 logits = counterfactual_outputs.logits[0, -1]
 
@@ -372,10 +376,11 @@ def experiment(
                 
                 for pos_i in range(1, len(test.input_ids[0])):
                     _, counterfactual_outputs = alignable(
-                        pair[0], [test], {"sources->base": ([[[pos_i]]], [[[pos_base]]])}
+                        pair[0], [test], {"sources->base": ([[[pos_i for _ in range(len(pos_base))]]], [[pos_base]])}
                     )
                     logits = counterfactual_outputs.logits[0, -1]
-                    partial_probs = logits.softmax(dim=-1)[tokens]
+                    probs = logits.softmax(dim=-1)
+                    partial_probs = probs[tokens]
                     partial_probs = partial_probs / partial_probs.sum()
                     for i, token in enumerate(tokens):
                         score = 0.0
@@ -387,7 +392,8 @@ def experiment(
                             "pos": pos_i,
                             "token": format_token(tokenizer, token),
                             "score": score,
-                            "prob": partial_probs[i].item(),
+                            "partial_prob": partial_probs[i].item(),
+                            "prob": probs[token].item(),
                             "logit": logits[token].item(),
                             "logitdiff": logits[token].item() - logits[tokens[1 - i]].item(),
                             "layer": layer_i,
@@ -402,7 +408,7 @@ def experiment(
         plot = (ggplot(df, aes(x="pos", y="layer", fill="prob"))
                 + facet_grid("label ~ token") + geom_tile()
                 + scale_x_continuous(breaks=ticks, labels=labels)
-                + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5)
+                + scale_fill_gradient(low="white", high="purple")
                 + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
         plot.save("figs/das/prob_per_pos.pdf")
         
