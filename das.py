@@ -10,6 +10,7 @@ from torch.nn import CrossEntropyLoss
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
 from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
+from data import make_data
 
 # add align-transformers to path
 sys.path.append("../align-transformers/")
@@ -26,19 +27,6 @@ from models.interventions import (
     TrainbleIntervention
 )
 from models.layers import LowRankRotateLayer
-
-names = {
-    "He": ["John", "Bill", "Joseph", "Patrick", "Ken", "Geoff", "Simon", "Richard", "David", "Michael"],
-    "She": ["Sarah", "Mary", "Elizabeth", "Jane", "Kate", "Jennifer", "Susan", "Karen", "Nancy", "Lisa"]
-}
-
-completions = [
-    "walked.",
-    "is tired.", "is excited.", "is ready.", "went home.",
-    "is walking.", "ran.", "is running.", "works there.",
-    "joined the army.", "plays soccer.", "likes playing games.",
-    "said no to me."
-]
 
 class LowRankRotatedSpaceIntervention(TrainbleIntervention):
     
@@ -99,12 +87,13 @@ def get_last_token(logits, attention_mask):
 
 def experiment(
     model: str,
+    dataset: str,
     steps: int,
     num_dims: int,
     warmup: bool,
     eval_steps: int,
     grad_steps: int,
-    batch_size: int
+    batch_size: int,
 ):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -117,44 +106,12 @@ def experiment(
     ).to(device)
     print(gpt.config.num_hidden_layers)
 
-    # filter names
-    for key in names:
-        names[key] = [name for name in names[key] if len(tokenizer(name)['input_ids']) == 1]
-    print(names)
-
-    def make_pair(batch_size: int=1):
-        base, src, labels, base_labels, pos_i = [], [], [], [], []
-
-        # make sentences
-        for _ in range(batch_size):
-            output = list(names.keys())
-            random.shuffle(output)
-            choices = [random.choice(names[output[0]]), random.choice(names[output[1]])]
-            completion = random.choice(completions)
-            base.append(f"<|endoftext|>{choices[0]} {completion}")
-            src.append(f"<|endoftext|>{choices[1]} {completion}")
-            labels.append(tokenizer.encode(" " + output[1])[0])
-            base_labels.append(tokenizer.encode(" " + output[0])[0])
-
-        # tokenize
-        pair = [
-            tokenizer(base, return_tensors="pt", padding=True).to(device),
-            tokenizer(src, return_tensors="pt", padding=True).to(device),
-        ]
-
-        # get pos_i
-        for i in range(batch_size):
-            pos_i.append([1, len(pair[0].input_ids[i]) - 1])
-
-        return pair, torch.tensor(labels), torch.tensor(base_labels), [pos_i,]
+    # train and eval sets
+    trainset, labels = make_data(tokenizer, dataset, batch_size, steps, device)
+    evalset, _ = make_data(tokenizer, dataset, 1, 20, device)
 
     # tokens to log
-    tokens = tokenizer.encode(" " + " ".join(list(names.keys())))
-
-    # make evalset
-    evalset = []
-    for i in range(20):
-        evalset.append(make_pair())
+    tokens = tokenizer.encode("".join(labels))
 
     # intervene on each layer
     data = []
@@ -204,9 +161,8 @@ def experiment(
         # loss fxn: cross entropy between logits and a single target label
         def calculate_loss(logits, label, step):
             shift_logits = logits.contiguous()
+            shift_labels = label.to(shift_logits.device)
             loss_fct = CrossEntropyLoss()
-            shift_labels = label
-            shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
 
             if step >= warm_up_steps:
@@ -226,7 +182,7 @@ def experiment(
         for step in iterator:
 
             # make pair
-            pair, label, _, pos_i = make_pair(batch_size=batch_size)
+            (pair, label, _, pos_i) = trainset[step]
 
             # inference
             _, counterfactual_outputs = alignable(
@@ -301,6 +257,7 @@ def experiment(
                                     "token": format_token(tokenizer, tok),
                                     "label_token": label + " > " + base_label + " " + format_token(tokenizer, tok),
                                     "prob": prob,
+                                    "logit": logits[0, tok].item(),
                                     "bound": boundary,
                                     "temperature": temperature_schedule[total_step],
                                     "layer": layer_i,
@@ -350,17 +307,27 @@ def experiment(
     )
     plot.save("figs/das/prob.pdf")
 
+    plot = (
+        ggplot(df, aes(x="step", y="logit", color="factor(label_token)"))
+        + facet_wrap("layer")
+        + geom_point(alpha=0.1)
+        + geom_line(stat='summary', fun_y=lambda x: x.mean())
+        + ggtitle("per-label logits")
+    )
+    plot.save("figs/das/logit.pdf")
+
     # test probe on a sentence
     with torch.no_grad():
         test = tokenizer(
-            "<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse.",
+            # "<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse.",
+            "<|endoftext|>The capital of Spain is Madrid. Jane went there because it is beautiful.",
             #  Spain is a beautiful, cute, and handsome country.
             return_tensors="pt",
         ).to(device)
 
         scores = []
         for layer_i in tqdm(layer_objs):
-            for (pair, label, base_label, pos_base) in evalset[:1]:
+            for (pair, label, base_label, pos_base) in evalset[:5]:
                 label = format_token(tokenizer, label[0])
                 base_label = format_token(tokenizer, base_label[0])
 
@@ -439,6 +406,7 @@ def experiment(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
+    parser.add_argument("--dataset", type=str, default="gender_basic")
     parser.add_argument("--steps", type=int, default=250)
     parser.add_argument("--num_dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
@@ -446,6 +414,7 @@ def main():
     parser.add_argument("--grad_steps", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=4)
     args = parser.parse_args()
+    print(vars(args))
     experiment(**vars(args))
 
 

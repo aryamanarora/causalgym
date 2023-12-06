@@ -1,0 +1,104 @@
+{
+    "gender_basic": {
+        "templates": [
+            "<|endoftext|>{name} {completion} because"
+        ],
+        "label": "name",
+        "variables": {
+            "name": {
+                " he": [
+                    "John", "Bill", "Joseph", "Patrick", "Ken", "Geoff",
+                    "Simon", "Richard", "David", "Michael"
+                ],
+                " she": [
+                    "Sarah", "Mary", "Elizabeth", "Jane", "Kate", "Jennifer",
+                    "Susan", "Karen", "Nancy", "Lisa"
+                ]
+            },
+            "completion": [
+                "walked"
+            ]
+        }
+    },
+    "gender": {
+        "templates": [
+            "<|endoftext|>{name} {completion} because"
+        ],
+        "label": "name",
+        "variables": {
+            "name": {
+                " he": [
+                    "John", "Bill", "Joseph", "Patrick", "Ken", "Geoff",
+                    "Simon", "Richard", "David", "Michael"
+                ],
+                " she": [
+                    "Sarah", "Mary", "Elizabeth", "Jane", "Kate", "Jennifer",
+                    "Susan", "Karen", "Nancy", "Lisa"
+                ]
+            },
+            "completion": [
+                "walked",
+                "is tired", "is excited", "is ready", "went home",
+                "is walking", "ran", "is running", "works there",
+                "joined the army", "plays soccer", "likes playing games",
+                "said no to me"
+            ]
+        }
+    },
+    "location": {
+        "templates": [
+            "<|endoftext|>{object} is a"
+        ],
+        "label": "object",
+        "variables": {
+            "object": {
+                " country": [
+                    "Canada", "America", "Mexico", "Brazil", "Argentina",
+                    "Chile", "Peru", "Colombia", "Venezuela", "Ecuador",
+                    "Spain", "Portugal", "France", "Germany", "Italy",
+                    "England", "Ireland", "Scotland", "Wales", "Sweden",
+                    "Norway", "Finland", "Denmark", "Russia", "China",
+                    "Japan", "Korea", "India", "Pakistan", "Iran",
+                    "Iraq", "Egypt", "Nigeria", "South Africa", "Kenya",
+                    "Australia", "New Zealand"
+                ],
+                " city": [
+                    "Madrid", "Rome", "London", "Paris", "Berlin", "Moscow",
+                    "Beijing", "Tokyo", "Seoul", "Delhi", "Mumbai",
+                    "Bangalore", "Lagos", "Cairo", "Johannesburg",
+                    "Sydney", "Melbourne", "Auckland", "Wellington",
+                    "Toronto", "Montreal", "Vancouver", "New York",
+                    "Los Angeles", "Chicago", "Houston", "Philadelphia",
+                    "Phoenix", "San Antonio", "San Diego", "Dallas",
+                    "San Jose", "Austin", "Jacksonville", "San Francisco",
+                    "Amman", "Baghdad", "Damascus", "Jerusalem", "Kabul",
+                    "Tehran", "Ankara", "Athens", "Budapest", "Dublin",
+                    "Riyadh", "Kuwait City", "Nairobi", "Lima", "Bogota",
+                    "Caracas", "Santiago", "Buenos Aires", "Mexico City",
+                    "Brasilia", "Lisbon", "Barcelona", "Vienna", "Prague",
+                    "Warsaw", "Stockholm", "Copenhagen", "Oslo", "Helsinki",
+                    "Reykjavik", "Bucharest", "Sofia", "Belgrade", "Kiev",
+                    "Minsk", "Tbilisi", "Yerevan", "Baku", "Ashgabat",
+                    "Tashkent", "Dushanbe", "Kathmandu", "Islamabad",
+                    "Kabul", "Kathmandu", "Dhaka", "Colombo", "Yangon",
+                    "Bangkok", "Hanoi", "Manila", "Jakarta", "Kuala Lumpur"
+                ],
+                " state": [
+                    "California", "Texas", "Florida", "New York",
+                    "Pennsylvania", "Illinois", "Ohio", "Georgia",
+                    "North Carolina", "Michigan", "New Jersey",
+                    "Virginia", "Washington", "Arizona", "Massachusetts",
+                    "Tennessee", "Indiana", "Missouri", "Maryland",
+                    "Wisconsin", "Minnesota", "Colorado", "Alabama",
+                    "South Carolina", "Louisiana", "Kentucky",
+                    "Oregon", "Oklahoma", "Connecticut", "Iowa",
+                    "Mississippi", "Arkansas", "Utah", "Kansas",
+                    "Nevada", "New Mexico", "Nebraska", "West Virginia",
+                    "Idaho", "Hawaii", "New Hampshire", "Maine",
+                    "Rhode Island", "Montana", "Delaware", "South Dakota",
+                    "North Dakota", "Alaska", "Vermont", "Wyoming"
+                ]
+            }
+        }
+    }
+}
