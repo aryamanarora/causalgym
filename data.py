@@ -2,6 +2,7 @@ import json
 from datasets import Dataset
 from transformers import AutoTokenizer
 import random
+import torch
 
 def load_data():
     """Load data templates."""
@@ -22,7 +23,7 @@ def fill_variables(template, vars, label_var, label, other_label):
     return base, src
 
 
-def make_data(tokenizer, experiment, batch_size, batches, device):
+def make_data(tokenizer, experiment, batch_size, batches, device, positions="all"):
     """Make data for an experiment."""
     # load data
     data = load_data()[experiment]
@@ -59,15 +60,21 @@ def make_data(tokenizer, experiment, batch_size, batches, device):
             tokenizer(src, return_tensors="pt", padding=True).to(device),
         ]
 
-        # calculate final positions
-        last_token_indices = pair[0].attention_mask.sum(1) - 1
-        for i in range(batch_size):
-            pos_i.append([1, last_token_indices[i].item()])
+        if positions == "all":
+            shape = pair[0].input_ids.shape
+            pos_i = torch.arange(shape[1]).repeat(shape[0], 1).unsqueeze(0)
+        elif positions == "first+last":
+            # calculate final positions
+            last_token_indices = pair[0].attention_mask.sum(1) - 1
+            for i in range(batch_size):
+                pos_i.append(torch.arange(1, last_token_indices[i] + 1))
+            pos_i = [pos_i,]
         
         # return
         labels = tokenizer(labels, return_tensors="pt").input_ids.to(device).reshape(-1)
         base_labels = tokenizer(base_labels, return_tensors="pt").input_ids.to(device).reshape(-1)
-        result.append((pair, labels, base_labels, [pos_i,]))
+        result.append((pair, labels, base_labels, pos_i))
+    
     return result, label_opts
 
 def test():

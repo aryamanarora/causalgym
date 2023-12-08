@@ -47,7 +47,7 @@
     },
     "location": {
         "templates": [
-            "<|endoftext|>{object} is a"
+            "<|endoftext|>{object} is a famous"
         ],
         "label": "object",
         "variables": {
@@ -82,21 +82,6 @@
                     "Tashkent", "Dushanbe", "Kathmandu", "Islamabad",
                     "Kabul", "Kathmandu", "Dhaka", "Colombo", "Yangon",
                     "Bangkok", "Hanoi", "Manila", "Jakarta", "Kuala Lumpur"
-                ],
-                " state": [
-                    "California", "Texas", "Florida", "New York",
-                    "Pennsylvania", "Illinois", "Ohio", "Georgia",
-                    "North Carolina", "Michigan", "New Jersey",
-                    "Virginia", "Washington", "Arizona", "Massachusetts",
-                    "Tennessee", "Indiana", "Missouri", "Maryland",
-                    "Wisconsin", "Minnesota", "Colorado", "Alabama",
-                    "South Carolina", "Louisiana", "Kentucky",
-                    "Oregon", "Oklahoma", "Connecticut", "Iowa",
-                    "Mississippi", "Arkansas", "Utah", "Kansas",
-                    "Nevada", "New Mexico", "Nebraska", "West Virginia",
-                    "Idaho", "Hawaii", "New Hampshire", "Maine",
-                    "Rhode Island", "Montana", "Delaware", "South Dakota",
-                    "North Dakota", "Alaska", "Vermont", "Wyoming"
                 ]
             }
         }
