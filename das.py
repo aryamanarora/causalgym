@@ -6,11 +6,11 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
-from torch.nn import CrossEntropyLoss
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
 from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
 from data import make_data
+from eval import calculate_loss, eval, eval_sentence
 
 # add align-transformers to path
 sys.path.append("../align-transformers/")
@@ -37,10 +37,10 @@ def intervention_config(model_type, intervention_type, layer, num_dims, interven
                 intervention_type,  # intervention type
                 "pos",  # intervention unit
                 1,  # max number of unit
+                alignable_low_rank_dimension=num_dims,  # low rank dimension
             ),
         ],
-        alignable_interventions_type=intervention_obj,
-        alignable_low_rank_dimension=num_dims
+        alignable_interventions_type=intervention_obj
     )
     return alignable_config
 
@@ -124,23 +124,6 @@ def experiment(
         )
         alignable.set_temperature(temperature_schedule[total_step])
 
-        # loss fxn: cross entropy between logits and a single target label
-        def calculate_loss(logits, label, step):
-            shift_logits = logits.contiguous()
-            shift_labels = label.to(shift_logits.device)
-            loss_fct = CrossEntropyLoss()
-            loss = loss_fct(shift_logits, shift_labels)
-
-            if step >= warm_up_steps:
-                try:
-                    for k, v in alignable.interventions.items():
-                        boundary_loss = 1.0 * v[0].intervention_boundaries.sum()
-                    loss += boundary_loss
-                except:
-                    pass
-
-            return loss
-
         # train
         iterator = tqdm(range(total_steps))
         total_loss = torch.tensor(0.0).to(device)
@@ -161,7 +144,7 @@ def experiment(
             logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
 
             # loss and backprop
-            loss = calculate_loss(logits, src_label, step)
+            loss = calculate_loss(logits, src_label, step, alignable, warm_up_steps)
             total_loss += loss
 
             # gradient accumulation
@@ -184,58 +167,21 @@ def experiment(
 
             # eval
             if step % eval_steps == 0 or step == total_steps - 1:
-                with torch.no_grad():
-
-                    # get boundary
-                    eval_loss = 0.0
-                    boundary = num_dims
-                    if num_dims == -1:
-                        for k, v in alignable.interventions.items():
-                            boundary = (v[0].intervention_boundaries.sum() * v[0].embed_dim).item()
-
-                    for (pair, src_label, base_label, pos_i) in evalset:
-                        
-                        # inference
-                        _, counterfactual_outputs = alignable(
-                            pair[0],
-                            [pair[1]],
-                            {"sources->base": (pos_i, pos_i)},
-                        )
-
-                        # get last token probs
-                        logits = counterfactual_outputs.logits[:, -1]
-                        loss = calculate_loss(logits, src_label, step)
-                        logits = logits[0]
-                        eval_loss += loss.item()
-                        probs = logits.softmax(-1)
-
-                        # store stats
-                        src_label = format_token(tokenizer, src_label)
-                        base_label = format_token(tokenizer, base_label)
-                        for i, tok in enumerate(tokens):
-                            prob = probs[tok].item()
-                            stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
-                            data.append(
-                                {
-                                    "step": step,
-                                    "src_label": src_label,
-                                    "base_label": base_label,
-                                    "label": src_label + " > " + base_label,
-                                    "loss": loss.item(),
-                                    "token": format_token(tokenizer, tok),
-                                    "label_token": src_label + " > " + base_label + ": " + format_token(tokenizer, tok),
-                                    "prob": probs[tok].item(),
-                                    "logit": logits[tok].item(),
-                                    "bound": boundary,
-                                    "temperature": temperature_schedule[total_step],
-                                    "layer": layer_i,
-                                    "pos": pos_i,
-                                }
-                            )
-                    
-                    # update iterator
-                    stats["eval_loss"] = f"{eval_loss / len(evalset):.3f}"
-                    iterator.set_postfix(stats)
+                more_data, more_stats = eval(
+                    alignable, tokenizer, evalset, step=step,
+                    layer_i=layer_i, num_dims=num_dims, tokens=tokens
+                )
+                eval_sentence(
+                    alignable=alignable,
+                    tokenizer=tokenizer,
+                    df=df,
+                    layer_objs=layer_objs,
+                    tokens=tokens,
+                    evalset=evalset,
+                    sentences="<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse."
+                )
+                data.extend(more_data)
+                stats.update(more_stats)
 
             total_step += 1
         if layer_i not in layer_objs:
@@ -283,106 +229,17 @@ def experiment(
         + ggtitle("per-label logits")
     )
     plot.save("figs/das/logit.pdf")
-
-    # test probe on a sentence
-    with torch.no_grad():
-
-        # sentence
-        test = tokenizer(
-            "<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse.",
-            # "<|endoftext|>The capital of Spain is Madrid, which is a beautiful city.",
-            #  Spain is a beautiful, cute, and handsome country.
-            return_tensors="pt",
-        ).to(device)
-        scores = []
-
-        # check each layer
-        for layer_i in tqdm(layer_objs):
-            
-            # get per-token logit ranges
-            layer_data = df[df["layer"] == layer_i]
-            layer_data = layer_data[layer_data["step"] == steps - 1]
-
-            for (pair, src_label, base_label, pos_base) in evalset[:1]:
-                src_label = format_token(tokenizer, src_label[0])
-                base_label = format_token(tokenizer, base_label[0])
-
-                sublayer_data = layer_data[layer_data["label"] == src_label + " > " + base_label]
-                min_logit_per_token = sublayer_data.groupby("token")["logit"].min()
-                max_logit_per_token = sublayer_data.groupby("token")["logit"].max()
-
-                # get interventions
-                alignable = layer_objs[layer_i][0]
-                alignable.set_device(device)
-                
-                # run per-pos
-                for pair_i in range(2):
-                    base_logits = gpt(**pair[pair_i]).logits[0, -1]
-                    for pos_i in range(1, len(test.input_ids[0])):
-                        location = torch.zeros_like(pos_base) + pos_i
-                        _, counterfactual_outputs = alignable(
-                            pair[pair_i], [test], {"sources->base": (location, pos_base)}
-                        )
-                        logits = counterfactual_outputs.logits[0, -1]
-                        probs = logits.softmax(dim=-1)
-                        partial_probs = probs[tokens]
-                        partial_probs = partial_probs / partial_probs.sum()
-                        for i, tok in enumerate(tokens):
-                            token = format_token(tokenizer, tok)
-                            scores.append({
-                                "pos": pos_i,
-                                "token": f"p({token})",
-                                "partial_prob": partial_probs[i].item(),
-                                "prob": probs[tok].item(),
-                                "adjusted_logitdiff": max(0, min(1, (logits[tok].item() - min_logit_per_token.loc[token].item()) / (max_logit_per_token.loc[token] - min_logit_per_token.loc[token]))),
-                                "iit": 1.0 if partial_probs[i] > partial_probs[1 - i] else 0.0,
-                                "logit": logits[tok].item(),
-                                "logitdiff": logits[tok].item() - base_logits[tok].item(),
-                                "layer": layer_i,
-                                "src_label": src_label,
-                                "base_label": base_label,
-                            })
-                    src_label, base_label = base_label, src_label
         
-        # plot
-        df = pd.DataFrame(scores)
-        ticks = list(range(len(test.input_ids[0])))
-        labels = [format_token(tokenizer, test.input_ids[0][i]) for i in ticks]
-        plot = (ggplot(df, aes(x="pos", y="layer", fill="prob"))
-                + facet_grid("src_label ~ token") + geom_tile()
-                + scale_x_continuous(breaks=ticks, labels=labels)
-                + scale_fill_gradient(low="white", high="purple")
-                + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
-        plot.save("figs/das/prob_per_pos.pdf")
-        
-        # plot
-        plot = (ggplot(df, aes(x="pos", y="layer", fill="adjusted_logitdiff"))
-                + facet_grid("src_label ~ token") + geom_tile()
-                + scale_x_continuous(breaks=ticks, labels=labels)
-                + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5, limits=(0, 1))
-                + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
-        plot.save("figs/das/logitdiff_per_pos.pdf")
-
-        # print avg score per pos, token
-        for pos_i in range(1, len(test.input_ids[0])):
-            print(f"pos {pos_i}: {format_token(tokenizer, test.input_ids[0][pos_i])}")
-            for src_label in df["src_label"].unique():
-                print(src_label)
-                df = pd.DataFrame(scores)
-                df = df[df["pos"] == pos_i]
-                df = df[df["src_label"] == src_label]
-                df = df.groupby(["src_label", "base_label", "token"]).mean(numeric_only=True)
-                df = df.reset_index()
-
-                # convert df to dict where key is label
-                data = {}
-                for _, row in df.iterrows():
-                    data[row["token"]] = (row["prob"], row["logitdiff"])
-                
-                # print
-                for src_label in data:
-                    print(f"{src_label:<10} {data[src_label][0]:>15.3%} {data[src_label][1]:>15.3}")
-            print("\n")
+    # plot
+    scores_df, test = eval_sentence(
+        alignable=alignable,
+        tokenizer=tokenizer,
+        df=df,
+        layer_objs=layer_objs,
+        tokens=tokens,
+        evalset=evalset,
+        sentences="<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse."
+    )
 
 
 def main():

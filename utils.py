@@ -98,3 +98,7 @@ def make_sentence(
         name2=name2,
         connective=connective,
     )
+
+def format_token(tokenizer, tok):
+    """Format the token for some path patching experiment to show decoding diff"""
+    return tokenizer.decode(tok).replace(" ", "_").replace("\n", "\\n")
