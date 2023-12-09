@@ -62,7 +62,7 @@ def make_data(tokenizer, experiment, batch_size, batches, device, positions="all
 
         if positions == "all":
             shape = pair[0].input_ids.shape
-            pos_i = torch.arange(shape[1]).repeat(shape[0], 1).unsqueeze(0)
+            pos_i = torch.arange(shape[1]).repeat(shape[0], 1).unsqueeze(0).tolist()
         elif positions == "first+last":
             # calculate final positions
             last_token_indices = pair[0].attention_mask.sum(1) - 1

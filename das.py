@@ -70,6 +70,16 @@ def experiment(
     ).to(device)
     print(gpt.config.num_hidden_layers)
 
+    # make das subdir
+    if not os.path.exists("figs/das"):
+        os.makedirs("figs/das")
+    if not os.path.exists("figs/das/steps"):
+        os.makedirs("figs/das/steps")
+    
+    # clear files from figs/das/steps
+    for file in os.listdir("figs/das/steps"):
+        os.remove(os.path.join("figs/das/steps", file))
+
     # train and eval sets
     trainset, labels = make_data(tokenizer, dataset, batch_size, steps, device)
     evalset, _ = make_data(tokenizer, dataset, 1, 20, device)
@@ -78,7 +88,7 @@ def experiment(
     tokens = tokenizer.encode("".join(labels))
 
     # intervene on each layer
-    data = []
+    data, scores = [], []
     stats = {}
     layer_objs = {}
 
@@ -171,31 +181,31 @@ def experiment(
                     alignable, tokenizer, evalset, step=step,
                     layer_i=layer_i, num_dims=num_dims, tokens=tokens
                 )
-                eval_sentence(
-                    alignable=alignable,
+                data.extend(more_data)
+                stats.update(more_stats)
+                iterator.set_postfix(stats)
+                layer_objs[layer_i] = alignable
+                prefix = str(step).zfill(4)
+                
+                scores, _ = eval_sentence(
                     tokenizer=tokenizer,
-                    df=df,
+                    df=pd.DataFrame(data),
+                    scores=scores,
                     layer_objs=layer_objs,
                     tokens=tokens,
                     evalset=evalset,
-                    sentences="<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse."
+                    sentence="<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse.",
+                    prefix=f"steps/step_{prefix}",
+                    step=step,
+                    plots=True if (layer_i == gpt.config.num_hidden_layers - 1) else False,
+                    layer=layer_i
                 )
-                data.extend(more_data)
-                stats.update(more_stats)
 
             total_step += 1
-        if layer_i not in layer_objs:
-            layer_objs[layer_i] = (alignable, loss.item())
-        elif loss.item() < layer_objs[layer_i][1]:
-            layer_objs[layer_i] = (alignable, loss.item())
-
-    # make das subdir
-    if not os.path.exists("figs/das"):
-        os.makedirs("figs/das")
+        layer_objs[layer_i] = alignable
 
     # print plots
     df = pd.DataFrame(data)
-    
     plot = (
         ggplot(df, aes(x="step", y="bound", color="factor(layer)"))
         + geom_line()
@@ -232,14 +242,18 @@ def experiment(
         
     # plot
     scores_df, test = eval_sentence(
-        alignable=alignable,
         tokenizer=tokenizer,
         df=df,
         layer_objs=layer_objs,
         tokens=tokens,
         evalset=evalset,
-        sentences="<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse."
+        step=total_steps - 1,
+        sentence="<|endoftext|>Jane is a terrible, evil person. John is an angel, a kind soul, and my friend. I would never talk to Jane.",
+        plots=True
     )
+
+    # make gif of files in figs/das/steps
+    os.system("convert -delay 100 -loop 0 figs/das/steps/*.png figs/das/steps.gif")
 
 
 def main():

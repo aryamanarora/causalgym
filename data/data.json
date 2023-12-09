@@ -85,5 +85,17 @@
                 ]
             }
         }
+    },
+    "few_shot_polarity": {
+	    "templates": [
+		    "<|endoftext|>- advantage: good\n- robbery: bad\n- destruction: bad\n- health: good\n- positivity: good\n- war: bad\n- peace: good\n- beautiful: good\n- family: good\n-{word}:"
+	    ],
+	    "label": "word",
+	    "variables": {
+		    "word": {
+			    " good": [" toy", " happy", " friend", " child", " help", " nice", " kind", " clean"],
+			    " bad": [" kill", " hurt", " sad", " angry", " mean", " enemy", " rude", " prevent", " dirty"]
+		    }
+	    }
     }
 }

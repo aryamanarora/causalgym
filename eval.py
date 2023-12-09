@@ -3,6 +3,8 @@ from torch.nn import CrossEntropyLoss
 from utils import format_token
 from tqdm import tqdm
 import pandas as pd
+from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
+from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
 
 loss_fct = CrossEntropyLoss()
 
@@ -74,28 +76,32 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
     stats["eval_loss"] = f"{eval_loss / len(evalset):.3f}"
     return data, stats
 
-@torch.no_grad
+@torch.no_grad()
 def eval_sentence(
     layer_objs,
     df,
     evalset,
     tokenizer,
-    alignable,
     tokens,
     sentence,
-    prefix=""
+    step,
+    prefix="",
+    plots=False,
+    scores=[],
+    layer=-1
 ):
     # sentence
     device = evalset[0][0][0].input_ids.device
     test = tokenizer(sentence, return_tensors="pt").to(device)
-    scores = []
 
     # check each layer
-    for layer_i in tqdm(layer_objs):
+    for layer_i in layer_objs:
+        if layer != -1 and layer_i != layer:
+            continue
         
         # get per-token logit ranges
         layer_data = df[df["layer"] == layer_i]
-        layer_data = layer_data[layer_data["step"] == layer_data["step"].max()]
+        layer_data = layer_data[layer_data["step"] == step]
 
         for (pair, src_label, base_label, pos_base) in evalset[:1]:
             src_label = format_token(tokenizer, src_label[0])
@@ -106,16 +112,16 @@ def eval_sentence(
             max_logit_per_token = sublayer_data.groupby("token")["logit"].max()
 
             # get interventions
-            alignable = layer_objs[layer_i][0]
+            alignable = layer_objs[layer_i]
             alignable.set_device(device)
             
             # run per-pos
             for pair_i in range(2):
                 base_logits = alignable.model(**pair[pair_i]).logits[0, -1]
                 for pos_i in range(1, len(test.input_ids[0])):
-                    location = torch.zeros_like(pos_base) + pos_i
+                    location = torch.zeros_like(torch.tensor(pos_base)) + pos_i
                     _, counterfactual_outputs = alignable(
-                        pair[pair_i], [test], {"sources->base": (location, pos_base)}
+                        pair[pair_i], [test], {"sources->base": (location.tolist(), pos_base)}
                     )
                     logits = counterfactual_outputs.logits[0, -1]
                     probs = logits.softmax(dim=-1)
@@ -135,46 +141,56 @@ def eval_sentence(
                             "layer": layer_i,
                             "src_label": src_label,
                             "base_label": base_label,
+                            "step": step
                         })
                 src_label, base_label = base_label, src_label
     
     # plot
-    ticks = list(range(len(test.input_ids[0])))
-    labels = [format_token(tokenizer, test.input_ids[0][i]) for i in ticks]
-    plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="prob"))
-            + facet_grid("src_label ~ token") + geom_tile()
-            + scale_x_continuous(breaks=ticks, labels=labels)
-            + scale_fill_gradient(low="white", high="purple")
-            + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
-    plot.save(f"figs/das/{prefix}_prob_per_pos.pdf")
-    
-    plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="adjusted_logitdiff"))
-            + facet_grid("src_label ~ token") + geom_tile()
-            + scale_x_continuous(breaks=ticks, labels=labels)
-            + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5, limits=(0, 1))
-            + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10)))
-    plot.save(f"figs/das/{prefix}_logitdiff_per_pos.pdf")
+    if plots:
+        scores_df = pd.DataFrame(scores)
+        scores_df = scores_df[scores_df["step"] == step]
+        ticks = list(range(len(test.input_ids[0])))
+        labels = [format_token(tokenizer, test.input_ids[0][i]) for i in ticks]
+        if prefix != "":
+            prefix = prefix + "_"
+        ext = "png" if prefix != "" else "pdf"
+        plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="prob"))
+                + facet_grid("src_label ~ token") + geom_tile()
+                + scale_x_continuous(breaks=ticks, labels=labels)
+                + scale_fill_gradient(low="white", high="purple", limits=(0, 1))
+                + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
+                + ggtitle(f"Step {step}"))
+        plot.save(f"figs/das/{prefix}prob_per_pos.{ext}")
+        
+        if prefix == "":
+            plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="adjusted_logitdiff"))
+                    + facet_grid("src_label ~ token") + geom_tile()
+                    + scale_x_continuous(breaks=ticks, labels=labels)
+                    + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5, limits=(0, 1))
+                    + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
+                    + ggtitle(f"Step {step}"))
+            plot.save(f"figs/das/{prefix}logitdiff_per_pos.{ext}")
 
-    # print avg score per pos, token
-    if prefix == "":
-        for pos_i in range(1, len(test.input_ids[0])):
-            print(f"pos {pos_i}: {format_token(tokenizer, test.input_ids[0][pos_i])}")
-            for src_label in df["src_label"].unique():
-                print(src_label)
-                df = scores_df
-                df = df[df["pos"] == pos_i]
-                df = df[df["src_label"] == src_label]
-                df = df.groupby(["src_label", "base_label", "token"]).mean(numeric_only=True)
-                df = df.reset_index()
+        # print avg score per pos, token
+        if prefix == "":
+            for pos_i in range(1, len(test.input_ids[0])):
+                print(f"pos {pos_i}: {format_token(tokenizer, test.input_ids[0][pos_i])}")
+                for src_label in df["src_label"].unique():
+                    print(src_label)
+                    df = scores_df
+                    df = df[df["pos"] == pos_i]
+                    df = df[df["src_label"] == src_label]
+                    df = df.groupby(["src_label", "base_label", "token"]).mean(numeric_only=True)
+                    df = df.reset_index()
 
-                # convert df to dict where key is label
-                data = {}
-                for _, row in df.iterrows():
-                    data[row["token"]] = (row["prob"], row["logitdiff"])
-                
-                # print
-                for src_label in data:
-                    print(f"{src_label:<10} {data[src_label][0]:>15.3%} {data[src_label][1]:>15.3}")
-            print("\n")
+                    # convert df to dict where key is label
+                    data = {}
+                    for _, row in df.iterrows():
+                        data[row["token"]] = (row["prob"], row["logitdiff"])
+                    
+                    # print
+                    for src_label in data:
+                        print(f"{src_label:<10} {data[src_label][0]:>15.3%} {data[src_label][1]:>15.3}")
+                print("\n")
     
-    return pd.DataFrame(scores), test
+    return scores, test
