@@ -6,5 +6,5 @@ logs/sampling
 logs/kldivs
 .ipynb_checkpoints/
 .vscode/
-figs/old/
-figs/das/
+figs/
+deprecated/figs/

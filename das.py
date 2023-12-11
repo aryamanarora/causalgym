@@ -49,6 +49,10 @@ def get_last_token(logits, attention_mask):
     batch_indices = torch.arange(logits.size(0)).unsqueeze(1)
     return logits[batch_indices, last_token_indices.unsqueeze(1)].squeeze(1)
 
+def save_model(layer_objs):
+    for layer_i, layer_obj in layer_objs.items():
+        torch.save(layer_obj.model.state_dict(), f"figs/das/steps/layer_{layer_i}.pt")
+
 def experiment(
     model: str,
     dataset: str,
@@ -58,6 +62,7 @@ def experiment(
     eval_steps: int,
     grad_steps: int,
     batch_size: int,
+    num_tokens: int
 ):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -70,6 +75,9 @@ def experiment(
     ).to(device)
     print(gpt.config.num_hidden_layers)
 
+    # sentence for evals
+    sentence = "<|endoftext|>Jane is a terrible, evil person. John is an angel, a kind soul, and my friend. I would always talk to Jane."
+
     # make das subdir
     if not os.path.exists("figs/das"):
         os.makedirs("figs/das")
@@ -81,8 +89,8 @@ def experiment(
         os.remove(os.path.join("figs/das/steps", file))
 
     # train and eval sets
-    trainset, labels = make_data(tokenizer, dataset, batch_size, steps, device)
-    evalset, _ = make_data(tokenizer, dataset, 1, 20, device)
+    trainset, labels = make_data(tokenizer, dataset, batch_size, steps, num_tokens, device)
+    evalset, _ = make_data(tokenizer, dataset, 1, 20, num_tokens, device)
 
     # tokens to log
     tokens = tokenizer.encode("".join(labels))
@@ -194,7 +202,7 @@ def experiment(
                     layer_objs=layer_objs,
                     tokens=tokens,
                     evalset=evalset,
-                    sentence="<|endoftext|>Jane went home because she was beautiful. My buddy John is my girlfriend's brother and he wants to be a nurse.",
+                    sentence=sentence,
                     prefix=f"steps/step_{prefix}",
                     step=step,
                     plots=True if (layer_i == gpt.config.num_hidden_layers - 1) else False,
@@ -241,14 +249,14 @@ def experiment(
     plot.save("figs/das/logit.pdf")
         
     # plot
-    scores_df, test = eval_sentence(
+    eval_sentence(
         tokenizer=tokenizer,
         df=df,
         layer_objs=layer_objs,
         tokens=tokens,
         evalset=evalset,
         step=total_steps - 1,
-        sentence="<|endoftext|>Jane is a terrible, evil person. John is an angel, a kind soul, and my friend. I would never talk to Jane.",
+        sentence=sentence,
         plots=True
     )
 
@@ -266,6 +274,7 @@ def main():
     parser.add_argument("--eval_steps", type=int, default=50)
     parser.add_argument("--grad_steps", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--num_tokens", type=int, default=-1)
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))

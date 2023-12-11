@@ -3,38 +3,52 @@ from datasets import Dataset
 from transformers import AutoTokenizer
 import random
 import torch
+from collections import defaultdict
 
 def load_data():
     """Load data templates."""
     data = json.load(open("data/data.json", "r"))
     return data
 
-def fill_variables(template, vars, label_var, label, other_label):
+def fill_variables(template, variables, num_tokens, label_var, label, other_label):
     """Fill variables in a template sentence."""
     base, src = template, template
-    for var in vars:
+    for var in variables:
         if var == label_var:
-            base = base.replace(f"{{{var}}}", random.choice(vars[label_var][label]))
-            src = src.replace(f"{{{var}}}", random.choice(vars[label_var][other_label]))
+            base = base.replace(f"{{{var}}}", random.choice(variables[label_var][num_tokens][label]))
+            src = src.replace(f"{{{var}}}", random.choice(variables[label_var][num_tokens][other_label]))
         else:
-            val = random.choice(vars[var])
+            val = random.choice(variables[var])
             base = base.replace(f"{{{var}}}", val)
             src = src.replace(f"{{{var}}}", val)
     return base, src
 
 
-def make_data(tokenizer, experiment, batch_size, batches, device, positions="all"):
+def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit, device, positions="all"):
     """Make data for an experiment."""
     # load data
     data = load_data()[experiment]
     label_var = data["label"]
-    vars = data["variables"]
-    label_opts = list(vars[label_var].keys())
+    variables = data["variables"]
 
-    # remove too long label vars
-    for key in label_opts:
-        vars[label_var][key] = [name for name in vars[label_var][key] if len(tokenizer(name)['input_ids']) == 1]
-    print(vars[label_var])
+    # group by # tokens
+    grouped_by_tokens = defaultdict(lambda: defaultdict(list))
+    for label_opt in variables[label_var]:
+        for option in variables[label_var][label_opt]:
+            grouped_by_tokens[len(tokenizer(option)["input_ids"])][label_opt].append(option)
+
+    # delete tokens that lack all options
+    original_num_options = len(variables[label_var])
+    for num_tokens in list(grouped_by_tokens.keys()):
+        if num_tokens_limit != -1 and num_tokens != num_tokens_limit:
+            del grouped_by_tokens[num_tokens]
+        elif len(grouped_by_tokens[num_tokens]) < original_num_options:
+            del grouped_by_tokens[num_tokens]
+
+    # make token options
+    variables[label_var] = grouped_by_tokens
+    token_opts = list(variables[label_var].keys())
+    print(variables[label_var])
     
     # make batches
     result = []
@@ -44,11 +58,13 @@ def make_data(tokenizer, experiment, batch_size, batches, device, positions="all
         # make sents
         for _ in range(batch_size):
             template = random.choice(data["templates"])
+            num_tokens = random.choice(token_opts)
+            label_opts = list(variables[label_var][num_tokens].keys())
             label = random.choice(label_opts)
             other_label = random.choice(label_opts)
             while other_label == label:
                 other_label = random.choice(label_opts)
-            base_i, src_i = fill_variables(template, vars, label_var, label, other_label)
+            base_i, src_i = fill_variables(template, variables, num_tokens, label_var, label, other_label)
             base.append(base_i)
             src.append(src_i)
             labels.append(other_label)
