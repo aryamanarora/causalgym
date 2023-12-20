@@ -8,7 +8,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
-from utils import MODELS, WEIGHTS, Sentence, get_options, make_sentence
+from utils import MODELS, WEIGHTS
 from data import make_data
 from eval import calculate_loss, eval, eval_sentence
 
@@ -49,10 +49,6 @@ def get_last_token(logits, attention_mask):
     batch_indices = torch.arange(logits.size(0)).unsqueeze(1)
     return logits[batch_indices, last_token_indices.unsqueeze(1)].squeeze(1)
 
-def save_model(layer_objs):
-    for layer_i, layer_obj in layer_objs.items():
-        torch.save(layer_obj.model.state_dict(), f"figs/das/steps/layer_{layer_i}.pt")
-
 def experiment(
     model: str,
     dataset: str,
@@ -62,7 +58,8 @@ def experiment(
     eval_steps: int,
     grad_steps: int,
     batch_size: int,
-    num_tokens: int
+    num_tokens: int,
+    position: str
 ):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -76,7 +73,7 @@ def experiment(
     print(gpt.config.num_hidden_layers)
 
     # sentence for evals
-    sentence = "<|endoftext|>Jane is a terrible, evil person. John is an angel, a kind soul, and my friend. I would always talk to Jane."
+    sentence = "<|endoftext|>Jane is a terrible, evil person. John and Bob are very nice friends of ours. We will always talk to Jane."
 
     # make das subdir
     if not os.path.exists("figs/das"):
@@ -89,8 +86,8 @@ def experiment(
         os.remove(os.path.join("figs/das/steps", file))
 
     # train and eval sets
-    trainset, labels = make_data(tokenizer, dataset, batch_size, steps, num_tokens, device)
-    evalset, _ = make_data(tokenizer, dataset, 1, 20, num_tokens, device)
+    trainset, labels = make_data(tokenizer, dataset, batch_size, steps, num_tokens, device, position=position)
+    evalset, _ = make_data(tokenizer, dataset, 1, 20, num_tokens, device, position=position)
 
     # tokens to log
     tokens = tokenizer.encode("".join(labels))
@@ -203,6 +200,8 @@ def experiment(
                     tokens=tokens,
                     evalset=evalset,
                     sentence=sentence,
+                    dataset=dataset,
+                    model=model,
                     prefix=f"steps/step_{prefix}",
                     step=step,
                     plots=True if (layer_i == gpt.config.num_hidden_layers - 1) else False,
@@ -217,7 +216,7 @@ def experiment(
     plot = (
         ggplot(df, aes(x="step", y="bound", color="factor(layer)"))
         + geom_line()
-        + ggtitle("intervention boundary")
+        + ggtitle(f"{dataset}, {model}: intervention boundary")
     )
     plot.save("figs/das/bound.pdf")
 
@@ -226,7 +225,7 @@ def experiment(
         + facet_wrap("layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle("per-label loss")
+        + ggtitle(f"{dataset}, {model}: per-label loss")
     )
     plot.save("figs/das/loss.pdf")
 
@@ -235,7 +234,7 @@ def experiment(
         + facet_wrap("layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle("per-label probs")
+        + ggtitle(f"{dataset}, {model}: per-label probs")
     )
     plot.save("figs/das/prob.pdf")
 
@@ -244,7 +243,7 @@ def experiment(
         + facet_wrap("layer")
         + geom_point(alpha=0.1)
         + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle("per-label logits")
+        + ggtitle(f"{dataset}, {model}: per-label logits")
     )
     plot.save("figs/das/logit.pdf")
         
@@ -257,11 +256,14 @@ def experiment(
         evalset=evalset,
         step=total_steps - 1,
         sentence=sentence,
+        dataset=dataset,
+        model=model,
         plots=True
     )
 
     # make gif of files in figs/das/steps
-    os.system("convert -delay 100 -loop 0 figs/das/steps/*.png figs/das/steps.gif")
+    os.system("convert -delay 100 -loop 0 figs/das/steps/*prob_per_pos.png figs/das/prob_steps.gif")
+    os.system("convert -delay 100 -loop 0 figs/das/steps/*val_per_pos.png figs/das/val_steps.gif")
 
 
 def main():
@@ -275,6 +277,7 @@ def main():
     parser.add_argument("--grad_steps", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--num_tokens", type=int, default=-1)
+    parser.add_argument("--position", type=str, default="all")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))

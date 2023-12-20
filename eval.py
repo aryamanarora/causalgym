@@ -1,15 +1,33 @@
 import torch
 from torch.nn import CrossEntropyLoss
-from utils import format_token
 from tqdm import tqdm
 import pandas as pd
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
+import os
+from utils import format_token
+from collections import defaultdict
 
 loss_fct = CrossEntropyLoss()
 
+def save_layer_objs(layer_objs, name):
+    layers = defaultdict(dict)
+    for layer, alignable in layer_objs.items():
+        for key in alignable.interventions:
+            layers[layer][key] = alignable.interventions[key][0].state_dict()
+    torch.save(layers, f"saved/{name}")
+
+def get_intervention_vals(alignable):
+    """Get intervention activations."""
+    values = {}
+    for key in alignable.interventions:
+        intervention_object = alignable.interventions[key][0]
+        values[key] = {"base": intervention_object.base_val, "src": intervention_object.src_val}
+    # shape: [batch_size, seq_len, proj_dim]
+    return values
+
 def calculate_loss(logits, label, step, alignable, warm_up_steps=-1):
-    """loss fxn: cross entropy between logits and a single target label"""
+    """Calculate cross entropy between logits and a single target label (can be batched)"""
     shift_logits = logits.contiguous()
     shift_labels = label.to(shift_logits.device)
     loss = loss_fct(shift_logits, shift_labels)
@@ -41,6 +59,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
             [pair[1]],
             {"sources->base": (pos_i, pos_i)},
         )
+        intervention_vals = get_intervention_vals(alignable)
 
         # get last token probs
         logits = counterfactual_outputs.logits[:, -1]
@@ -85,6 +104,8 @@ def eval_sentence(
     tokens,
     sentence,
     step,
+    dataset,
+    model,
     prefix="",
     plots=False,
     scores=[],
@@ -120,13 +141,19 @@ def eval_sentence(
                 base_logits = alignable.model(**pair[pair_i]).logits[0, -1]
                 for pos_i in range(1, len(test.input_ids[0])):
                     location = torch.zeros_like(torch.tensor(pos_base)) + pos_i
+
                     _, counterfactual_outputs = alignable(
                         pair[pair_i], [test], {"sources->base": (location.tolist(), pos_base)}
                     )
+                    intervention_vals = get_intervention_vals(alignable)
+                    src_val = list(intervention_vals.values())[0]["src"].mean().item()
+                    base_val = list(intervention_vals.values())[0]["base"].mean().item()
+
                     logits = counterfactual_outputs.logits[0, -1]
                     probs = logits.softmax(dim=-1)
                     partial_probs = probs[tokens]
                     partial_probs = partial_probs / partial_probs.sum()
+
                     for i, tok in enumerate(tokens):
                         token = format_token(tokenizer, tok)
                         scores.append({
@@ -140,7 +167,11 @@ def eval_sentence(
                             "logitdiff": logits[tok].item() - base_logits[tok].item(),
                             "layer": layer_i,
                             "src_label": src_label,
+                            "src_val": src_val,
                             "base_label": base_label,
+                            "base_val": base_val,
+                            "label": src_label + " > " + base_label,
+                            "valdiff": src_val - base_val,
                             "step": step
                         })
                 src_label, base_label = base_label, src_label
@@ -155,21 +186,20 @@ def eval_sentence(
             prefix = prefix + "_"
         ext = "png" if prefix != "" else "pdf"
         plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="prob"))
-                + facet_grid("src_label ~ token") + geom_tile()
+                + facet_grid("label ~ token") + geom_tile()
                 + scale_x_continuous(breaks=ticks, labels=labels)
                 + scale_fill_gradient(low="white", high="purple", limits=(0, 1))
                 + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
-                + ggtitle(f"Step {step}"))
+                + ggtitle(f"{dataset}, {model}: Step {step}"))
         plot.save(f"figs/das/{prefix}prob_per_pos.{ext}")
         
-        if prefix == "":
-            plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="adjusted_logitdiff"))
-                    + facet_grid("src_label ~ token") + geom_tile()
-                    + scale_x_continuous(breaks=ticks, labels=labels)
-                    + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5, limits=(0, 1))
-                    + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
-                    + ggtitle(f"Step {step}"))
-            plot.save(f"figs/das/{prefix}logitdiff_per_pos.{ext}")
+        plot = (ggplot(scores_df, aes(x="pos", y="layer", fill="valdiff"))
+                + facet_grid("label ~ token") + geom_tile()
+                + scale_x_continuous(breaks=ticks, labels=labels)
+                + scale_fill_gradient2(low="purple", high="orange", mid="white", midpoint=0.5)
+                + theme(axis_text_x=element_text(rotation=90), figure_size=(10, 10))
+                + ggtitle(f"{dataset}, {model}: Step {step}"))
+        plot.save(f"figs/das/{prefix}val_per_pos.{ext}")
 
         # print avg score per pos, token
         if prefix == "":
@@ -186,7 +216,7 @@ def eval_sentence(
                     # convert df to dict where key is label
                     data = {}
                     for _, row in df.iterrows():
-                        data[row["token"]] = (row["prob"], row["logitdiff"])
+                        data[row["token"]] = (row["prob"], row["src_val"])
                     
                     # print
                     for src_label in data:

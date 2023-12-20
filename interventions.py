@@ -27,8 +27,10 @@ class LowRankRotatedSpaceIntervention(TrainbleIntervention):
         base = base.reshape(batch_size, -1, self.embed_dim)
         source = source.reshape(batch_size, -1, self.embed_dim)
         rotated_base = self.rotate_layer(base)
+        self.base_val = rotated_base.clone()
         low_rank_approx_base = base - torch.matmul(rotated_base, self.rotate_layer.weight.T)
         rotated_source = self.rotate_layer(source)
+        self.src_val = rotated_source.clone()
         # interchange
         inv_value = rotated_source
         # inverse base

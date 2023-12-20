@@ -1,4 +1,4 @@
-from torch import float32, bfloat16, float16
+from torch import float32, bfloat16, float16, topk
 from collections import namedtuple
 import random
 from transformers import AutoTokenizer
@@ -102,3 +102,15 @@ def make_sentence(
 def format_token(tokenizer, tok):
     """Format the token for some path patching experiment to show decoding diff"""
     return tokenizer.decode(tok).replace(" ", "_").replace("\n", "\\n")
+
+def top_vals(tokenizer, res, highlight=[], n=10):
+    """Pretty print the top n values of a distribution over the vocabulary"""
+    top_values, top_indices = topk(res, n)
+    for i in range(len(top_values)):
+        val = top_indices[i].item()
+        tok = format_token(tokenizer, val)
+        if val in highlight:
+            tok = f"\x1b[6;30;42m{tok}\x1b[0m"
+            print(f"{tok:<34} {val:>5} {top_values[i].item():.4%}")
+        else:
+            print(f"{tok:<20} {val:>5} {top_values[i].item():.4%}")
