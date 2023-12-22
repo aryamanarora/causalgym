@@ -59,7 +59,8 @@ def experiment(
     grad_steps: int,
     batch_size: int,
     num_tokens: int,
-    position: str
+    position: str,
+    do_swap: bool,
 ):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -146,21 +147,28 @@ def experiment(
         for step in iterator:
 
             # make pair
-            (pair, src_label, _, pos_i) = trainset[step]
+            (pair, src_label, base_label, pos_i) = trainset[step]
+            for i in range(2):
+                # inference
+                _, counterfactual_outputs = alignable(
+                    pair[0],
+                    [pair[1]],
+                    {"sources->base": (pos_i, pos_i)},
+                )
 
-            # inference
-            _, counterfactual_outputs = alignable(
-                pair[0],
-                [pair[1]],
-                {"sources->base": (pos_i, pos_i)},
-            )
+                # get last token logits
+                logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
 
-            # get last token logits
-            logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
-
-            # loss and backprop
-            loss = calculate_loss(logits, src_label, step, alignable, warm_up_steps)
-            total_loss += loss
+                # loss and backprop
+                loss = calculate_loss(logits, src_label, step, alignable, warm_up_steps)
+                total_loss += loss
+                
+                # swap
+                if do_swap:
+                    pair[0], pair[1] = pair[1], pair[0]
+                    src_label, base_label = base_label, src_label
+                else:
+                    break
 
             # gradient accumulation
             if total_step % grad_steps == 0:
@@ -273,11 +281,12 @@ def main():
     parser.add_argument("--steps", type=int, default=250)
     parser.add_argument("--num_dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
-    parser.add_argument("--eval_steps", type=int, default=50)
-    parser.add_argument("--grad_steps", type=int, default=1)
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--eval-steps", type=int, default=50)
+    parser.add_argument("--grad-steps", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--num_tokens", type=int, default=-1)
     parser.add_argument("--position", type=str, default="all")
+    parser.add_argument("--do-swap", action="store_true")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
