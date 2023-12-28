@@ -1,4 +1,4 @@
-from torch import float32, bfloat16, float16, topk
+from torch import float32, bfloat16, float16, topk, arange
 from collections import namedtuple
 import random
 from transformers import AutoTokenizer
@@ -114,3 +114,8 @@ def top_vals(tokenizer, res, highlight=[], n=10):
             print(f"{tok:<34} {val:>5} {top_values[i].item():.4%}")
         else:
             print(f"{tok:<20} {val:>5} {top_values[i].item():.4%}")
+
+def get_last_token(logits, attention_mask):
+    last_token_indices = attention_mask.sum(1) - 1
+    batch_indices = arange(logits.size(0)).unsqueeze(1)
+    return logits[batch_indices, last_token_indices.unsqueeze(1)].squeeze(1)

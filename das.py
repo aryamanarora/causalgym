@@ -6,9 +6,9 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
-from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
+from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap, geom_text
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
-from utils import MODELS, WEIGHTS
+from utils import MODELS, WEIGHTS, get_last_token
 from data import make_data
 from eval import calculate_loss, eval, eval_sentence
 
@@ -44,11 +44,6 @@ def intervention_config(model_type, intervention_type, layer, num_dims, interven
     )
     return alignable_config
 
-def get_last_token(logits, attention_mask):
-    last_token_indices = attention_mask.sum(1) - 1
-    batch_indices = torch.arange(logits.size(0)).unsqueeze(1)
-    return logits[batch_indices, last_token_indices.unsqueeze(1)].squeeze(1)
-
 def experiment(
     model: str,
     dataset: str,
@@ -60,7 +55,7 @@ def experiment(
     batch_size: int,
     num_tokens: int,
     position: str,
-    do_swap: bool,
+    do_swap: bool=True,
 ):
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -254,7 +249,42 @@ def experiment(
         + ggtitle(f"{dataset}, {model}: per-label logits")
     )
     plot.save("figs/das/logit.pdf")
+
+    # cosine sim of learned directions plot
+    if num_dims == 1:
+        # collect data
+        directions = {}
+        cos_sims = []
+        for layer in layer_objs:
+            alignable = layer_objs[layer]
+            for key in alignable.interventions:
+                intervention_object = alignable.interventions[key][0]
+                direction = intervention_object.rotate_layer.weight.detach().cpu().reshape(-1)
+                directions[layer] = direction
+        for layer in directions:
+            direction = directions[layer]
+            for other_layer in directions:
+                cos_sim = torch.nn.functional.cosine_similarity(direction, directions[other_layer], dim=0).mean().abs().item()
+                cos_sims.append({"layer": layer, "other_layer": other_layer, "cos_sim": cos_sim})
+            directions[layer] = direction
         
+        # plot sims
+        cos_sims_df = pd.DataFrame(cos_sims)
+        plot = (
+            ggplot(cos_sims_df, aes(x="layer", y="other_layer", fill="cos_sim"))
+            + geom_tile()
+            + ggtitle(f"{dataset}, {model}: cosine similarity of learned directions")
+        )
+
+        # add text for each tile
+        for i in range(cos_sims_df.shape[0]):
+            plot += geom_text(
+                aes(x=cos_sims_df["layer"][i], y=cos_sims_df["other_layer"][i], label=f"{cos_sims_df['cos_sim'][i]:.2f}"),
+                size=4,
+                color="white"
+            )
+        plot.save("figs/das/cos_sim.pdf")
+
     # plot
     eval_sentence(
         tokenizer=tokenizer,
@@ -273,20 +303,21 @@ def experiment(
     os.system("convert -delay 100 -loop 0 figs/das/steps/*prob_per_pos.png figs/das/prob_steps.gif")
     os.system("convert -delay 100 -loop 0 figs/das/steps/*val_per_pos.png figs/das/val_steps.gif")
 
+    # save layer objs
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
     parser.add_argument("--dataset", type=str, default="gender_basic")
     parser.add_argument("--steps", type=int, default=250)
-    parser.add_argument("--num_dims", type=int, default=-1)
+    parser.add_argument("--num-dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
     parser.add_argument("--eval-steps", type=int, default=50)
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)
-    parser.add_argument("--num_tokens", type=int, default=-1)
+    parser.add_argument("--num-tokens", type=int, default=-1)
     parser.add_argument("--position", type=str, default="all")
-    parser.add_argument("--do-swap", action="store_true")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
