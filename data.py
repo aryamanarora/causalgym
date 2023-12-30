@@ -3,12 +3,13 @@ from datasets import Dataset
 from transformers import AutoTokenizer
 import random
 import torch
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 import json
 import glob
 
 random.seed(42)
 Batch = namedtuple("Batch", ["pair", "src_labels", "base_labels", "pos_i"])
+LabelSet = namedtuple("LabelSet", ["label_var", "num_tokens"])
 
 
 def load_data(template_file):
@@ -25,13 +26,15 @@ def list_datasets():
     return keys
 
 
-def fill_variables(template, variables, num_tokens, label_var, label, other_label):
+def fill_variables(template, variables, grouped_by_tokens, label_vars, label, other_label):
     """Fill variables in a template sentence."""
     base, src = template, template
     for var in variables:
-        if var == label_var:
-            base = base.replace(f"{{{var}}}", random.choice(variables[label_var][num_tokens][label]))
-            src = src.replace(f"{{{var}}}", random.choice(variables[label_var][num_tokens][other_label]))
+        if var in label_vars:
+            label_sets = [label_set for label_set in grouped_by_tokens if label_set.label_var == var]
+            label_set = random.choice(label_sets)
+            base = base.replace(f"{{{var}}}", random.choice(grouped_by_tokens[label_set][label]))
+            src = src.replace(f"{{{var}}}", random.choice(grouped_by_tokens[label_set][other_label]))
         else:
             val = random.choice(variables[var])
             base = base.replace(f"{{{var}}}", val)
@@ -39,42 +42,58 @@ def fill_variables(template, variables, num_tokens, label_var, label, other_labe
     return base, src
 
 
-def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all"):
+def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all", seed=42):
     """Make data for an experiment."""
 
     # load data
+    random.seed(seed)
     template_file = "data"
     if '/' in experiment:
         template_file, experiment = experiment.split('/')
     data = load_data(template_file)[experiment]
 
     # get vars
-    label_var = data["label"]
+    label_vars = data["label"]
+    if isinstance(label_vars, str):
+        label_vars = [label_vars]
     variables = data["variables"]
-    labels = data["labels"] if "labels" in data else {label_opt: [label_opt] for label_opt in variables[label_var]}
+    labels = data["labels"] if "labels" in data else {label_opt: [label_opt] for label_opt in variables[label_vars[0]]}
     labels = {label_opt: [" " + label for label in labels[label_opt]] for label_opt in labels}
     all_labels = list(set([label for label_opt in labels for label in labels[label_opt]]))
     data["templates"] = ["<|endoftext|>" + template for template in data["templates"]]
 
     # group by # tokens
     grouped_by_tokens = defaultdict(lambda: defaultdict(list))
-    for label_opt in variables[label_var]:
-        for option in variables[label_var][label_opt]:
-            token = ' ' + option if data["label_prepend_space"] else option
-            grouped_by_tokens[len(tokenizer(token)["input_ids"])][label_opt].append(option)
+    for label_var in label_vars:
+        for label_opt in variables[label_var]:
+            for option in variables[label_var][label_opt]:
+                token = ' ' + option if data["label_prepend_space"] else option
+                grouped_by_tokens[LabelSet(label_var, len(tokenizer(token)["input_ids"]))][label_opt].append(option)
 
-    # delete tokens that lack all options
-    original_num_options = len(variables[label_var])
-    for num_tokens in list(grouped_by_tokens.keys()):
-        if num_tokens_limit != -1 and num_tokens != num_tokens_limit:
-            del grouped_by_tokens[num_tokens]
-        elif len(grouped_by_tokens[num_tokens]) < original_num_options:
-            del grouped_by_tokens[num_tokens]
+    # apply limits
+    original_num_options = len(labels)
+    for label_set in list(grouped_by_tokens.keys()):
+        for label_opt in list(grouped_by_tokens[label_set].keys()):
+            # delete options that don't match num_tokens_limit
+            if num_tokens_limit != -1 and label_set.num_tokens != num_tokens_limit:
+                del grouped_by_tokens[label_set][label_opt]
+            
+            # delete incomplete label sets
+            if len(grouped_by_tokens[label_set]) < original_num_options:
+                del grouped_by_tokens[label_set]
+                break
+    
+    # delete vars that are not most common token length
+    if isinstance(position, int):
+        assert num_tokens_limit != -1, "Must specify num-tokens when using position=each"
+        for var in variables:
+            if var in label_vars:
+                continue
+            max_count = Counter([len(tokenizer(' ' + option)["input_ids"]) for option in variables[var]]).most_common(1)[0][0]
+            variables[var] = [option for option in variables[var] if len(tokenizer(' ' + option)["input_ids"]) == max_count]
 
     # make token options
-    variables[label_var] = grouped_by_tokens
-    token_opts = list(variables[label_var].keys())
-    # print(variables[label_var])
+    token_opts = list(labels.keys())
     
     # make batches
     result = []
@@ -84,8 +103,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
         # make sents
         for _ in range(batch_size):
             template = random.choice(data["templates"])
-            num_tokens = random.choice(token_opts)
-            label_opts = list(variables[label_var][num_tokens].keys())
+            label_opts = list(labels.keys())
             
             # pick label
             label = random.choice(label_opts)
@@ -94,7 +112,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
                 other_label = random.choice(label_opts)
             
             # fill vars in rest of template
-            base_i, src_i = fill_variables(template, variables, num_tokens, label_var, label, other_label)
+            base_i, src_i = fill_variables(template, variables, grouped_by_tokens, label_vars, label, other_label)
             base.append(base_i)
             src.append(src_i)
 
@@ -115,7 +133,9 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
         if position == "all":
             shape = pair[0].input_ids.shape
             pos_i = torch.arange(shape[1]).repeat(shape[0], 1).unsqueeze(0)
+            print(pos_i.shape)
             pos_i = pos_i.tolist()
+            input()
         elif position == "label":
             not_matching = pair[0].input_ids != pair[1].input_ids
             non_matching_indices = [torch.nonzero(pair[0].input_ids[p] != pair[1].input_ids[p], as_tuple=False).reshape(-1) for p in range(batch_size)]
@@ -133,10 +153,11 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             for i in range(batch_size):
                 pos_i.append([last_token_indices[i]])
             pos_i = [pos_i,]
+        elif isinstance(position, int):
+            pos_i = [[[position,]] * batch_size]
         else:
             raise ValueError(f"Invalid position {position}")
 
-        
         # return
         result.append(Batch(pair, torch.LongTensor(src_labels), torch.LongTensor(base_labels), pos_i))
     
@@ -144,7 +165,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
 
 
 def load_from_syntaxgym():
-    for suite_file in glob.glob("data/test_suites/*.json"):
+    for suite_file in glob.glob("data/test_suites/reflexive_number_agreement_feminine_object_relative.json"):
         print(suite_file.split('/')[-1])
         with open(suite_file, "r") as f:
             suite = json.load(f)
@@ -179,4 +200,4 @@ def test():
     print(data)
 
 if __name__ == "__main__":
-    print(list_datasets())
+    print(load_from_syntaxgym())

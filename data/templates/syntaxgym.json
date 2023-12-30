@@ -64,5 +64,28 @@
                 "officers", "teachers", "ministers", "customers", "senators", "authors", "managers", "doctors", "guards", "farmers", "pilots", "actors", "executives", "athletes", "secretaries", "architects", "clerks"
             ]
         }
+    },
+    "reflexive_number_agreement_with_object_relative_clause": {
+        "templates": [
+            "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
+        ],
+        "label": ["subject", "embed_np"],
+        "label_prepend_space": true,
+        "labels": {
+            "plural": ["themselves", "themselves"],
+            "singular": ["herself", "himself"]
+        },
+        "variables": {
+            "subject": {
+                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
+            },
+            "embed_np": {
+                "singular": ["actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators"],
+                "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
+            },
+            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt"]
+        }
     }
 }

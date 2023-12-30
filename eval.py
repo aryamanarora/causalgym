@@ -5,7 +5,7 @@ import pandas as pd
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
 import os
-from utils import format_token
+from utils import format_token, get_last_token, top_vals
 from collections import defaultdict
 
 loss_fct = CrossEntropyLoss()
@@ -60,43 +60,47 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
             [pair[1]],
             {"sources->base": (pos_i, pos_i)},
         )
-        intervention_vals = get_intervention_vals(alignable)
+        # intervention_vals = get_intervention_vals(alignable)
 
         # get last token probs
-        logits = counterfactual_outputs.logits[:, -1]
+        logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
         loss = calculate_loss(logits, src_label, step, alignable)
-        logits = logits[0]
         eval_loss += loss.item()
-        probs = logits.softmax(-1)
-        if probs[src_label].item() > probs[base_label].item():
-            iia += 1
 
-        # store stats
-        src_label_p = format_token(tokenizer, src_label)
-        base_label_p = format_token(tokenizer, base_label)
-        for i, tok in enumerate(tokens):
-            prob = probs[tok].item()
-            if len(tokens) <= 3: stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
-            data.append(
-                {
-                    "step": step,
-                    "src_label": src_label_p,
-                    "base_label": base_label_p,
-                    "label": src_label_p + " > " + base_label_p,
-                    "loss": loss.item(),
-                    "token": format_token(tokenizer, tok),
-                    "label_token": src_label_p + " > " + base_label_p + ": " + format_token(tokenizer, tok),
-                    "prob": probs[tok].item(),
-                    "logit": logits[tok].item(),
-                    "bound": boundary,
-                    "layer": layer_i,
-                    "pos": pos_i,
-                }
-            )
+        # get probs
+        batch_size = logits.shape[0]
+        for batch_i in range(batch_size):
+            probs = logits[batch_i].softmax(-1)
+            if probs[src_label[batch_i]].item() > probs[base_label[batch_i]].item():
+                iia += 1
+
+            # store stats
+            src_label_p = format_token(tokenizer, src_label[batch_i])
+            base_label_p = format_token(tokenizer, base_label[batch_i])
+            for i, tok in enumerate(tokens):
+                prob = probs[tok].item()
+                if len(tokens) <= 3: stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
+                data.append(
+                    {
+                        "step": step,
+                        "src_label": src_label_p,
+                        "base_label": base_label_p,
+                        "label": src_label_p + " > " + base_label_p,
+                        "loss": loss.item(),
+                        "token": format_token(tokenizer, tok),
+                        "label_token": src_label_p + " > " + base_label_p + ": " + format_token(tokenizer, tok),
+                        "prob": probs[tok].item(),
+                        "iia": 1 if probs[src_label[batch_i]].item() > probs[base_label[batch_i]].item() else 0,
+                        "logit": logits[batch_i][tok].item(),
+                        "bound": boundary,
+                        "layer": layer_i,
+                        "pos": pos_i[0][batch_i][0] if len(pos_i[0][batch_i]) == 1 else None,
+                    }
+                )
     
     # update iterator
-    stats["eval_loss"] = f"{eval_loss / len(evalset):.3f}"
-    stats["iia"] = f"{iia / len(evalset):.3f}"
+    stats["eval_loss"] = f"{eval_loss / (len(evalset) * batch_size):.3f}"
+    stats["iia"] = f"{iia / (len(evalset) * batch_size):.3f}"
     return data, stats
 
 @torch.no_grad()
@@ -149,9 +153,9 @@ def eval_sentence(
                     _, counterfactual_outputs = alignable(
                         pair[pair_i], [test], {"sources->base": (location.tolist(), pos_base)}
                     )
-                    intervention_vals = get_intervention_vals(alignable)
-                    src_val = list(intervention_vals.values())[0]["src"].mean().item()
-                    base_val = list(intervention_vals.values())[0]["base"].mean().item()
+                    # intervention_vals = get_intervention_vals(alignable)
+                    # src_val = list(intervention_vals.values())[0]["src"].mean().item()
+                    # base_val = list(intervention_vals.values())[0]["base"].mean().item()
 
                     logits = counterfactual_outputs.logits[0, -1]
                     probs = logits.softmax(dim=-1)
@@ -166,14 +170,14 @@ def eval_sentence(
                             "partial_prob": partial_probs[i].item(),
                             "prob": probs[tok].item(),
                             "adjusted_logitdiff": max(0, min(1, (logits[tok].item() - min_logit_per_token.loc[token].item()) / (max_logit_per_token.loc[token] - min_logit_per_token.loc[token]))),
-                            "iit": 1.0 if partial_probs[i] > partial_probs[1 - i] else 0.0,
+                            "iia": 1.0 if partial_probs[i] > partial_probs[1 - i] else 0.0,
                             "logit": logits[tok].item(),
                             "logitdiff": logits[tok].item() - base_logits[tok].item(),
                             "layer": layer_i,
                             "src_label": src_label,
-                            "src_val": src_val,
+                            # "src_val": src_val,
                             "base_label": base_label,
-                            "base_val": base_val,
+                            # "base_val": base_val,
                             "label": src_label + " > " + base_label,
                             "valdiff": src_val - base_val,
                             "step": step

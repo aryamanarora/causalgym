@@ -1,5 +1,5 @@
-from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap
-from plotnine.scales import scale_x_log10
+from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text
+from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
 import json
 import pandas as pd
 import torch
@@ -63,6 +63,31 @@ def plot_label_logit(df: pd.DataFrame, title="per-label logit", loc="figs/das/lo
     plot.save(loc)
 
 
+def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.pdf", sentence=None):
+    """Plot position iia for DAS."""
+
+    # get last step
+    last_step = df["step"].max()
+    df = df[df["step"] == last_step]
+    
+    # group df by pos and layer
+    df = df.groupby(["pos", "layer"]).mean().reset_index()
+    df["iia_formatted"] = df["iia"].apply(lambda x: f"{x:.2f}")
+
+    # plot
+    plot = (
+        ggplot(df, aes(x="pos", y="layer"))
+        + geom_tile(aes(fill="iia")) + scale_fill_cmap("Purples", limits=[0,1])
+        + geom_text(aes(label="iia_formatted"), color="black", size=10) + ggtitle(title)
+    )
+
+    # modify x axis labels to use sentence
+    if sentence is not None:
+        plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
+        plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
+
+    plot.save(loc)
+
 def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/cos_sim.pdf"):
     # collect data
     directions = {}
@@ -82,21 +107,19 @@ def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/co
     
     # plot sims
     cos_sims_df = pd.DataFrame(cos_sims)
+    cos_sims_df["cos_sim_formatted"] = cos_sims_df["cos_sim"].apply(lambda x: f"{x:.2f}")
     plot = (
-        ggplot(cos_sims_df, aes(x="layer", y="other_layer", fill="cos_sim"))
-        + geom_tile()
+        ggplot(cos_sims_df, aes(x="layer", y="other_layer"))
+        + geom_tile(aes(fill="cos_sim")) + scale_fill_cmap("Purples", limits=[0,1])
+        + geom_text(aes(label="cos_sim_formatted"), color="black", size=10)
         + ggtitle(title)
     )
-
-    # add text for each tile
-    for i in range(cos_sims_df.shape[0]):
-        plot += geom_text(
-            aes(x=cos_sims_df["layer"][i], y=cos_sims_df["other_layer"][i], label=f"{cos_sims_df['cos_sim'][i]:.2f}"),
-            size=4,
-            color="white"
-        )
     plot.save(loc)
 
 
 if __name__ == "__main__":
-    plot_benchmark()
+    # plot_benchmark()
+    with open("logs/das/pythia-70m__gender_basic__20231229234618.json", "r") as f:
+        data = json.load(f)
+        df = pd.DataFrame(data["data"])
+        plot_pos_iia(df, "position iia, full interchange, residual stream")
