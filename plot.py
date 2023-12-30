@@ -4,16 +4,17 @@ import json
 import pandas as pd
 import torch
 
+
 def plot_benchmark():
     data = json.load(open("logs/benchmark.json", "r"))
     df = pd.DataFrame(data)
     plot = (
         ggplot(df, aes(x="factor(parameters)", y="iia", group="dataset"))
-        + geom_line(aes(color="dataset"))
-        + geom_point(aes(fill="dataset"), color="white", size=3)
-        + scale_x_log10()
+        + geom_line()
+        + geom_point(fill="black", color="white", size=3)
+        + scale_x_log10() + facet_wrap("dataset")
     )
-    plot.save("logs/benchmark.pdf")
+    plot.save("logs/benchmark.pdf", width=10, height=10)
 
 
 def plot_bounds(df: pd.DataFrame, title="intervention boundary", loc="figs/das/bound.pdf"):
@@ -95,6 +96,7 @@ def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/co
             color="white"
         )
     plot.save(loc)
+
 
 if __name__ == "__main__":
     plot_benchmark()

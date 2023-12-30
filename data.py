@@ -98,9 +98,10 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             base.append(base_i)
             src.append(src_i)
 
-            # add labels
-            label = tokenizer.encode(random.choice(labels[label]))[0]
-            other_label = tokenizer.encode(random.choice(labels[other_label]))[0]
+            # add labels (enforce same position in lists, assumes pairing)
+            pos = random.randint(0, len(labels[label]) - 1)
+            label = tokenizer.encode(labels[label][pos])[0]
+            other_label = tokenizer.encode(labels[other_label][pos])[0]
             src_labels.append(other_label)
             base_labels.append(label)
 

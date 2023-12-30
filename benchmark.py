@@ -11,7 +11,7 @@ from tqdm import tqdm
 import json
 
 @torch.no_grad()
-def benchmark(model=None):
+def benchmark(model=None, debug=False):
 
     # get models, data
     if model is None:
@@ -54,6 +54,12 @@ def benchmark(model=None):
                         probs = torch.softmax(logits[i], dim=-1)
                         if probs[base_label[i]] > probs[src_label[i]]:
                             correct += 1
+                        elif debug:
+                            print(tokenizer.decode(pair[pair_i].input_ids[i]))
+                            print(tokenizer.decode(pair[1 - pair_i].input_ids[i]))
+                            print(f"base: {format_token(tokenizer, base_label[i])} {probs[base_label[i]]:.2%}")
+                            print(f"src: {format_token(tokenizer, src_label[i])} {probs[src_label[i]]:.2%}")
+                            top_vals(tokenizer, probs)
                         probs_base.append(probs[base_label[i]].item())
                         probs_src.append(probs[src_label[i]].item())
 
@@ -83,6 +89,7 @@ def benchmark(model=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default=None)
+    parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     benchmark(**vars(args))
 
