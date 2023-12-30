@@ -76,7 +76,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
         base_label_p = format_token(tokenizer, base_label)
         for i, tok in enumerate(tokens):
             prob = probs[tok].item()
-            stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
+            if len(tokens) <= 3: stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
             data.append(
                 {
                     "step": step,

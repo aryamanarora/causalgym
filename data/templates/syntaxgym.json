@@ -4,6 +4,7 @@
             "The {subject} that {verbed} the {object}"
         ],
         "label": "subject",
+        "label_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
             "singular": ["likes", "knows", "enjoys", "is", "brings", "interests"]
@@ -25,6 +26,7 @@
             "The {subject} {prep} the {object}"
         ],
         "label": "subject",
+        "label_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
             "singular": ["likes", "knows", "enjoys", "is", "brings", "interests"]

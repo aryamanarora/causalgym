@@ -13,13 +13,16 @@ Batch = namedtuple("Batch", ["pair", "src_labels", "base_labels", "pos_i"])
 
 def load_data(template_file):
     """Load data templates."""
-    data = json.load(open(template_file, "r"))
+    data = json.load(open(f"data/templates/{template_file}.json", "r"))
     return data
 
 
 def list_datasets():
-    data = load_data()
-    return list(data.keys())
+    keys = []
+    for file in glob.glob("data/templates/*.json"):
+        prefix = file.split('/')[-1].split('.')[0]
+        keys.extend([prefix + '/' + x for x in load_data(prefix).keys()])
+    return keys
 
 
 def fill_variables(template, variables, num_tokens, label_var, label, other_label):
@@ -36,10 +39,16 @@ def fill_variables(template, variables, num_tokens, label_var, label, other_labe
     return base, src
 
 
-def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all", template_file="data/templates/data.json"):
+def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all"):
     """Make data for an experiment."""
+
     # load data
+    template_file = "data"
+    if '/' in experiment:
+        template_file, experiment = experiment.split('/')
     data = load_data(template_file)[experiment]
+
+    # get vars
     label_var = data["label"]
     variables = data["variables"]
     labels = data["labels"] if "labels" in data else {label_opt: [label_opt] for label_opt in variables[label_var]}
@@ -169,4 +178,4 @@ def test():
     print(data)
 
 if __name__ == "__main__":
-    test()
+    print(list_datasets())
