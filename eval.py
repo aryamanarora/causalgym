@@ -47,6 +47,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
     # get boundary
     data, stats = [], {}
     eval_loss = 0.0
+    iia = 0
     boundary = num_dims
     if num_dims == -1:
         for k, v in alignable.interventions.items():
@@ -67,22 +68,24 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
         logits = logits[0]
         eval_loss += loss.item()
         probs = logits.softmax(-1)
+        if probs[src_label].item() > probs[base_label].item():
+            iia += 1
 
         # store stats
-        src_label = format_token(tokenizer, src_label)
-        base_label = format_token(tokenizer, base_label)
+        src_label_p = format_token(tokenizer, src_label)
+        base_label_p = format_token(tokenizer, base_label)
         for i, tok in enumerate(tokens):
             prob = probs[tok].item()
             stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
             data.append(
                 {
                     "step": step,
-                    "src_label": src_label,
-                    "base_label": base_label,
-                    "label": src_label + " > " + base_label,
+                    "src_label": src_label_p,
+                    "base_label": base_label_p,
+                    "label": src_label_p + " > " + base_label_p,
                     "loss": loss.item(),
                     "token": format_token(tokenizer, tok),
-                    "label_token": src_label + " > " + base_label + ": " + format_token(tokenizer, tok),
+                    "label_token": src_label_p + " > " + base_label_p + ": " + format_token(tokenizer, tok),
                     "prob": probs[tok].item(),
                     "logit": logits[tok].item(),
                     "bound": boundary,
@@ -93,6 +96,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
     
     # update iterator
     stats["eval_loss"] = f"{eval_loss / len(evalset):.3f}"
+    stats["iia"] = f"{iia / len(evalset):.3f}"
     return data, stats
 
 @torch.no_grad()

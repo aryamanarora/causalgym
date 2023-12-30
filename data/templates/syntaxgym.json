@@ -1,0 +1,44 @@
+{
+    "subject_verb_number_agreement_with_subject_relative_clause": {
+        "templates": [
+            "The {subject} that {verbed} the {object}"
+        ],
+        "label": "subject",
+        "labels": {
+            "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
+            "singular": ["likes", "knows", "enjoys", "is", "brings", "interests"]
+        },
+        "variables": {
+            "subject": {
+                "singular": ["guard", "doctor", "farmer", "author", "officer", "secretary", "taxi driver", "athlete", "manager", "senator", "consultant", "teacher", "customer", "pilot", "executive", "minister", "actor", "architect", "clerk"],
+                "plural": ["customers", "authors", "actors", "senators", "athletes", "officers", "teachers", "ministers", "managers", "farmers", "guards", "pilots", "secretaries", "architects", "doctors", "consultants", "taxi drivers", "executives", "clerks"]
+            },
+            "verbed": ["hated", "injured", "disguised", "ignored", "embarrassed", "admired", "liked", "hurt"],
+            "object": [
+                "manager", "senator", "actor", "teacher", "doctor", "customer", "executive", "pilot", "farmer", "guard", "author", "officer", "architect", "secretary", "minister", "clerk", "athlete",
+                "officers", "teachers", "ministers", "customers", "senators", "authors", "managers", "doctors", "guards", "farmers", "pilots", "actors", "executives", "athletes", "secretaries", "architects", "clerks"
+            ]
+        }
+    },
+    "subject_verb_number_agreement_with_prepositional_phrase": {
+        "templates": [
+            "The {subject} {prep} the {object}"
+        ],
+        "label": "subject",
+        "labels": {
+            "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
+            "singular": ["likes", "knows", "enjoys", "is", "brings", "interests"]
+        },
+        "variables": {
+            "subject": {
+                "singular": ["guard", "doctor", "farmer", "author", "officer", "secretary", "taxi driver", "athlete", "manager", "senator", "consultant", "teacher", "customer", "pilot", "executive", "minister", "actor", "architect", "clerk"],
+                "plural": ["customers", "authors", "actors", "senators", "athletes", "officers", "teachers", "ministers", "managers", "farmers", "guards", "pilots", "secretaries", "architects", "doctors", "consultants", "taxi drivers", "executives", "clerks"]
+            },
+            "prep": ["in front of", "near", "to the side of", "next to", "across from", "behind"],
+            "object": [
+                "manager", "senator", "actor", "teacher", "doctor", "customer", "executive", "pilot", "farmer", "guard", "author", "officer", "architect", "secretary", "minister", "clerk", "athlete",
+                "officers", "teachers", "ministers", "customers", "senators", "authors", "managers", "doctors", "guards", "farmers", "pilots", "actors", "executives", "athletes", "secretaries", "architects", "clerks"
+            ]
+        }
+    }
+}

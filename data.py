@@ -3,18 +3,24 @@ from datasets import Dataset
 from transformers import AutoTokenizer
 import random
 import torch
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+import json
+import glob
 
 random.seed(42)
+Batch = namedtuple("Batch", ["pair", "src_labels", "base_labels", "pos_i"])
 
-def load_data():
+
+def load_data(template_file):
     """Load data templates."""
-    data = json.load(open("data/data.json", "r"))
+    data = json.load(open(template_file, "r"))
     return data
+
 
 def list_datasets():
     data = load_data()
     return list(data.keys())
+
 
 def fill_variables(template, variables, num_tokens, label_var, label, other_label):
     """Fill variables in a template sentence."""
@@ -30,18 +36,23 @@ def fill_variables(template, variables, num_tokens, label_var, label, other_labe
     return base, src
 
 
-def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all"):
+def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all", template_file="data/templates/data.json"):
     """Make data for an experiment."""
     # load data
-    data = load_data()[experiment]
+    data = load_data(template_file)[experiment]
     label_var = data["label"]
     variables = data["variables"]
+    labels = data["labels"] if "labels" in data else {label_opt: [label_opt] for label_opt in variables[label_var]}
+    labels = {label_opt: [" " + label for label in labels[label_opt]] for label_opt in labels}
+    all_labels = list(set([label for label_opt in labels for label in labels[label_opt]]))
+    data["templates"] = ["<|endoftext|>" + template for template in data["templates"]]
 
     # group by # tokens
     grouped_by_tokens = defaultdict(lambda: defaultdict(list))
     for label_opt in variables[label_var]:
         for option in variables[label_var][label_opt]:
-            grouped_by_tokens[len(tokenizer(option)["input_ids"])][label_opt].append(option)
+            token = ' ' + option if data["label_prepend_space"] else option
+            grouped_by_tokens[len(tokenizer(token)["input_ids"])][label_opt].append(option)
 
     # delete tokens that lack all options
     original_num_options = len(variables[label_var])
@@ -66,13 +77,21 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             template = random.choice(data["templates"])
             num_tokens = random.choice(token_opts)
             label_opts = list(variables[label_var][num_tokens].keys())
+            
+            # pick label
             label = random.choice(label_opts)
             other_label = random.choice(label_opts)
             while other_label == label:
                 other_label = random.choice(label_opts)
+            
+            # fill vars in rest of template
             base_i, src_i = fill_variables(template, variables, num_tokens, label_var, label, other_label)
             base.append(base_i)
             src.append(src_i)
+
+            # add labels
+            label = tokenizer.encode(random.choice(labels[label]))[0]
+            other_label = tokenizer.encode(random.choice(labels[other_label]))[0]
             src_labels.append(other_label)
             base_labels.append(label)
 
@@ -109,17 +128,44 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
 
         
         # return
-        src_labels = tokenizer(src_labels, return_tensors="pt").input_ids.to(device).reshape(-1)
-        base_labels = tokenizer(base_labels, return_tensors="pt").input_ids.to(device).reshape(-1)
-        result.append((pair, src_labels, base_labels, pos_i))
+        result.append(Batch(pair, torch.LongTensor(src_labels), torch.LongTensor(base_labels), pos_i))
     
-    return result, label_opts
+    return result, all_labels
+
+
+def load_from_syntaxgym():
+    for suite_file in glob.glob("data/test_suites/*.json"):
+        print(suite_file.split('/')[-1])
+        with open(suite_file, "r") as f:
+            suite = json.load(f)
+        if "items" not in suite:
+            continue
+        print(len(suite["items"]))
+
+        region_numbers = defaultdict(set)
+        for i, item in enumerate(suite["items"]):
+            for condition in item["conditions"]:
+                for region in condition["regions"]:
+                    region_numbers[f"{condition['condition_name']}_{region['region_number']}"].add(region["content"])
+
+        # convert sets to lists
+        region_numbers = {k: list(v) for k, v in region_numbers.items()}
+        print(json.dumps(region_numbers))
+        input()
+
 
 def test():
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
     tokenizer.pad_token = tokenizer.eos_token
     device = "cpu"
-    data = make_data(tokenizer, "gender", 3, 2, -1, device, "label")
+    data, label_opts = make_data(tokenizer, "subject_verb_number_agreement_with_subject_relative_clause", 3, 2, -1, device, "label", template_file="data/templates/syntaxgym.json")
+    for d in data:
+        print(d[0][0])
+        print(d[0][1])
+        for i in range(len(d[0][0].input_ids)):
+            print(tokenizer.decode(d[0][0].input_ids[i]))
+            print(tokenizer.decode(d[0][1].input_ids[i]))
+            print('---')
     print(data)
 
 if __name__ == "__main__":

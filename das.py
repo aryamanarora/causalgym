@@ -28,8 +28,11 @@ from interventions import (
 )
 
 def intervention_config(model_type, intervention_type, layer, num_dims, intervention_obj=None):
+    intervention_class = None
     if intervention_obj is None:
-        intervention_obj = BoundlessRotatedSpaceIntervention if num_dims == -1 else LowRankRotatedSpaceIntervention
+        intervention_class = BoundlessRotatedSpaceIntervention if num_dims == -1 else LowRankRotatedSpaceIntervention
+    else:
+        intervention_class = type(intervention_obj)
     alignable_config = AlignableConfig(
         alignable_model_type=model_type,
         alignable_representations=[
@@ -41,7 +44,8 @@ def intervention_config(model_type, intervention_type, layer, num_dims, interven
                 alignable_low_rank_dimension=num_dims,  # low rank dimension
             ),
         ],
-        alignable_interventions_type=intervention_obj
+        alignable_interventions_type=intervention_class,
+        alignable_interventions=[intervention_obj]
     )
     return alignable_config
 
@@ -252,7 +256,7 @@ def main():
     parser.add_argument("--steps", type=int, default=125)
     parser.add_argument("--num-dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
-    parser.add_argument("--eval-steps", type=int, default=150)
+    parser.add_argument("--eval-steps", type=int, default=25)
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--num-tokens", type=int, default=-1)
