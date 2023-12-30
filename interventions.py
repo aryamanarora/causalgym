@@ -4,12 +4,12 @@ import torch
 sys.path.append("../align-transformers/")
 from models.layers import LowRankRotateLayer, RotateLayer
 from models.interventions import (
-    TrainbleIntervention,
+    TrainableIntervention,
     VanillaIntervention
 )
-from models.utils import sigmoid_boundary
+from models.basic_utils import sigmoid_boundary
 
-class LowRankRotatedSpaceIntervention(TrainbleIntervention):
+class LowRankRotatedSpaceIntervention(TrainableIntervention):
     
     """Intervention in the rotated space."""
     def __init__(self, embed_dim, **kwargs):
@@ -41,7 +41,7 @@ class LowRankRotatedSpaceIntervention(TrainbleIntervention):
     def __str__(self):
         return f"LowRankRotatedSpaceIntervention(embed_dim={self.embed_dim})"
 
-class BoundlessRotatedSpaceIntervention(TrainbleIntervention):
+class BoundlessRotatedSpaceIntervention(TrainableIntervention):
     
     """Intervention in the rotated space with boundary mask."""
     def __init__(self, embed_dim, **kwargs):

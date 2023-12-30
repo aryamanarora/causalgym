@@ -11,10 +11,11 @@ from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse
 from utils import MODELS, WEIGHTS, get_last_token
 from data import make_data
 from eval import calculate_loss, eval, eval_sentence
+import plot
 
 # add align-transformers to path
 sys.path.append("../align-transformers/")
-from models.utils import format_token, sm, count_parameters
+from models.basic_utils import format_token, sm, count_parameters
 from models.configuration_alignable_model import (
     AlignableRepresentationConfig,
     AlignableConfig,
@@ -216,74 +217,14 @@ def experiment(
 
     # print plots
     df = pd.DataFrame(data)
-    plot = (
-        ggplot(df, aes(x="step", y="bound", color="factor(layer)"))
-        + geom_line()
-        + ggtitle(f"{dataset}, {model}: intervention boundary")
-    )
-    plot.save("figs/das/bound.pdf")
-
-    plot = (
-        ggplot(df, aes(x="step", y="loss", color="factor(label)"))
-        + facet_wrap("layer")
-        + geom_point(alpha=0.1)
-        + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle(f"{dataset}, {model}: per-label loss")
-    )
-    plot.save("figs/das/loss.pdf")
-
-    plot = (
-        ggplot(df, aes(x="step", y="prob", color="factor(label_token)"))
-        + facet_wrap("layer")
-        + geom_point(alpha=0.1)
-        + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle(f"{dataset}, {model}: per-label probs")
-    )
-    plot.save("figs/das/prob.pdf")
-
-    plot = (
-        ggplot(df, aes(x="step", y="logit", color="factor(label_token)"))
-        + facet_wrap("layer")
-        + geom_point(alpha=0.1)
-        + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle(f"{dataset}, {model}: per-label logits")
-    )
-    plot.save("figs/das/logit.pdf")
+    plot.plot_bounds(df, f"{dataset}, {model}: intervention boundary")
+    plot.plot_label_loss(df, f"{dataset}, {model}: per-label loss")
+    plot.plot_label_prob(df, f"{dataset}, {model}: per-label probs")
+    plot.plot_label_logit(df, f"{dataset}, {model}: per-label logits")
 
     # cosine sim of learned directions plot
     if num_dims == 1:
-        # collect data
-        directions = {}
-        cos_sims = []
-        for layer in layer_objs:
-            alignable = layer_objs[layer]
-            for key in alignable.interventions:
-                intervention_object = alignable.interventions[key][0]
-                direction = intervention_object.rotate_layer.weight.detach().cpu().reshape(-1)
-                directions[layer] = direction
-        for layer in directions:
-            direction = directions[layer]
-            for other_layer in directions:
-                cos_sim = torch.nn.functional.cosine_similarity(direction, directions[other_layer], dim=0).mean().abs().item()
-                cos_sims.append({"layer": layer, "other_layer": other_layer, "cos_sim": cos_sim})
-            directions[layer] = direction
-        
-        # plot sims
-        cos_sims_df = pd.DataFrame(cos_sims)
-        plot = (
-            ggplot(cos_sims_df, aes(x="layer", y="other_layer", fill="cos_sim"))
-            + geom_tile()
-            + ggtitle(f"{dataset}, {model}: cosine similarity of learned directions")
-        )
-
-        # add text for each tile
-        for i in range(cos_sims_df.shape[0]):
-            plot += geom_text(
-                aes(x=cos_sims_df["layer"][i], y=cos_sims_df["other_layer"][i], label=f"{cos_sims_df['cos_sim'][i]:.2f}"),
-                size=4,
-                color="white"
-            )
-        plot.save("figs/das/cos_sim.pdf")
+        plot.plot_das_cos_sim(layer_objs, f"{dataset}, {model}: cosine similarity of learned directions")
 
     # plot
     eval_sentence(
@@ -303,17 +244,15 @@ def experiment(
     os.system("convert -delay 100 -loop 0 figs/das/steps/*prob_per_pos.png figs/das/prob_steps.gif")
     os.system("convert -delay 100 -loop 0 figs/das/steps/*val_per_pos.png figs/das/val_steps.gif")
 
-    # save layer objs
-
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
     parser.add_argument("--dataset", type=str, default="gender_basic")
-    parser.add_argument("--steps", type=int, default=250)
+    parser.add_argument("--steps", type=int, default=125)
     parser.add_argument("--num-dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
-    parser.add_argument("--eval-steps", type=int, default=50)
+    parser.add_argument("--eval-steps", type=int, default=150)
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--num-tokens", type=int, default=-1)
