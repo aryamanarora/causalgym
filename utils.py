@@ -105,15 +105,16 @@ def format_token(tokenizer, tok):
 
 def top_vals(tokenizer, res, highlight=[], n=10):
     """Pretty print the top n values of a distribution over the vocabulary"""
-    top_values, top_indices = topk(res, n)
-    for i in range(len(top_values)):
-        val = top_indices[i].item()
+    _, top_indices = topk(res, n)
+    top_indices = top_indices.tolist() + highlight
+    for i in range(len(top_indices)):
+        val = top_indices[i]
         tok = format_token(tokenizer, val)
         if val in highlight:
             tok = f"\x1b[6;30;42m{tok}\x1b[0m"
-            print(f"{tok:<34} {val:>5} {top_values[i].item():.4%}")
+            print(f"{tok:<34} {val:>5} {res[top_indices[i]].item():>10.4%}")
         else:
-            print(f"{tok:<20} {val:>5} {top_values[i].item():.4%}")
+            print(f"{tok:<20} {val:>5} {res[top_indices[i]].item():>10.4%}")
 
 def get_last_token(logits, attention_mask):
     last_token_indices = attention_mask.sum(1) - 1
