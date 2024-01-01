@@ -18,7 +18,7 @@ def benchmark(model=None, debug=False):
         models = [model for model in MODELS if model.startswith("EleutherAI")]
     else:
         models = [model]
-    datasets = [dataset for dataset in list_datasets() if dataset.startswith("syntaxgym/")]
+    datasets = [dataset for dataset in list_datasets() if dataset.startswith("syntaxgym/filler_gap_dependencies_subject_extraction_nogap")]
     data = []
 
     # benchmark
@@ -54,12 +54,12 @@ def benchmark(model=None, debug=False):
                         probs = torch.softmax(logits[i], dim=-1)
                         if probs[base_label[i]] > probs[src_label[i]]:
                             correct += 1
-                        elif debug:
+                        if debug:
+                            print(probs[base_label[i]] > probs[src_label[i]])
                             print(tokenizer.decode(pair[pair_i].input_ids[i]))
                             print(tokenizer.decode(pair[1 - pair_i].input_ids[i]))
-                            print(f"base: {format_token(tokenizer, base_label[i])} {probs[base_label[i]]:.2%}")
-                            print(f"src: {format_token(tokenizer, src_label[i])} {probs[src_label[i]]:.2%}")
-                            top_vals(tokenizer, probs)
+                            top_vals(tokenizer, probs, highlight=[base_label[i], src_label[i]])
+                            input()
                         probs_base.append(probs[base_label[i]].item())
                         probs_src.append(probs[src_label[i]].item())
 

@@ -164,13 +164,13 @@
         "label": "comp",
         "label_prepend_space": true,
         "labels": {
-            "wh": ["derailed", "placed", "published", "hired", "showed", "collected", "forged", "caught", "will be awarded", "brought", "prepared", "will sell", "revealed", "grabbed", "repaired", "sold", "delivered", "dragged", "stole", "should administer", "sent", "killed"],
-            "th": ["the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the"]
+            "wh": ["did"],
+            "th": ["there"]
         },
         "variables": {
             "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
             "comp": {
-                "wh": ["what"],
+                "wh": ["who"],
                 "th": ["that"]
             }
         }
@@ -182,17 +182,17 @@
         "label": "comp",
         "label_prepend_space": true,
         "labels": {
-            "wh": [",", "."],
-            "th": ["the", "the"]
+            "wh": ["when"],
+            "th": ["a"]
         },
         "variables": {
             "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
             "comp": {
-                "wh": ["what"],
+                "wh": ["who"],
                 "th": ["that"]
             },
-            "np1": ["the company", "the gossip column", "our new friend", "the committee", "the star student", "the nurse", "the restaurant", "the student", "the neighbors", "the government", "the movie star", "the man", "the convict", "the newspaper", "the collector", "our uncle", "the university", "the authorities", "the dog", "her rival", "my good friend", "the truck", "the suspect", "the businessman"],
-            "verb": ["derailed", "placed", "published", "hired", "showed", "collected", "forged", "caught", "will be awarded", "brought", "prepared", "will sell", "revealed", "grabbed", "repaired", "sold", "delivered", "dragged", "stole", "should administer", "sent", "killed"]
+            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
+            "verb": ["killed", "met", "attacked", "saw"]
         }
     }
 }
