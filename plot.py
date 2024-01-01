@@ -145,7 +145,7 @@ def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
     plot.save(loc)
 
 if __name__ == "__main__":
-    # plot_benchmark()
-    with open("logs/das/pythia-70m__gender_basic__20231231234245.json", "r") as f:
-        data = json.load(f)
-        plot_weights(data["weights"])
+    plot_benchmark()
+    # with open("logs/das/pythia-70m__gender_basic__20231231234245.json", "r") as f:
+    #     data = json.load(f)
+    #     plot_weights(data["weights"])
