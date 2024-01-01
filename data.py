@@ -133,9 +133,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
         if position == "all":
             shape = pair[0].input_ids.shape
             pos_i = torch.arange(shape[1]).repeat(shape[0], 1).unsqueeze(0)
-            print(pos_i.shape)
             pos_i = pos_i.tolist()
-            input()
         elif position == "label":
             not_matching = pair[0].input_ids != pair[1].input_ids
             non_matching_indices = [torch.nonzero(pair[0].input_ids[p] != pair[1].input_ids[p], as_tuple=False).reshape(-1) for p in range(batch_size)]
