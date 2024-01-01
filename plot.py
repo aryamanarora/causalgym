@@ -72,6 +72,7 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
     df = df[df["step"] == last_step]
     
     # group df by pos and layer
+    df = df[["pos", "layer", "iia"]]
     df = df.groupby(["pos", "layer"]).mean().reset_index()
     df["iia_formatted"] = df["iia"].apply(lambda x: f"{x:.2f}")
 
