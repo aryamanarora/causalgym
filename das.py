@@ -69,6 +69,7 @@ def experiment(
     num_tokens: int,
     position: str,
     intervention_site: str,
+    store_weights: bool,
     do_swap: bool=True,
     test_sentence: bool=False
 ):
@@ -104,6 +105,7 @@ def experiment(
     # entering train loops
     max_loop = 1
     pos_i = 0
+    weights = []
     while pos_i < (max_loop if position == "each" else 1):
 
         # train and eval sets
@@ -166,6 +168,17 @@ def experiment(
             total_loss = torch.tensor(0.0).to(device)
 
             for step in iterator:
+
+                # get weights
+                if store_weights:
+                    for k, v in alignable.interventions.items():
+                        try:
+                            w = v[0].rotate_layer.weight
+                            for i in range(w.shape[0]):
+                                for j in range(w.shape[1]):
+                                    weights.append([step, layer_i, pos_i, w[i, j].item(), i, j])
+                        except:
+                            pass
 
                 # make pair
                 (pair, src_label, base_label, pos_interv) = trainset[step]
@@ -263,6 +276,7 @@ def experiment(
             "scores": scores,
             "test_sentence": test_sentence,
         },
+        "weights": weights,
         "data": data
     }
     with open(f"logs/das/{short_model_name}__{short_dataset_name}__{NOW}.json", "w") as f:
@@ -317,6 +331,7 @@ def main():
     parser.add_argument("--num-tokens", type=int, default=-1)
     parser.add_argument("--position", type=str, default="all")
     parser.add_argument("--intervention-site", type=str, default="block_output")
+    parser.add_argument("--store-weights", action="store_true")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))

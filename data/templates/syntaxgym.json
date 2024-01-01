@@ -85,7 +85,114 @@
                 "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
             },
             "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
-            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt"]
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
+        }
+    },
+    "reflexive_number_agreement_with_object_relative_clause2": {
+        "templates": [
+            "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
+        ],
+        "label": "subject",
+        "label_prepend_space": true,
+        "labels": {
+            "plural": ["themselves", "themselves"],
+            "singular": ["herself", "himself"]
+        },
+        "variables": {
+            "subject": {
+                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
+            },
+            "embed_np": [
+                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
+                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
+            ],
+            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
+        }
+    },
+    "reflexive_number_agreement_with_prepositional_phrase": {
+        "templates": [
+            "The {subject} {prep} the {object} {matrix_v}"
+        ],
+        "label": ["subject", "object"],
+        "label_prepend_space": true,
+        "labels": {
+            "plural": ["themselves", "themselves"],
+            "singular": ["herself", "himself"]
+        },
+        "variables": {
+            "subject": {
+                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
+            },
+            "prep": ["in front of", "near", "to the side of", "next to", "across from", "behind"],
+            "object": {
+                "singular": ["actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators"],
+                "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
+            },
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
+        }
+    },
+    "reflexive_number_agreement_with_subject_relative_clause": {
+        "templates": [
+            "The {subject} that {embed_vp} the {embed_np} {matrix_v}"
+        ],
+        "label": ["subject", "embed_np"],
+        "label_prepend_space": true,
+        "labels": {
+            "plural": ["themselves", "themselves"],
+            "singular": ["herself", "himself"]
+        },
+        "variables": {
+            "subject": {
+                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
+            },
+            "embed_np": {
+                "singular": ["actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators"],
+                "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
+            },
+            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
+        }
+    },
+    "filler_gap_dependencies_subject_extraction_gap": {
+        "templates": [
+            "{prefix} {comp}"
+        ],
+        "label": "comp",
+        "label_prepend_space": true,
+        "labels": {
+            "wh": ["derailed", "placed", "published", "hired", "showed", "collected", "forged", "caught", "will be awarded", "brought", "prepared", "will sell", "revealed", "grabbed", "repaired", "sold", "delivered", "dragged", "stole", "should administer", "sent", "killed"],
+            "th": ["the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the", "the"]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "comp": {
+                "wh": ["who"],
+                "th": ["that"]
+            }
+        }
+    },
+    "filler_gap_dependencies_subject_extraction_nogap": {
+        "templates": [
+            "{prefix} {comp} {np1} {verb}"
+        ],
+        "label": "comp",
+        "label_prepend_space": true,
+        "labels": {
+            "wh": [",", "."],
+            "th": ["the", "the"]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "comp": {
+                "wh": ["who"],
+                "th": ["that"]
+            },
+            "np1": ["the company", "the gossip column", "our new friend", "the committee", "the star student", "the nurse", "the restaurant", "the student", "the neighbors", "the government", "the movie star", "the man", "the convict", "the newspaper", "the collector", "our uncle", "the university", "the authorities", "the dog", "her rival", "my good friend", "the truck", "the suspect", "the businessman"],
+            "verb": ["derailed", "placed", "published", "hired", "showed", "collected", "forged", "caught", "will be awarded", "brought", "prepared", "will sell", "revealed", "grabbed", "repaired", "sold", "delivered", "dragged", "stole", "should administer", "sent", "killed"]
         }
     }
 }
