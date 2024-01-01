@@ -1,4 +1,5 @@
-from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text
+from matplotlib import axis
+from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text, facet_grid, geom_histogram
 from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
 import json
 import pandas as pd
@@ -117,9 +118,33 @@ def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/co
     plot.save(loc)
 
 
+def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
+    """Plot DAS weights."""
+    
+    df = pd.DataFrame(weights, columns=["step", "layer", "pos", "weight", "dim"])
+
+    # df = df[df["layer"] == 0]
+    # print(len(df))
+    # plot = (
+    #     ggplot(df, aes(x="step", y="weight", group="factor(dim)"))
+    #     + facet_grid("layer~pos")
+    #     + geom_line(alpha=0.1)
+    #     + ggtitle(title)
+    # )
+
+    df = df[df["step"] == df["step"].max()]
+    print(len(df))
+    plot = (
+        ggplot(df, aes(x="weight"))
+        + geom_histogram(bins=50)
+        + facet_grid("layer~pos")
+        + ggtitle(title)
+    )
+
+    plot.save(loc)
+
 if __name__ == "__main__":
     # plot_benchmark()
-    with open("logs/das/pythia-70m__gender_basic__20231229234618.json", "r") as f:
+    with open("logs/das/pythia-70m__gender_basic__20231231234245.json", "r") as f:
         data = json.load(f)
-        df = pd.DataFrame(data["data"])
-        plot_pos_iia(df, "position iia, full interchange, residual stream")
+        plot_weights(data["weights"])
