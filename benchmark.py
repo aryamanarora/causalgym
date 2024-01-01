@@ -18,7 +18,7 @@ def benchmark(model=None, debug=False):
         models = [model for model in MODELS if model.startswith("EleutherAI")]
     else:
         models = [model]
-    datasets = [dataset for dataset in list_datasets() if dataset.startswith("syntaxgym/filler_gap_dependencies_subject_extraction_nogap")]
+    datasets = [dataset for dataset in list_datasets() if dataset.startswith("syntaxgym/")]
     data = []
 
     # benchmark
