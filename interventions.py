@@ -5,7 +5,8 @@ sys.path.append("../align-transformers/")
 from models.layers import LowRankRotateLayer, RotateLayer
 from models.interventions import (
     TrainableIntervention,
-    VanillaIntervention
+    VanillaIntervention,
+    Intervention
 )
 from models.basic_utils import sigmoid_boundary
 
@@ -99,3 +100,26 @@ class BoundlessRotatedSpaceIntervention(TrainableIntervention):
     
     def __str__(self):
         return f"BoundlessRotatedSpaceIntervention(embed_dim={self.embed_dim})"
+
+class CollectActivation(Intervention):
+    
+    """Collect activations."""
+    def __init__(self, embed_dim, **kwargs):
+        super().__init__()
+        self.interchange_dim = None
+        self.subspace_partition = kwargs["subspace_partition"] \
+            if "subspace_partition" in kwargs else None
+        self.stored_val = None
+        
+    def set_interchange_dim(self, interchange_dim):
+        self.interchange_dim = interchange_dim
+
+    def forward(self, base, source):
+        self.stored_val = base.clone().detach()
+        return base
+    
+    def get_stored_val(self):
+        return self.stored_val
+    
+    def __str__(self):
+        return f"LowRankRotatedSpaceIntervention(embed_dim={self.embed_dim})"

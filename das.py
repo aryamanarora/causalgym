@@ -11,6 +11,7 @@ from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse
 from utils import MODELS, WEIGHTS, get_last_token
 from data import make_data
 from eval import calculate_loss, eval, eval_sentence
+from train import train_das
 import plot
 import datetime
 import json
@@ -61,6 +62,7 @@ def experiment(
     model: str,
     dataset: str,
     steps: int,
+    intervention: str,
     num_dims: int,
     warmup: bool,
     eval_steps: int,
@@ -73,6 +75,8 @@ def experiment(
     do_swap: bool=True,
     test_sentence: bool=False
 ):
+    """Run a feature-finding experiment."""
+
     # load model
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
@@ -84,40 +88,41 @@ def experiment(
     ).to(device)
     print(gpt.config.num_hidden_layers)
 
-    # sentence for evals
-    sentence = "<|endoftext|>Jane is a terrible, evil person. John and Bob are very nice friends of ours. We will always talk to Jane."
+    # setup
+    if intervention == "vanilla":
+        num_dims = 0
 
     # make das subdir
     if not os.path.exists("figs/das"):
         os.makedirs("figs/das")
     if not os.path.exists("figs/das/steps"):
         os.makedirs("figs/das/steps")
+    if not os.path.exists("logs/das"):
+        os.makedirs("logs/das")
     
     # clear files from figs/das/steps
     for file in os.listdir("figs/das/steps"):
         os.remove(os.path.join("figs/das/steps", file))
 
     # intervene on each layer
-    data, scores = [], []
-    stats = {}
+    data, weights = [], []
     layer_objs = {}
     
     # entering train loops
-    max_loop = 1
-    pos_i = 0
-    weights = []
+    max_loop, pos_i = 1, 0
     while pos_i < (max_loop if position == "each" else 1):
 
         # train and eval sets
         trainset, labels = make_data(tokenizer, dataset, batch_size, steps, num_tokens, device, position=position if position != "each" else pos_i, seed=42)
         evalset, _ = make_data(tokenizer, dataset, batch_size, 20, num_tokens, device, position=position if position != "each" else pos_i, seed=420)
         max_loop = len(trainset[0].pair[0].input_ids[0])
+        print(f"position {pos_i} of {max_loop}")
 
         # tokens to log
         tokens = tokenizer.encode("".join(labels))
 
+        # per-layer training loop
         for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
-            print(pos_i, layer_i)
 
             # set up alignable model
             alignable_config = intervention_config(
@@ -127,133 +132,21 @@ def experiment(
             alignable.set_device(device)
             alignable.disable_model_gradients()
 
-            # optimizer
-            if num_dims != 0:
-                total_steps = steps
-                warm_up_steps = 0.1 * total_steps if warmup else 0
-                optimizer_params = []
-                for k, v in alignable.interventions.items():
-                    try:
-                        optimizer_params.append({"params": v[0].rotate_layer.parameters()})
-                        optimizer_params.append({"params": v[0].intervention_boundaries, "lr": 1e-2})
-                    except:
-                        print("some trainable params not found")
-                        pass
-                optimizer = torch.optim.Adam(optimizer_params, lr=1e-3)
-                scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0, total_iters=total_steps)
-                # scheduler = get_linear_schedule_with_warmup(
-                #     optimizer,
-                #     num_warmup_steps=warm_up_steps,
-                #     num_training_steps=total_steps,
-                # )
-                print("model trainable parameters: ", count_parameters(alignable.model))
-                print("intervention trainable parameters: ", alignable.count_parameters())
-            else:
-                total_steps = 1
-                warm_up_steps = 0.1 * total_steps if warmup else 0
+            # training
+            if intervention == "das":
+                _, more_data, more_weights = train_das(
+                    alignable, tokenizer, trainset, evalset, layer_i,
+                    pos_i, num_dims, steps, warmup, eval_steps, grad_steps,
+                    store_weights, tokens
+                )
+                weights.extend(more_weights)
+            elif intervention == "vanilla":
+                more_data, _ = eval(alignable, tokenizer, evalset, layer_i, 0, tokens, num_dims)
 
-            # temperature for boundless
-            total_step = 0
-            temperature_start = 50.0
-            temperature_end = 0.1
-            temperature_schedule = (
-                torch.linspace(temperature_start, temperature_end, total_steps)
-                .to(torch.bfloat16)
-                .to(device)
-            )
-            alignable.set_temperature(temperature_schedule[total_step])
-
-            # train
-            iterator = tqdm(range(total_steps))
-            total_loss = torch.tensor(0.0).to(device)
-
-            for step in iterator:
-
-                # get weights
-                if store_weights:
-                    for k, v in alignable.interventions.items():
-                        try:
-                            w = v[0].rotate_layer.weight
-                            for i in range(w.shape[0]):
-                                for j in range(w.shape[1]):
-                                    weights.append([step, layer_i, pos_i, w[i, j].item(), i, j])
-                        except:
-                            pass
-
-                # make pair
-                (pair, src_label, base_label, pos_interv) = trainset[step]
-                for i in range(2):
-
-                    # inference
-                    _, counterfactual_outputs = alignable(
-                        pair[0],
-                        [pair[1]],
-                        {"sources->base": (pos_interv, pos_interv)},
-                    )
-
-                    # get last token logits
-                    logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
-
-                    # loss and backprop
-                    loss = calculate_loss(logits, src_label, step, alignable, warm_up_steps)
-                    total_loss += loss
-                    
-                    # swap
-                    if do_swap:
-                        pair[0], pair[1] = pair[1], pair[0]
-                        src_label, base_label = base_label, src_label
-                    else:
-                        break
-
-                # gradient accumulation
-                if total_step % grad_steps == 0 and num_dims != 0:
-                    # print stats
-                    stats["lr"] = scheduler.optimizer.param_groups[0]['lr']
-                    stats["loss"] = f"{total_loss.item():.3f}"
-                    if num_dims == -1:
-                        for k, v in alignable.interventions.items():
-                            stats["bound"] = f"{v[0].intervention_boundaries.sum() * v[0].embed_dim:.3f}"
-                    iterator.set_postfix(stats)
-
-                    if not (grad_steps > 1 and total_step == 0):
-                        total_loss.backward()
-                        total_loss = torch.tensor(0.0).to(device)
-                        optimizer.step()
-                        scheduler.step()
-                        alignable.set_zero_grad()
-                        alignable.set_temperature(temperature_schedule[total_step])
-
-                # eval
-                if (step % eval_steps == 0 or step == total_steps - 1):
-                    more_data, more_stats = eval(
-                        alignable, tokenizer, evalset, step=step,
-                        layer_i=layer_i, num_dims=num_dims, tokens=tokens
-                    )
-                    data.extend(more_data)
-                    stats.update(more_stats)
-                    iterator.set_postfix(stats)
-                    layer_objs[layer_i] = alignable
-                    prefix = str(step).zfill(4)
-                    
-                    if test_sentence:
-                        scores, _ = eval_sentence(
-                            tokenizer=tokenizer,
-                            df=pd.DataFrame(data),
-                            scores=scores,
-                            layer_objs=layer_objs,
-                            tokens=tokens,
-                            evalset=evalset,
-                            sentence=sentence,
-                            dataset=dataset,
-                            model=model,
-                            prefix=f"steps/step_{prefix}",
-                            step=step,
-                            plots=True if (layer_i == gpt.config.num_hidden_layers - 1) else False,
-                            layer=layer_i
-                        )
-
-                total_step += 1
+            # store obj
             layer_objs[layer_i] = alignable
+            data.extend(more_data)
+        
         pos_i += 1
 
     # make data dump
@@ -273,7 +166,6 @@ def experiment(
             "position": position,
             "intervention_site": intervention_site,
             "do_swap": do_swap,
-            "scores": scores,
             "test_sentence": test_sentence,
         },
         "weights": weights,
@@ -292,26 +184,18 @@ def experiment(
     # cosine sim of learned directions plot
     if num_dims == 1:
         plot.plot_das_cos_sim(layer_objs, f"{short_dataset_name}, {short_model_name}: cosine similarity of learned directions")
+    
+    # iia per position/layer plot
     if position == "each":
         sentence = evalset[0].pair[0].input_ids[0]
-        sentence = [format_token(tokenizer, tok) for tok in sentence]
-        print(sentence)
-        plot.plot_pos_iia(df, f"{short_dataset_name}, {short_model_name}: position iia", sentence=sentence)
-
-    # plot
-    if test_sentence:
-        eval_sentence(
-            tokenizer=tokenizer,
-            df=df,
-            layer_objs=layer_objs,
-            tokens=tokens,
-            evalset=evalset,
-            step=total_steps - 1,
-            sentence=sentence,
-            dataset=dataset,
-            model=model,
-            plots=True
-        )
+        other_sentence = evalset[0].pair[1].input_ids[0]
+        labels = []
+        for i in range(len(sentence)):
+            if sentence[i] != other_sentence[i]:
+                labels.append(format_token(tokenizer, sentence[i]) + ' / ' + format_token(tokenizer, other_sentence[i]))
+            else:
+                labels.append(format_token(tokenizer, sentence[i]))
+        plot.plot_pos_iia(df, f"{short_dataset_name}, {short_model_name}: position iia", sentence=labels)
 
     # make gif of files in figs/das/steps
     os.system("convert -delay 100 -loop 0 figs/das/steps/*prob_per_pos.png figs/das/prob_steps.gif")
@@ -322,6 +206,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
     parser.add_argument("--dataset", type=str, default="gender_basic")
+    parser.add_argument("--intervention", type=str, default="das")
     parser.add_argument("--steps", type=int, default=125)
     parser.add_argument("--num-dims", type=int, default=-1)
     parser.add_argument("--warmup", action="store_true")
