@@ -1,8 +1,11 @@
+from re import A
 import torch
 from eval import calculate_loss, eval, eval_sentence
 from tqdm import tqdm
 from utils import get_last_token
 import sys
+from collections import defaultdict
+from interventions import activation_addition_position_config, AlignableModel
 
 sys.path.append("../align-transformers/")
 from models.basic_utils import format_token, sm, count_parameters
@@ -134,3 +137,103 @@ def train_das(
     
     # return data
     return alignable, data, weights
+
+@torch.no_grad()
+def train_mean_diff(alignable, tokenizer, trainset, evalset, layer_i, pos_i, intervention_site, tokens):
+    # init
+    means, counts = {}, defaultdict(int)
+
+    # collect activations
+    for (pair, src_label, base_label, pos_interv) in tqdm(trainset):
+        for i in range(2):
+            # inference
+            alignable(
+                pair[0],
+                [pair[1]],
+                {"sources->base": (pos_interv, pos_interv)},
+            )
+
+            # get activations
+            activations = list(alignable.interventions.values())[0][0].get_stored_val()
+
+            # per-batch
+            for batch_i in range(activations.shape[0]):
+                key = base_label[batch_i].item()
+                if key not in means:
+                    means[key] = torch.zeros_like(activations[batch_i])
+                means[key] += activations[batch_i]
+                counts[key] += 1
+                
+            # swap
+            pair[0], pair[1] = pair[1], pair[0]
+            src_label, base_label = base_label, src_label
+    
+    # get means
+    for k in means:
+        means[k] /= counts[k]
+
+    # set up addition config
+    eval_config = activation_addition_position_config(type(alignable.model), intervention_site, layer_i)
+    alignable2 = AlignableModel(eval_config, alignable.model)
+
+    # eval
+    data = []
+    stats = {}
+    iterator = tqdm(evalset)
+    iia, eval_loss = 0, 0.0
+    for step, (pair, src_label, base_label, pos_interv) in enumerate(iterator):
+        # set up activations
+        diff_vector = [means[src_label[i].item()] - means[base_label[i].item()] for i in range(len(base_label))]
+        diff_vector = torch.stack(diff_vector).to(alignable2.get_device()).unsqueeze(1)
+        activations_sources = dict(
+            zip(alignable2.sorted_alignable_keys, [diff_vector]*len(alignable2.sorted_alignable_keys))
+        )
+
+        # run inference
+        _, counterfactual_outputs = alignable2(
+            pair[0],
+            [pair[1]],
+            {"sources->base": (pos_interv, pos_interv)},
+            activations_sources=activations_sources
+        )
+
+        # logits
+        logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
+        loss = calculate_loss(logits, src_label, 0, alignable2)
+        eval_loss += loss.item()
+
+        # get probs
+        batch_size = logits.shape[0]
+        for batch_i in range(batch_size):
+            probs = logits[batch_i].softmax(-1)
+            if probs[src_label[batch_i]].item() > probs[base_label[batch_i]].item():
+                iia += 1
+
+            # store stats
+            src_label_p = format_token(tokenizer, src_label[batch_i])
+            base_label_p = format_token(tokenizer, base_label[batch_i])
+            for i, tok in enumerate(tokens):
+                prob = probs[tok].item()
+                data.append(
+                    {
+                        "step": 0,
+                        "src_label": src_label_p,
+                        "base_label": base_label_p,
+                        "label": src_label_p + " > " + base_label_p,
+                        "loss": loss.item(),
+                        "token": format_token(tokenizer, tok),
+                        "label_token": src_label_p + " > " + base_label_p + ": " + format_token(tokenizer, tok),
+                        "prob": probs[tok].item(),
+                        "iia": 1 if probs[src_label[batch_i]].item() > probs[base_label[batch_i]].item() else 0,
+                        "logit": logits[batch_i][tok].item(),
+                        "bound": 0,
+                        "layer": layer_i,
+                        "pos": pos_interv[0][batch_i][0] if len(pos_interv[0][batch_i]) == 1 else None,
+                    }
+                )
+    
+        # update iterator
+        stats["eval_loss"] = f"{eval_loss / ((step + 1) * batch_size):.3f}"
+        stats["iia"] = f"{iia / ((step + 1) * batch_size):.3f}"
+        iterator.set_postfix(stats)
+    return data, stats

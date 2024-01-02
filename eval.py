@@ -179,7 +179,7 @@ def eval_sentence(
                             "base_label": base_label,
                             # "base_val": base_val,
                             "label": src_label + " > " + base_label,
-                            "valdiff": src_val - base_val,
+                            # "valdiff": src_val - base_val,
                             "step": step
                         })
                 src_label, base_label = base_label, src_label

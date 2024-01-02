@@ -3,12 +3,80 @@ import torch
 
 sys.path.append("../align-transformers/")
 from models.layers import LowRankRotateLayer, RotateLayer
+from models.configuration_alignable_model import (
+    AlignableRepresentationConfig,
+    AlignableConfig,
+)
+from models.alignable_base import AlignableModel
 from models.interventions import (
     TrainableIntervention,
     VanillaIntervention,
-    Intervention
+    Intervention,
+    AdditionIntervention
 )
 from models.basic_utils import sigmoid_boundary
+
+
+# INTERVENTION CONFIGS
+
+
+def intervention_config(
+    model_type, intervention_type,
+    layer, num_dims, intervention_obj=None
+):
+    """Generate intervention config."""
+
+    # which intervention class to use
+    intervention_class = VanillaIntervention
+    if intervention_obj is None:
+        if num_dims == -1:
+            intervention_class = BoundlessRotatedSpaceIntervention
+        elif num_dims is None:
+            intervention_class = CollectActivation
+        elif num_dims > 0:
+            intervention_class = LowRankRotatedSpaceIntervention
+    else:
+        intervention_class = type(intervention_obj)
+
+    # init
+    alignable_config = AlignableConfig(
+        alignable_model_type=model_type,
+        alignable_representations=[
+            AlignableRepresentationConfig(
+                layer,                                  # layer
+                intervention_type,                      # intervention type
+                "pos",                                  # intervention unit
+                1,                                      # max number of unit
+                alignable_low_rank_dimension=num_dims,  # low rank dimension
+            ),
+        ],
+        alignable_interventions_type=intervention_class,
+        alignable_interventions=[intervention_obj]
+    )
+    return alignable_config
+
+
+def activation_addition_position_config(
+    model_type, intervention_type, 
+    layer
+):
+    alignable_config = AlignableConfig(
+        alignable_model_type=model_type,
+        alignable_representations=[
+            AlignableRepresentationConfig(
+                layer,             # layer
+                intervention_type, # intervention type
+                "pos",             # intervention unit
+                1                  # max number of unit
+            ),
+        ],
+        alignable_interventions_type=AdditionIntervention,
+    )
+    return alignable_config
+
+
+# INTERVENTIONS
+
 
 class LowRankRotatedSpaceIntervention(TrainableIntervention):
     
@@ -41,6 +109,7 @@ class LowRankRotatedSpaceIntervention(TrainableIntervention):
     
     def __str__(self):
         return f"LowRankRotatedSpaceIntervention(embed_dim={self.embed_dim})"
+
 
 class BoundlessRotatedSpaceIntervention(TrainableIntervention):
     
@@ -101,6 +170,7 @@ class BoundlessRotatedSpaceIntervention(TrainableIntervention):
     def __str__(self):
         return f"BoundlessRotatedSpaceIntervention(embed_dim={self.embed_dim})"
 
+
 class CollectActivation(Intervention):
     
     """Collect activations."""
@@ -115,11 +185,11 @@ class CollectActivation(Intervention):
         self.interchange_dim = interchange_dim
 
     def forward(self, base, source):
-        self.stored_val = base.clone().detach()
+        self.stored_val = base
         return base
     
     def get_stored_val(self):
         return self.stored_val
     
     def __str__(self):
-        return f"LowRankRotatedSpaceIntervention(embed_dim={self.embed_dim})"
+        return f"CollectActivation()"

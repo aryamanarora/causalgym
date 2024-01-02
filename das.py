@@ -8,10 +8,10 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
 from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap, geom_text
 from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
-from utils import MODELS, WEIGHTS, get_last_token
+from utils import MODELS, WEIGHTS, get_last_token, format_token
 from data import make_data
 from eval import calculate_loss, eval, eval_sentence
-from train import train_das
+from train import *
 import plot
 import datetime
 import json
@@ -21,42 +21,8 @@ NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 # add align-transformers to path
 sys.path.append("../align-transformers/")
-from models.basic_utils import format_token, sm, count_parameters
-from models.configuration_alignable_model import (
-    AlignableRepresentationConfig,
-    AlignableConfig,
-)
 from models.alignable_base import AlignableModel
-from interventions import (
-    LowRankRotatedSpaceIntervention,
-    BoundlessRotatedSpaceIntervention,
-    VanillaIntervention
-)
-
-def intervention_config(model_type, intervention_type, layer, num_dims, intervention_obj=None):
-    intervention_class = VanillaIntervention
-    if intervention_obj is None:
-        if num_dims == -1:
-            intervention_class = BoundlessRotatedSpaceIntervention
-        elif num_dims > 0:
-            intervention_class = LowRankRotatedSpaceIntervention
-    else:
-        intervention_class = type(intervention_obj)
-    alignable_config = AlignableConfig(
-        alignable_model_type=model_type,
-        alignable_representations=[
-            AlignableRepresentationConfig(
-                layer,  # layer
-                intervention_type,  # intervention type
-                "pos",  # intervention unit
-                1,  # max number of unit
-                alignable_low_rank_dimension=num_dims,  # low rank dimension
-            ),
-        ],
-        alignable_interventions_type=intervention_class,
-        alignable_interventions=[intervention_obj]
-    )
-    return alignable_config
+from interventions import *
 
 def experiment(
     model: str,
@@ -91,6 +57,8 @@ def experiment(
     # setup
     if intervention == "vanilla":
         num_dims = 0
+    elif intervention in ["mean_diff"]:
+        num_dims = None
 
     # make das subdir
     if not os.path.exists("figs/das"):
@@ -116,13 +84,13 @@ def experiment(
         trainset, labels = make_data(tokenizer, dataset, batch_size, steps, num_tokens, device, position=position if position != "each" else pos_i, seed=42)
         evalset, _ = make_data(tokenizer, dataset, batch_size, 20, num_tokens, device, position=position if position != "each" else pos_i, seed=420)
         max_loop = len(trainset[0].pair[0].input_ids[0])
-        print(f"position {pos_i} of {max_loop}")
 
         # tokens to log
         tokens = tokenizer.encode("".join(labels))
 
         # per-layer training loop
         for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
+            print(f"position {pos_i} of {max_loop}, layer {layer_i}")
 
             # set up alignable model
             alignable_config = intervention_config(
@@ -142,7 +110,11 @@ def experiment(
                 weights.extend(more_weights)
             elif intervention == "vanilla":
                 more_data, _ = eval(alignable, tokenizer, evalset, layer_i, 0, tokens, num_dims)
-
+            elif intervention == "mean_diff":
+                more_data, _ = train_mean_diff(
+                    alignable, tokenizer, trainset, evalset, layer_i, pos_i, intervention_site, tokens
+                )
+                
             # store obj
             layer_objs[layer_i] = alignable
             data.extend(more_data)
