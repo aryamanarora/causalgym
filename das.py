@@ -89,7 +89,8 @@ def experiment(
         tokens = tokenizer.encode("".join(labels))
 
         # per-layer training loop
-        for layer_i in tqdm(range(gpt.config.num_hidden_layers)):
+        iterator = tqdm(range(gpt.config.num_hidden_layers))
+        for layer_i in iterator:
             print(f"position {pos_i} of {max_loop}, layer {layer_i}")
 
             # set up alignable model
@@ -109,7 +110,8 @@ def experiment(
                 )
                 weights.extend(more_weights)
             elif intervention == "vanilla":
-                more_data, _ = eval(alignable, tokenizer, evalset, layer_i, 0, tokens, num_dims)
+                more_data, more_stats = eval(alignable, tokenizer, evalset, layer_i, 0, tokens, num_dims)
+                iterator.set_postfix(more_stats)
             elif intervention == "mean_diff":
                 more_data, _ = train_mean_diff(
                     alignable, tokenizer, trainset, evalset, layer_i, pos_i, intervention_site, tokens
@@ -128,6 +130,7 @@ def experiment(
         "metadata": {
             "model": model,
             "dataset": dataset,
+            "intervention": intervention,
             "steps": steps,
             "num_dims": num_dims,
             "warmup": warmup,

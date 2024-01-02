@@ -62,6 +62,18 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
     all_labels = list(set([label for label_opt in labels for label in labels[label_opt]]))
     data["templates"] = ["<|endoftext|>" + template for template in data["templates"]]
 
+    # count possible
+    possible = 1
+    per_label = defaultdict(lambda: 1)
+    for var in variables:
+        if isinstance(variables[var], dict):
+            for opt in variables[var]:
+                per_label[opt] *= len(set(variables[var][opt]))
+        else:
+            possible *= len(set(variables[var]))
+    total = sum(list(per_label.values())) * possible
+    print(f"{experiment} possible:", total)
+
     # group by # tokens
     grouped_by_tokens = defaultdict(lambda: defaultdict(list))
     for label_var in label_vars:

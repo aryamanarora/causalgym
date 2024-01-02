@@ -12,7 +12,8 @@ from models.interventions import (
     TrainableIntervention,
     VanillaIntervention,
     Intervention,
-    AdditionIntervention
+    BasisAgnosticIntervention,
+    _do_intervention_by_swap
 )
 from models.basic_utils import sigmoid_boundary
 
@@ -77,6 +78,27 @@ def activation_addition_position_config(
 
 # INTERVENTIONS
 
+
+class AdditionIntervention(BasisAgnosticIntervention):
+    
+    """Modified."""
+    def __init__(self, embed_dim, **kwargs):
+        super().__init__()
+        self.interchange_dim = None
+        self.embed_dim = embed_dim
+        self.subspace_partition = kwargs["subspace_partition"] \
+            if "subspace_partition" in kwargs else None
+        
+    def set_interchange_dim(self, interchange_dim):
+        self.interchange_dim = interchange_dim
+
+    def forward(self, base, source, subspaces=None):
+        result = base + source
+        return result
+
+    def __str__(self):
+        return f"AdditionIntervention(embed_dim={self.embed_dim})"
+    
 
 class LowRankRotatedSpaceIntervention(TrainableIntervention):
     
@@ -179,17 +201,19 @@ class CollectActivation(Intervention):
         self.interchange_dim = None
         self.subspace_partition = kwargs["subspace_partition"] \
             if "subspace_partition" in kwargs else None
-        self.stored_val = None
+        self.stored_base = None
+        self.stored_src = None
         
     def set_interchange_dim(self, interchange_dim):
         self.interchange_dim = interchange_dim
 
     def forward(self, base, source):
-        self.stored_val = base
+        self.stored_base = base
+        self.stored_src = source
         return base
     
-    def get_stored_val(self):
-        return self.stored_val
+    def get_stored_vals(self):
+        return self.stored_base, self.stored_src
     
     def __str__(self):
         return f"CollectActivation()"

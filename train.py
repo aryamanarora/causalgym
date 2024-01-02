@@ -145,34 +145,33 @@ def train_mean_diff(alignable, tokenizer, trainset, evalset, layer_i, pos_i, int
 
     # collect activations
     for (pair, src_label, base_label, pos_interv) in tqdm(trainset):
+        # inference
+        alignable(
+            pair[0],
+            [pair[1]],
+            {"sources->base": (pos_interv, pos_interv)},
+        )
+
+        # get activations
+        activations_base, activations_src = list(alignable.interventions.values())[0][0].get_stored_vals()
+
+        # per-batch
         for i in range(2):
-            # inference
-            alignable(
-                pair[0],
-                [pair[1]],
-                {"sources->base": (pos_interv, pos_interv)},
-            )
-
-            # get activations
-            activations = list(alignable.interventions.values())[0][0].get_stored_val()
-
-            # per-batch
-            for batch_i in range(activations.shape[0]):
+            for batch_i in range(activations_base.shape[0]):
                 key = base_label[batch_i].item()
                 if key not in means:
-                    means[key] = torch.zeros_like(activations[batch_i])
-                means[key] += activations[batch_i]
+                    means[key] = torch.zeros_like(activations_base[batch_i])
+                means[key] += activations_base[batch_i]
                 counts[key] += 1
-                
-            # swap
-            pair[0], pair[1] = pair[1], pair[0]
             src_label, base_label = base_label, src_label
+            activations_base, activations_src = activations_src, activations_base
     
     # get means
     for k in means:
         means[k] /= counts[k]
 
     # set up addition config
+    alignable._cleanup_states()
     eval_config = activation_addition_position_config(type(alignable.model), intervention_site, layer_i)
     alignable2 = AlignableModel(eval_config, alignable.model)
 
@@ -236,4 +235,5 @@ def train_mean_diff(alignable, tokenizer, trainset, evalset, layer_i, pos_i, int
         stats["eval_loss"] = f"{eval_loss / ((step + 1) * batch_size):.3f}"
         stats["iia"] = f"{iia / ((step + 1) * batch_size):.3f}"
         iterator.set_postfix(stats)
+    alignable2._cleanup_states()
     return data, stats
