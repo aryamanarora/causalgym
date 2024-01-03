@@ -9,8 +9,10 @@ from utils import get_last_token
 import sys
 from collections import defaultdict
 from interventions import activation_addition_position_config, intervention_config, AlignableModel, LowRankRotatedSpaceIntervention
+
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
 
 sys.path.append("../align-transformers/")
 from models.basic_utils import format_token, sm, count_parameters
@@ -170,8 +172,8 @@ def kmeans_diff(activations):
     kmeans = KMeans(n_clusters=2, random_state=0).fit([activation for activation, _ in activations])
     
     # make vector
-    vecs = list(kmeans.cluster_centers_.values())
-    vec = torch.tensor(vecs[0] - vecs[1])
+    vecs = kmeans.cluster_centers_
+    vec = torch.tensor(vecs[0] - vecs[1], dtype=torch.float32)
     return vec / torch.norm(vec)
 
 
@@ -194,9 +196,9 @@ def probing_diff(activations):
     weight.requires_grad = True
 
     # train
-    optimizer = torch.optim.Adam([weight], lr=1e-2)
-    for epoch in range(10):
-        for activation, label in activations:
+    optimizer = torch.optim.Adam([weight], lr=1e-3)
+    for epoch in range(1):
+        for i, (activation, label) in enumerate(activations):
             logit = torch.matmul(weight, activation)
             loss = torch.nn.functional.binary_cross_entropy_with_logits(logit, torch.tensor(1.0 if label == label_0 else 0.0))
             loss.backward()
@@ -205,7 +207,8 @@ def probing_diff(activations):
         # print acc
         acc = 0
         for activation, label in activations:
-            prob = torch.matmul(weight, activation)
+            logit = torch.matmul(weight, activation)
+            prob = torch.sigmoid(logit).item()
             if (prob > 0.5 and label == label_0) or (prob < 0.5 and label != label_0):
                 acc += 1
         print("linear probing acc:", acc / len(activations))
@@ -215,19 +218,31 @@ def probing_diff(activations):
     return weight_vector
 
 
+def probing_diff_sklearn(activations):
+    # fit lr
+    labels = [label for _, label in activations]
+    lr = LogisticRegression(random_state=0, max_iter=1000, fit_intercept=False).fit([activation for activation, _ in activations], labels)
+    accuracy = lr.score([activation for activation, _ in activations], labels)
+    print("accuracy:", accuracy)
+
+    # extract weight
+    vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
+    return vec / torch.norm(vec)
+
+
 method_to_class_mapping = {
     "mean_diff": mean_diff,
     "kmeans": kmeans_diff,
     "probe": probing_diff,
-    "pca": pca_diff,
+    "probe_sklearn": probing_diff_sklearn,
+    "pca": pca_diff
 }
 
 
 def train_feature_direction(method, alignable, tokenizer, trainset, evalset, layer_i, pos_i, intervention_site, tokens):
-    # init
-    activations = []
-
+    """Train/compute an intervention direction on some activations."""
     # collect activations
+    activations = []
     with torch.no_grad():
         for (pair, src_label, base_label, pos_interv, src_label_o, base_label_o) in tqdm(trainset):
             # inference
@@ -260,65 +275,8 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
     alignable2 = AlignableModel(eval_config, alignable.model)
 
     # eval
-    data = []
-    stats = {}
-    iterator = tqdm(evalset)
-    iia, eval_loss = 0, 0.0
+    data, stats = eval(alignable2, tokenizer, evalset, layer_i, 0, tokens, None)
 
-    with torch.no_grad():
-        for step, (pair, src_label, base_label, pos_interv, src_label_o, base_label_o) in enumerate(iterator):
-            # # set up activations
-            # diff_vector = [diff_function(base_label_o[i], src_label_o[i]) for i in range(len(base_label))]
-            # diff_vector = torch.stack(diff_vector).to(alignable2.get_device()).unsqueeze(1)
-            # activations_sources = dict(
-            #     zip(alignable2.sorted_alignable_keys, [diff_vector]*len(alignable2.sorted_alignable_keys))
-            # )
-
-            # run inference
-            _, counterfactual_outputs = alignable2(
-                pair[0],
-                [pair[1]],
-                {"sources->base": (pos_interv, pos_interv)}
-            )
-
-            # logits
-            logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
-            loss = calculate_loss(logits, src_label, 0, alignable2)
-            eval_loss += loss.item()
-
-            # get probs
-            batch_size = logits.shape[0]
-            for batch_i in range(batch_size):
-                probs = logits[batch_i].softmax(-1)
-                if probs[src_label[batch_i]].item() > probs[base_label[batch_i]].item():
-                    iia += 1
-
-                # store stats
-                src_label_p = format_token(tokenizer, src_label[batch_i])
-                base_label_p = format_token(tokenizer, base_label[batch_i])
-                for i, tok in enumerate(tokens):
-                    prob = probs[tok].item()
-                    data.append(
-                        {
-                            "step": 0,
-                            "src_label": src_label_p,
-                            "base_label": base_label_p,
-                            "label": src_label_p + " > " + base_label_p,
-                            "loss": loss.item(),
-                            "token": format_token(tokenizer, tok),
-                            "label_token": src_label_p + " > " + base_label_p + ": " + format_token(tokenizer, tok),
-                            "prob": probs[tok].item(),
-                            "iia": 1 if probs[src_label[batch_i]].item() > probs[base_label[batch_i]].item() else 0,
-                            "logit": logits[batch_i][tok].item(),
-                            "bound": 0,
-                            "layer": layer_i,
-                            "pos": pos_interv[0][batch_i][0] if len(pos_interv[0][batch_i]) == 1 else None,
-                        }
-                    )
-        
-            # update iterator
-            stats["eval_loss"] = f"{eval_loss / ((step + 1) * batch_size):.3f}"
-            stats["iia"] = f"{iia / ((step + 1) * batch_size):.3f}"
-            iterator.set_postfix(stats)
+    # done
     alignable2._cleanup_states()
     return data, stats

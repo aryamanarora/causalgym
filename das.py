@@ -113,11 +113,12 @@ def experiment(
                 more_data, more_stats = eval(alignable, tokenizer, evalset,
                                              layer_i, 0, tokens, num_dims)
                 iterator.set_postfix(more_stats)
-            elif intervention in ["mean_diff", "kmeans", "probe", "pca"]:
-                more_data, _ = train_feature_direction(
+            elif intervention in ["mean_diff", "kmeans", "probe", "probe_sklearn", "pca"]:
+                more_data, more_stats = train_feature_direction(
                     intervention, alignable, tokenizer, trainset, evalset,
                     layer_i, pos_i, intervention_site, tokens
                 )
+                iterator.set_postfix(more_stats)
                 
             # store obj
             layer_objs[layer_i] = alignable
