@@ -8,7 +8,7 @@ import json
 import glob
 
 random.seed(42)
-Batch = namedtuple("Batch", ["pair", "src_labels", "base_labels", "pos_i"])
+Batch = namedtuple("Batch", ["pair", "src_labels", "base_labels", "pos_i", "src_label_overall", "base_label_overall"])
 LabelSet = namedtuple("LabelSet", ["label_var", "num_tokens"])
 
 
@@ -110,7 +110,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
     # make batches
     result = []
     for batch in range(batches):
-        base, src, src_labels, base_labels, pos_i = [], [], [], [], []
+        base, src, src_labels, base_labels, pos_i, src_labels_overall, base_labels_overall = [], [], [], [], [], [], []
 
         # make sents
         for _ in range(batch_size):
@@ -120,6 +120,8 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             # pick label
             label = random.choice(label_opts)
             other_label = random.choice(label_opts)
+            src_labels_overall.append(other_label)
+            base_labels_overall.append(label)
             while other_label == label:
                 other_label = random.choice(label_opts)
             
@@ -130,10 +132,10 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
 
             # add labels (enforce same position in lists, assumes pairing)
             pos = random.randint(0, len(labels[label]) - 1)
-            label = tokenizer.encode(labels[label][pos])[0]
-            other_label = tokenizer.encode(labels[other_label][pos])[0]
-            src_labels.append(other_label)
-            base_labels.append(label)
+            label_tok = tokenizer.encode(labels[label][pos])[0]
+            other_label_tok = tokenizer.encode(labels[other_label][pos])[0]
+            src_labels.append(other_label_tok)
+            base_labels.append(label_tok)
 
         # tokenize
         pair = [
@@ -169,7 +171,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             raise ValueError(f"Invalid position {position}")
 
         # return
-        result.append(Batch(pair, torch.LongTensor(src_labels), torch.LongTensor(base_labels), pos_i))
+        result.append(Batch(pair, torch.LongTensor(src_labels), torch.LongTensor(base_labels), pos_i, src_labels_overall, base_labels_overall))
     
     return result, all_labels
 

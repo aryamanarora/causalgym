@@ -43,7 +43,7 @@ def benchmark(model=None, debug=False):
             count, correct = 0, 0
             probs_base, probs_src = [], []
 
-            for (pair, src_label, base_label, pos_base) in tqdm(trainset):
+            for (pair, src_label, base_label, pos_base, _, _) in tqdm(trainset):
                 for pair_i in range(2):
                     # inference
                     output = gpt(**pair[pair_i])

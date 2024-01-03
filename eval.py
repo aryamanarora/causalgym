@@ -53,7 +53,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
         for k, v in alignable.interventions.items():
             boundary = (v[0].intervention_boundaries.sum() * v[0].embed_dim).item()
 
-    for (pair, src_label, base_label, pos_i) in evalset:
+    for (pair, src_label, base_label, pos_i, _, _) in evalset:
         # inference
         _, counterfactual_outputs = alignable(
             pair[0],
@@ -120,7 +120,7 @@ def eval_sentence(
     layer=-1
 ):
     # sentence
-    device = evalset[0][0][0].input_ids.device
+    device = evalset[0].pair[0].input_ids.device
     test = tokenizer(sentence, return_tensors="pt").to(device)
 
     # check each layer
@@ -132,7 +132,7 @@ def eval_sentence(
         layer_data = df[df["layer"] == layer_i]
         layer_data = layer_data[layer_data["step"] == step]
 
-        for (pair, src_label, base_label, pos_base) in evalset[:1]:
+        for (pair, src_label, base_label, pos_base, _, _) in evalset[:1]:
             src_label = format_token(tokenizer, src_label[0])
             base_label = format_token(tokenizer, base_label[0])
 

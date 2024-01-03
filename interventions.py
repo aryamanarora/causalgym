@@ -112,9 +112,13 @@ class LowRankRotatedSpaceIntervention(TrainableIntervention):
         
     def set_interchange_dim(self, interchange_dim):
         self.interchange_dim = interchange_dim
+    
+    def set_rotate_layer_weight(self, weight):
+        self.rotate_layer.weight = weight
 
     def forward(self, base, source):
         batch_size = base.shape[0]
+        # print(torch.nn.functional.cosine_similarity(source - base, self.rotate_layer.weight.reshape(1, -1), dim=1))
         base = base.reshape(batch_size, -1, self.embed_dim)
         source = source.reshape(batch_size, -1, self.embed_dim)
         rotated_base = self.rotate_layer(base)

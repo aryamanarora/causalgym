@@ -57,7 +57,7 @@ def experiment(
     # setup
     if intervention == "vanilla":
         num_dims = 0
-    elif intervention in ["mean_diff"]:
+    elif intervention != "das":
         num_dims = None
 
     # make das subdir
@@ -77,7 +77,7 @@ def experiment(
     layer_objs = {}
     
     # entering train loops
-    max_loop, pos_i = 1, 0
+    max_loop, pos_i = 2, 1
     while pos_i < (max_loop if position == "each" else 1):
 
         # train and eval sets
@@ -110,11 +110,13 @@ def experiment(
                 )
                 weights.extend(more_weights)
             elif intervention == "vanilla":
-                more_data, more_stats = eval(alignable, tokenizer, evalset, layer_i, 0, tokens, num_dims)
+                more_data, more_stats = eval(alignable, tokenizer, evalset,
+                                             layer_i, 0, tokens, num_dims)
                 iterator.set_postfix(more_stats)
-            elif intervention == "mean_diff":
-                more_data, _ = train_mean_diff(
-                    alignable, tokenizer, trainset, evalset, layer_i, pos_i, intervention_site, tokens
+            elif intervention in ["mean_diff", "kmeans", "probe", "pca"]:
+                more_data, _ = train_feature_direction(
+                    intervention, alignable, tokenizer, trainset, evalset,
+                    layer_i, pos_i, intervention_site, tokens
                 )
                 
             # store obj
