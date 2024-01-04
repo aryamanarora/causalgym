@@ -148,7 +148,11 @@ def experiment(
         "weights": weights,
         "data": data
     }
-    with open(f"logs/das/{short_model_name}__{short_dataset_name}__{NOW}.json", "w") as f:
+
+    # log
+    log_file = f"logs/das/{short_model_name}__{short_dataset_name}__{NOW}.json"
+    print(f"logging to {log_file}")
+    with open(log_file, "w") as f:
         json.dump(filedump, f)
 
     # print plots
