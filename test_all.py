@@ -2,7 +2,7 @@ from data import list_datasets
 from das import experiment
 
 def run_command(dataset, method):
-    steps = 80
+    steps = 50
     # command = f"python das.py --model EleutherAI/pythia-70m --intervention {method} --dataset {dataset} --position each --num-tokens 1 --num-dims 1 --steps {steps}"
     experiment(
         model="EleutherAI/pythia-70m",
@@ -11,7 +11,7 @@ def run_command(dataset, method):
         intervention=method,
         num_dims=1,
         warmup=False,
-        eval_steps=40,
+        eval_steps=25,
         grad_steps=1,
         batch_size=4,
         num_tokens=1,

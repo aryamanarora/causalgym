@@ -276,6 +276,7 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
     intervention.set_rotate_layer_weight(diff_vector.unsqueeze(1))
     eval_config = intervention_config(type(alignable.model), intervention_site, layer_i, None, intervention)
     alignable2 = AlignableModel(eval_config, alignable.model)
+    alignable2.set_device(alignable.get_device())
 
     # eval
     data, stats = eval(alignable2, tokenizer, evalset, layer_i, 0, tokens, None, accuracy=accuracy)
