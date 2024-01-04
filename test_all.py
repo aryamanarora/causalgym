@@ -1,5 +1,5 @@
 import os
-from datasets import list_datasets
+from data import list_datasets
 
 def run_command(dataset, method):
     steps = 125
