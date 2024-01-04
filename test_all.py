@@ -12,3 +12,6 @@ def main():
     for dataset in datasets:
         for method in methods:
             run_command(dataset, method)
+
+if __name__ == "__main__":
+    main()
