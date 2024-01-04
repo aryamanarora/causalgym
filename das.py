@@ -16,9 +16,6 @@ import plot
 import datetime
 import json
 
-# make a timestamp int
-NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-
 # add align-transformers to path
 sys.path.append("../align-transformers/")
 from models.alignable_base import AlignableModel
@@ -45,6 +42,7 @@ def experiment(
     """Run a feature-finding experiment."""
 
     # load model
+    NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
     tokenizer.pad_token = tokenizer.eos_token
