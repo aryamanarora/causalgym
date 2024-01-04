@@ -254,6 +254,8 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
 
             # get activations
             activations_base, activations_src = list(alignable.interventions.values())[0][0].get_stored_vals()
+            activations_base = activations_base.to("cpu")
+            activations_src = activations_src.to("cpu")
 
             # per-batch
             for i in range(2):
