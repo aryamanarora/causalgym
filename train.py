@@ -268,6 +268,7 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
     
     # get means
     diff_vector, accuracy = method_to_class_mapping[method](activations)
+    diff_vector = diff_vector.to(alignable.get_device())
 
     # set up addition config
     alignable._cleanup_states()
