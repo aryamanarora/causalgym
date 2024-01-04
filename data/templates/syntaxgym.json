@@ -1,5 +1,5 @@
 {
-    "subject_verb_number_agreement_with_subject_relative_clause": {
+    "agreement_number_subj-relc": {
         "templates": [
             "The {subject} that {verbed} the {object}"
         ],
@@ -21,7 +21,7 @@
             ]
         }
     },
-    "subject_verb_number_agreement_with_object_relative_clause": {
+    "agreement_number_obj-relc": {
         "templates": [
             "The {subject} that the {object} {verbed}"
         ],
@@ -43,7 +43,7 @@
             ]
         }
     },
-    "subject_verb_number_agreement_with_prepositional_phrase": {
+    "agreement_number_pp": {
         "templates": [
             "The {subject} {prep} the {object}"
         ],
@@ -65,7 +65,7 @@
             ]
         }
     },
-    "reflexive_number_agreement_with_object_relative_clause2": {
+    "agreement_number_reflexive_obj-relc2": {
         "templates": [
             "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
@@ -88,7 +88,7 @@
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "reflexive_number_agreement_with_object_relative_clause": {
+    "agreement_number_reflexive_obj-relc": {
         "templates": [
             "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
@@ -111,7 +111,7 @@
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "reflexive_number_agreement_with_prepositional_phrase": {
+    "agreement_number_reflexive_pp": {
         "templates": [
             "The {subject} {prep} the {object} {matrix_v}"
         ],
@@ -134,7 +134,7 @@
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "reflexive_number_agreement_with_subject_relative_clause": {
+    "agreement_number_reflexive_subj-relc": {
         "templates": [
             "The {subject} that {embed_vp} the {embed_np} {matrix_v}"
         ],
@@ -157,7 +157,7 @@
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "filler_gap": {
+    "fillergap_subj": {
         "templates": [
             "{prefix} {comp}"
         ],
@@ -175,7 +175,7 @@
             }
         }
     },
-    "filler_gap_object_extraction_him": {
+    "fillergap_obj-him": {
         "templates": [
             "{prefix} {comp} {np1} {verb}"
         ],
@@ -195,7 +195,7 @@
             "verb": ["killed", "met", "attacked", "saw"]
         }
     },
-    "filler_gap_object_extraction_it": {
+    "fillergap_obj-it": {
         "templates": [
             "{prefix} {comp} {np1} {verb}"
         ],
@@ -215,47 +215,69 @@
             "verb": ["grabbed", "caught", "stole", "forged", "derailed", "will get", "will be awarded", "placed", "repaired", "dragged"]
         }
     },
-    "filler_gap_time_extraction": {
+    "fillergap_passive_subj-pp": {
         "templates": [
-            "{prefix} {comp} {np1} will {verb}"
+            "{prefix} {wh} the {subject} was {verb} by"
         ],
-        "label": "comp",
+        "label": "wh",
         "label_prepend_space": true,
         "labels": {
-            "wh": ["."],
-            "th": ["soon"]
+            "why": ["them"],
+            "who": ["."]
         },
         "variables": {
             "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "comp": {
-                "wh": ["when"],
-                "th": ["that"]
+            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+            "wh": {
+                "why": ["why"],
+                "who": ["who"]
             },
-            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
-            "verb": ["arrive", "depart", "leave", "come back", "return"]
+            "verb": ["killed", "attacked", "admired", "amazed", "impressed", "disturbed", "injured", "hurt", "shot"]
         }
     },
-    "from_to": {
+    "fillergap_ditransitive_recipient": {
         "templates": [
-            "The {subject} {verb} {fromto} the {object}"
+            "{prefix} {wh} the {subject} {verb} the {object} to"
         ],
-        "label": "fromto",
+        "label": "wh",
         "label_prepend_space": true,
         "labels": {
-            "from": ["to"],
-            "to": ["from"]
+            "that": ["them"],
+            "who": ["."]
         },
         "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
             "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-            "verb": ["drove", "walked", "flew", "ran", "swam", "crawled", "sailed", "skated", "biked", "hiked", "skied", "climbed", "traveled", "jogged", "sprinted", "raced", "strolled", "marched", "ambled", "wandered"],
-            "fromto": {
-                "from": ["from"],
-                "to": ["to"]
+            "wh": {
+                "that": ["that"],
+                "who": ["who"]
             },
-            "object": ["city", "town", "village", "beach", "north", "south"]
+            "object": ["box", "toy", "present", "gift", "package", "letter", "card", "book", "note", "envelope", "package", "ball", "flower", "message", "email", "bill", "check", "money", "package", "parcel"],
+            "verb": ["showed", "gave", "presented", "offered", "sent", "handed", "delivered", "sold"]
         }
     },
-    "negative_polarity_licensing_with_object_relative_clause": {
+    "fillergap_ditransitive_time": {
+        "templates": [
+            "{prefix} {wh} the {subject} {verb} the {object} to them"
+        ],
+        "label": "wh",
+        "label_prepend_space": true,
+        "labels": {
+            "that": ["today"],
+            "when": ["."]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+            "wh": {
+                "that": ["that"],
+                "when": ["when"]
+            },
+            "object": ["box", "toy", "present", "gift", "package", "letter", "card", "book", "note", "envelope", "package", "ball", "flower", "message", "email", "bill", "check", "money", "package", "parcel"],
+            "verb": ["showed", "gave", "presented", "offered", "sent", "handed", "delivered", "sold"]
+        }
+    },
+    "npi_obj-relc": {
         "templates": [
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
         ],
@@ -277,7 +299,7 @@
             "matrix_v": ["has shown", "has fired", "has broken", "have planted", "has passed up", "have had", "has spent", "have missed", "has seen", "has had", "have landed", "has crashed", "have refused", "have passed", "has missed", "has known", "have failed", "has burned", "have advocated", "has completed", "have caught", "has failed", "has passed", "have purchased", "have broken", "have read", "have crashed", "have burned", "have arrested"]
         }
     },
-    "negative_polarity_licensing_with_object_relative_clause2": {
+    "npi_obj-relc2": {
         "templates": [
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
         ],
@@ -300,6 +322,25 @@
             "rc_subj": ["consultant", "taxi driver", "architects", "farmer", "pilots", "architect", "journalists", "authors", "athlete", "secretaries", "clerks", "minister", "pilot", "senators", "clerk", "ministers", "dancer", "officers", "secretary", "senator", "farmers", "guard", "doctors", "manager", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
             "rc_verb": ["helped", "liked", "admired", "contacted", "respected", "discussed", "impressed", "praised", "knew", "hated", "loved"],
             "matrix_v": ["has shown", "has fired", "has broken", "have planted", "has passed up", "have had", "has spent", "have missed", "has seen", "has had", "have landed", "has crashed", "have refused", "have passed", "has missed", "has known", "have failed", "has burned", "have advocated", "has completed", "have caught", "has failed", "has passed", "have purchased", "have broken", "have read", "have crashed", "have burned", "have arrested"]
+        }
+    },
+    "passive": {
+        "templates": [
+            "The {subject} {hadwas} {verb}"
+        ],
+        "label": "hadwas",
+        "label_prepend_space": true,
+        "labels": {
+            "had": ["the"],
+            "was": ["by"]
+        },
+        "variables": {
+            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+            "hadwas": {
+                "had": ["had"],
+                "was": ["was"]
+            },
+            "verb": ["killed", "attacked", "admired", "amazed", "impressed", "disturbed", "injured", "hurt", "shot"]
         }
     }
 }

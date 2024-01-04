@@ -11,14 +11,14 @@ from tqdm import tqdm
 import json
 
 @torch.no_grad()
-def benchmark(model=None, debug=False):
+def benchmark(model=None, task=None, debug=False):
 
     # get models, data
     if model is None:
         models = [model for model in MODELS if model.startswith("EleutherAI")]
     else:
         models = [model]
-    datasets = [dataset for dataset in list_datasets() if dataset.startswith("syntaxgym/")]
+    datasets = [dataset for dataset in list_datasets() if dataset.startswith(f"syntaxgym/{task if task is not None else ''}")]
     data = []
 
     # benchmark
@@ -89,6 +89,7 @@ def benchmark(model=None, debug=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default=None)
+    parser.add_argument("--task", type=str, default=None)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     benchmark(**vars(args))

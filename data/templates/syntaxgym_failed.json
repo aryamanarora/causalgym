@@ -1,0 +1,62 @@
+{
+    "passive_wh_extraction": {
+        "templates": [
+            "{prefix} who the {subject} {hadwas} {verb}"
+        ],
+        "label": "hadwas",
+        "label_prepend_space": true,
+        "labels": {
+            "had": ["."],
+            "was": ["by"]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+            "hadwas": {
+                "had": ["had"],
+                "was": ["was"]
+            },
+            "verb": ["killed", "attacked", "admired", "amazed", "impressed", "disturbed", "injured", "hurt", "shot"]
+        }
+    },
+    "from_to": {
+        "templates": [
+            "The {subject} {verb} {fromto} the {object}"
+        ],
+        "label": "fromto",
+        "label_prepend_space": true,
+        "labels": {
+            "from": ["to"],
+            "to": ["from"]
+        },
+        "variables": {
+            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+            "verb": ["drove", "walked", "flew", "ran", "swam", "crawled", "sailed", "skated", "biked", "hiked", "skied", "climbed", "traveled", "jogged", "sprinted", "raced", "strolled", "marched", "ambled", "wandered"],
+            "fromto": {
+                "from": ["from"],
+                "to": ["to"]
+            },
+            "object": ["city", "town", "village", "beach", "north", "south"]
+        }
+    },
+    "filler_gap_time_extraction": {
+        "templates": [
+            "{prefix} {comp} {np1} will {verb}"
+        ],
+        "label": "comp",
+        "label_prepend_space": true,
+        "labels": {
+            "wh": ["."],
+            "th": ["soon"]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "comp": {
+                "wh": ["when"],
+                "th": ["that"]
+            },
+            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
+            "verb": ["arrive", "depart", "leave", "come back", "return"]
+        }
+    }
+}
