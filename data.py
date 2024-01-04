@@ -177,7 +177,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
 
 
 def load_from_syntaxgym():
-    for suite_file in glob.glob("data/test_suites/npi.json"):
+    for suite_file in glob.glob("data/test_suites/filler_gap_subject.json"):
         print(suite_file.split('/')[-1])
         with open(suite_file, "r") as f:
             suite = json.load(f)
@@ -192,8 +192,8 @@ def load_from_syntaxgym():
                     region_numbers[f"{condition['condition_name']}_{region['region_number']}"].add(region["content"])
 
         # convert sets to lists
-        region_numbers = {k: list(v) for k, v in region_numbers.items()}
-        print(json.dumps(region_numbers))
+        region_numbers = {k: str(list(v)) for k, v in region_numbers.items()}
+        print(json.dumps(region_numbers, indent=2).replace("'", '"'))
         input()
 
 

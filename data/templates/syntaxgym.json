@@ -65,7 +65,7 @@
             ]
         }
     },
-    "reflexive_number_agreement_with_object_relative_clause": {
+    "reflexive_number_agreement_with_object_relative_clause2": {
         "templates": [
             "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
@@ -88,7 +88,7 @@
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "reflexive_number_agreement_with_object_relative_clause2": {
+    "reflexive_number_agreement_with_object_relative_clause": {
         "templates": [
             "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
@@ -115,7 +115,7 @@
         "templates": [
             "The {subject} {prep} the {object} {matrix_v}"
         ],
-        "label": ["subject", "object"],
+        "label": "subject",
         "label_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
@@ -127,10 +127,10 @@
                 "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
             },
             "prep": ["in front of", "near", "to the side of", "next to", "across from", "behind"],
-            "object": {
-                "singular": ["actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators"],
-                "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
-            },
+            "object": [
+                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
+                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
+            ],
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
@@ -138,7 +138,7 @@
         "templates": [
             "The {subject} that {embed_vp} the {embed_np} {matrix_v}"
         ],
-        "label": ["subject", "embed_np"],
+        "label": "subject",
         "label_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
@@ -149,15 +149,15 @@
                 "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
                 "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
             },
-            "embed_np": {
-                "singular": ["actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators"],
-                "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
-            },
+            "embed_np": [
+                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
+                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
+            ],
             "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "filler_gap_dependencies_subject_extraction_gap": {
+    "filler_gap": {
         "templates": [
             "{prefix} {comp}"
         ],
@@ -175,7 +175,7 @@
             }
         }
     },
-    "filler_gap_dependencies_subject_extraction_nogap": {
+    "filler_gap_object_extraction_him": {
         "templates": [
             "{prefix} {comp} {np1} {verb}"
         ],
@@ -183,7 +183,7 @@
         "label_prepend_space": true,
         "labels": {
             "wh": ["when"],
-            "th": ["a"]
+            "th": ["him"]
         },
         "variables": {
             "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
@@ -193,6 +193,26 @@
             },
             "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
             "verb": ["killed", "met", "attacked", "saw"]
+        }
+    },
+    "filler_gap_object_extraction_it": {
+        "templates": [
+            "{prefix} {comp} {np1} {verb}"
+        ],
+        "label": "comp",
+        "label_prepend_space": true,
+        "labels": {
+            "wh": ["when"],
+            "th": ["it"]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "comp": {
+                "wh": ["what"],
+                "th": ["that"]
+            },
+            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
+            "verb": ["grabbed", "caught", "stole", "forged", "derailed", "will get", "will be awarded", "placed", "repaired", "dragged"]
         }
     },
     "negative_polarity_licensing_with_object_relative_clause": {
