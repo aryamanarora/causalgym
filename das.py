@@ -39,7 +39,8 @@ def experiment(
     intervention_site: str,
     store_weights: bool,
     do_swap: bool=True,
-    test_sentence: bool=False
+    test_sentence: bool=False,
+    plot_now: bool=False
 ):
     """Run a feature-finding experiment."""
 
@@ -153,31 +154,32 @@ def experiment(
         json.dump(filedump, f)
 
     # print plots
-    df = pd.DataFrame(data)
-    plot.plot_bounds(df, f"{short_dataset_name}, {short_model_name}: intervention boundary")
-    plot.plot_label_loss(df, f"{short_dataset_name}, {short_model_name}: per-label loss")
-    plot.plot_label_prob(df, f"{short_dataset_name}, {short_model_name}: per-label probs")
-    plot.plot_label_logit(df, f"{short_dataset_name}, {short_model_name}: per-label logits")
+    if plot_now:
+        df = pd.DataFrame(data)
+        plot.plot_bounds(df, f"{short_dataset_name}, {short_model_name}: intervention boundary")
+        plot.plot_label_loss(df, f"{short_dataset_name}, {short_model_name}: per-label loss")
+        plot.plot_label_prob(df, f"{short_dataset_name}, {short_model_name}: per-label probs")
+        plot.plot_label_logit(df, f"{short_dataset_name}, {short_model_name}: per-label logits")
 
-    # cosine sim of learned directions plot
-    if num_dims == 1:
-        plot.plot_das_cos_sim(layer_objs, f"{short_dataset_name}, {short_model_name}: cosine similarity of learned directions")
-    
-    # iia per position/layer plot
-    if position == "each":
-        sentence = evalset[0].pair[0].input_ids[0]
-        other_sentence = evalset[0].pair[1].input_ids[0]
-        labels = []
-        for i in range(len(sentence)):
-            if sentence[i] != other_sentence[i]:
-                labels.append(format_token(tokenizer, sentence[i]) + ' / ' + format_token(tokenizer, other_sentence[i]))
-            else:
-                labels.append(format_token(tokenizer, sentence[i]))
-        plot.plot_pos_iia(df, f"{short_dataset_name}, {short_model_name}: position iia", sentence=labels)
+        # cosine sim of learned directions plot
+        if num_dims == 1:
+            plot.plot_das_cos_sim(layer_objs, f"{short_dataset_name}, {short_model_name}: cosine similarity of learned directions")
+        
+        # iia per position/layer plot
+        if position == "each":
+            sentence = evalset[0].pair[0].input_ids[0]
+            other_sentence = evalset[0].pair[1].input_ids[0]
+            labels = []
+            for i in range(len(sentence)):
+                if sentence[i] != other_sentence[i]:
+                    labels.append(format_token(tokenizer, sentence[i]) + ' / ' + format_token(tokenizer, other_sentence[i]))
+                else:
+                    labels.append(format_token(tokenizer, sentence[i]))
+            plot.plot_pos_iia(df, f"{short_dataset_name}, {short_model_name}: position iia", sentence=labels)
 
-    # make gif of files in figs/das/steps
-    os.system("convert -delay 100 -loop 0 figs/das/steps/*prob_per_pos.png figs/das/prob_steps.gif")
-    # os.system("convert -delay 100 -loop 0 figs/das/steps/*val_per_pos.png figs/das/val_steps.gif")
+        # make gif of files in figs/das/steps
+        os.system("convert -delay 100 -loop 0 figs/das/steps/*prob_per_pos.png figs/das/prob_steps.gif")
+        # os.system("convert -delay 100 -loop 0 figs/das/steps/*val_per_pos.png figs/das/val_steps.gif")
 
 
 def main():
@@ -195,6 +197,7 @@ def main():
     parser.add_argument("--position", type=str, default="all")
     parser.add_argument("--intervention-site", type=str, default="block_output")
     parser.add_argument("--store-weights", action="store_true")
+    parser.add_argument("--plot-now", action="store_true")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
