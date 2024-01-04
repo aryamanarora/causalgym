@@ -215,6 +215,26 @@
             "verb": ["grabbed", "caught", "stole", "forged", "derailed", "will get", "will be awarded", "placed", "repaired", "dragged"]
         }
     },
+    "filler_gap_time_extraction": {
+        "templates": [
+            "{prefix} {comp} {np1} will {verb}"
+        ],
+        "label": "comp",
+        "label_prepend_space": true,
+        "labels": {
+            "wh": ["."],
+            "th": ["soon"]
+        },
+        "variables": {
+            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
+            "comp": {
+                "wh": ["when"],
+                "th": ["that"]
+            },
+            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
+            "verb": ["arrive", "depart", "leave", "come back", "return"]
+        }
+    },
     "negative_polarity_licensing_with_object_relative_clause": {
         "templates": [
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
