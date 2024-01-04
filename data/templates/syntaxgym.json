@@ -235,6 +235,26 @@
             "verb": ["arrive", "depart", "leave", "come back", "return"]
         }
     },
+    "from_to": {
+        "templates": [
+            "The {subject} {verb} {fromto} the {object}"
+        ],
+        "label": "fromto",
+        "label_prepend_space": true,
+        "labels": {
+            "from": ["to"],
+            "to": ["from"]
+        },
+        "variables": {
+            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+            "verb": ["drove", "walked", "flew", "ran", "swam", "crawled", "sailed", "skated", "biked", "hiked", "skied", "climbed", "traveled", "jogged", "sprinted", "raced", "strolled", "marched", "ambled", "wandered"],
+            "fromto": {
+                "from": ["from"],
+                "to": ["to"]
+            },
+            "object": ["city", "town", "village", "beach", "north", "south"]
+        }
+    },
     "negative_polarity_licensing_with_object_relative_clause": {
         "templates": [
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
