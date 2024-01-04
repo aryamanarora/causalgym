@@ -43,7 +43,7 @@ def calculate_loss(logits, label, step, alignable, warm_up_steps=-1):
     return loss
 
 @torch.no_grad()
-def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
+def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims, accuracy=None):
     # get boundary
     data, stats = [], {}
     eval_loss = 0.0
@@ -95,6 +95,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims):
                         "bound": boundary,
                         "layer": layer_i,
                         "pos": pos_i[0][batch_i][0] if len(pos_i[0][batch_i]) == 1 else None,
+                        "acc": accuracy
                     }
                 )
     

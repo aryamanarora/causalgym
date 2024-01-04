@@ -164,7 +164,7 @@ def mean_diff(activations):
     # make vector
     vecs = list(means.values())
     vec = vecs[1] - vecs[0]
-    return vec / torch.norm(vec)
+    return vec / torch.norm(vec), None
 
 
 def kmeans_diff(activations):
@@ -174,7 +174,7 @@ def kmeans_diff(activations):
     # make vector
     vecs = kmeans.cluster_centers_
     vec = torch.tensor(vecs[0] - vecs[1], dtype=torch.float32)
-    return vec / torch.norm(vec)
+    return vec / torch.norm(vec), None
 
 
 def pca_diff(activations):
@@ -183,7 +183,7 @@ def pca_diff(activations):
 
     # get first component
     vec = torch.tensor(pca.components_[0], dtype=torch.float32)
-    return vec / torch.norm(vec)
+    return vec / torch.norm(vec), None
 
 
 def probing_diff(activations):
@@ -215,7 +215,7 @@ def probing_diff(activations):
 
     weight_vector = weight.detach() / torch.norm(weight.detach())
     weight_vector.requires_grad = False
-    return weight_vector
+    return weight_vector, acc / len(activations)
 
 
 def probing_diff_sklearn(activations):
@@ -227,7 +227,7 @@ def probing_diff_sklearn(activations):
 
     # extract weight
     vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
-    return vec / torch.norm(vec)
+    return vec / torch.norm(vec), accuracy
 
 
 method_to_class_mapping = {
@@ -265,7 +265,7 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
                 activations_base, activations_src = activations_src, activations_base
     
     # get means
-    diff_vector = method_to_class_mapping[method](activations)
+    diff_vector, accuracy = method_to_class_mapping[method](activations)
 
     # set up addition config
     alignable._cleanup_states()
@@ -275,7 +275,7 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
     alignable2 = AlignableModel(eval_config, alignable.model)
 
     # eval
-    data, stats = eval(alignable2, tokenizer, evalset, layer_i, 0, tokens, None)
+    data, stats = eval(alignable2, tokenizer, evalset, layer_i, 0, tokens, None, accuracy=accuracy)
 
     # done
     alignable2._cleanup_states()
