@@ -274,6 +274,7 @@ def train_feature_direction(method, alignable, tokenizer, trainset, evalset, lay
     alignable._cleanup_states()
     intervention = LowRankRotatedSpaceIntervention(activations[0][0].shape[-1], proj_dim=1)
     intervention.set_rotate_layer_weight(diff_vector.unsqueeze(1))
+    intervention.to(alignable.get_device())
     eval_config = intervention_config(type(alignable.model), intervention_site, layer_i, None, intervention)
     alignable2 = AlignableModel(eval_config, alignable.model)
     alignable2.set_device(alignable.get_device())
