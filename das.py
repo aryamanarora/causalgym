@@ -5,12 +5,10 @@ import sys
 import argparse
 import pandas as pd
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
-from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap, geom_text
-from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
-from utils import MODELS, WEIGHTS, get_last_token, format_token
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from utils import WEIGHTS, format_token
 from data import make_data
-from eval import calculate_loss, eval, eval_sentence
+from eval import eval
 from train import *
 import plot
 import datetime
@@ -25,7 +23,6 @@ def experiment(
     steps: int,
     intervention: str,
     num_dims: int,
-    warmup: bool,
     eval_steps: int,
     grad_steps: int,
     batch_size: int,
@@ -33,6 +30,7 @@ def experiment(
     position: str,
     intervention_site: str,
     store_weights: bool,
+    warmup: bool=True,
     do_swap: bool=True,
     test_sentence: bool=False,
     plot_now: bool=False
@@ -189,7 +187,6 @@ def main():
     parser.add_argument("--intervention", type=str, default="das")
     parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--num-dims", type=int, default=1)
-    parser.add_argument("--warmup", action="store_true")
     parser.add_argument("--eval-steps", type=int, default=25)
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)

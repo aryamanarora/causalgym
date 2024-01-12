@@ -10,7 +10,6 @@ def run_command(dataset, method):
         steps=steps,
         intervention=method,
         num_dims=1,
-        warmup=False,
         eval_steps=25,
         grad_steps=1,
         batch_size=4,

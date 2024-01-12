@@ -1,16 +1,17 @@
 import torch
-from eval import calculate_loss, eval, eval_sentence
 from tqdm import tqdm
-from utils import get_last_token
-import sys
+from transformers import get_linear_schedule_with_warmup
 from collections import defaultdict
-from interventions import activation_addition_position_config, intervention_config, IntervenableModel, LowRankRotatedSpaceIntervention
 
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 
-from pyvene.models.basic_utils import format_token, sm, count_parameters
+from eval import calculate_loss, eval
+from utils import get_last_token
+from interventions import intervention_config, IntervenableModel, LowRankRotatedSpaceIntervention
+
+from pyvene.models.basic_utils import sm, count_parameters
 
 def train_das(
     intervenable,
@@ -46,12 +47,12 @@ def train_das(
                 print("some trainable params not found")
                 pass
         optimizer = torch.optim.Adam(optimizer_params, lr=1e-3)
-        scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0, total_iters=total_steps)
-        # scheduler = get_linear_schedule_with_warmup(
-        #     optimizer,
-        #     num_warmup_steps=warm_up_steps,
-        #     num_training_steps=total_steps,
-        # )
+        # scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0, total_iters=total_steps)
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=warm_up_steps,
+            num_training_steps=total_steps,
+        )
         print("model trainable parameters: ", count_parameters(intervenable.model))
         print("intervention trainable parameters: ", intervenable.count_parameters())
 
