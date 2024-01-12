@@ -102,7 +102,7 @@ def train_das(
 
             # store activations/labels for training non-causal methods
             for batch_i in range(len(base_outputs[-1])):
-                activation = base_outputs[-1][batch_i].detach().reshape(-1)
+                activation = base_outputs[-1][batch_i].detach().reshape(-1).cpu()
                 activations.append((activation, base_label[batch_i].item()))
 
             # get last token logits
