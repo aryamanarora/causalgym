@@ -43,7 +43,7 @@ def calculate_loss(logits, label, step, alignable, warm_up_steps=-1):
     return loss
 
 @torch.no_grad()
-def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims, accuracy=None):
+def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims, accuracy=None, method="das"):
     # get boundary
     data, stats = [], {}
     eval_loss = 0.0
@@ -57,10 +57,9 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims, accurac
         # inference
         _, counterfactual_outputs = alignable(
             pair[0],
-            [pair[1]],
-            {"sources->base": (pos_i, pos_i)},
+            [None, pair[1]],
+            {"sources->base": ([None, pos_i[0]], [pos_i[0], pos_i[0]])},
         )
-        # intervention_vals = get_intervention_vals(alignable)
 
         # get last token probs
         logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
@@ -82,6 +81,7 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims, accurac
                 if len(tokens) <= 3: stats[format_token(tokenizer, tok)] = f"{prob:.3f}"
                 data.append(
                     {
+                        "method": method,
                         "step": step,
                         "src_label": src_label_p,
                         "base_label": base_label_p,
@@ -102,6 +102,8 @@ def eval(alignable, tokenizer, evalset, layer_i, step, tokens, num_dims, accurac
     # update iterator
     stats["eval_loss"] = f"{eval_loss / (len(evalset) * batch_size):.3f}"
     stats["iia"] = f"{iia / (len(evalset) * batch_size):.3f}"
+    if accuracy is not None:
+        stats["acc"] = f"{accuracy:.3%}"
     return data, stats
 
 @torch.no_grad()

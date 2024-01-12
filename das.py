@@ -5,20 +5,16 @@ import sys
 import argparse
 import pandas as pd
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
-from plotnine import ggplot, geom_point, aes, facet_grid, geom_line, ggtitle, geom_tile, theme, element_text, facet_wrap, geom_text
-from plotnine.scales import scale_x_continuous, scale_fill_cmap, scale_y_reverse, scale_fill_gradient2, scale_fill_gradient
-from utils import MODELS, WEIGHTS, get_last_token, format_token
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from utils import WEIGHTS, format_token
 from data import make_data
-from eval import calculate_loss, eval, eval_sentence
+from eval import eval
 from train import *
 import plot
 import datetime
 import json
 
-# add align-transformers to path
-sys.path.append("../align-transformers/")
-from models.alignable_base import AlignableModel
+from pyvene.models.intervenable_base import IntervenableModel
 from interventions import *
 
 def experiment(
@@ -27,7 +23,6 @@ def experiment(
     steps: int,
     intervention: str,
     num_dims: int,
-    warmup: bool,
     eval_steps: int,
     grad_steps: int,
     batch_size: int,
@@ -35,6 +30,7 @@ def experiment(
     position: str,
     intervention_site: str,
     store_weights: bool,
+    warmup: bool=True,
     do_swap: bool=True,
     test_sentence: bool=False,
     plot_now: bool=False
@@ -76,7 +72,7 @@ def experiment(
     layer_objs = {}
     
     # entering train loops
-    max_loop, pos_i = 2, 1
+    max_loop, pos_i = 1, 0
     while pos_i < (max_loop if position == "each" else 1):
 
         # train and eval sets
@@ -92,36 +88,39 @@ def experiment(
         for layer_i in iterator:
             print(f"position {pos_i} of {max_loop}, layer {layer_i}")
 
-            # set up alignable model
-            alignable_config = intervention_config(
+            # set up intervenable model
+            intervenable_config = intervention_config(
                 type(gpt), intervention_site, layer_i, num_dims
             )
-            alignable = AlignableModel(alignable_config, gpt)
-            alignable.set_device(device)
-            alignable.disable_model_gradients()
+            intervenable = IntervenableModel(intervenable_config, gpt)
+            intervenable.set_device(device)
+            intervenable.disable_model_gradients()
 
             # training
             if intervention == "das":
-                _, more_data, more_weights = train_das(
-                    alignable, tokenizer, trainset, evalset, layer_i,
+
+                # actual DAS which collects activations
+                _, more_data, more_weights, activations = train_das(
+                    intervenable, tokenizer, trainset, evalset, layer_i,
                     pos_i, num_dims, steps, warmup, eval_steps, grad_steps,
                     store_weights, tokens
                 )
-                weights.extend(more_weights)
+                data.extend(more_data)
+                
+                # test other methods
+                for method in ["mean_diff", "kmeans", "probe", "probe_sklearn", "pca"]:
+                    more_data, more_stats = train_feature_direction(
+                        method, intervenable, tokenizer, activations, evalset,
+                        layer_i, pos_i, intervention_site, tokens
+                    )
+                    print(method, more_stats)
             elif intervention == "vanilla":
-                more_data, more_stats = eval(alignable, tokenizer, evalset,
+                more_data, more_stats = eval(intervenable, tokenizer, evalset,
                                              layer_i, 0, tokens, num_dims)
-                iterator.set_postfix(more_stats)
-            elif intervention in ["mean_diff", "kmeans", "probe", "probe_sklearn", "pca"]:
-                more_data, more_stats = train_feature_direction(
-                    intervention, alignable, tokenizer, trainset, evalset,
-                    layer_i, pos_i, intervention_site, tokens
-                )
                 iterator.set_postfix(more_stats)
                 
             # store obj
-            layer_objs[layer_i] = alignable
-            data.extend(more_data)
+            layer_objs[layer_i] = intervenable
         
         pos_i += 1
 
@@ -189,9 +188,8 @@ def main():
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
     parser.add_argument("--dataset", type=str, default="gender_basic")
     parser.add_argument("--intervention", type=str, default="das")
-    parser.add_argument("--steps", type=int, default=125)
-    parser.add_argument("--num-dims", type=int, default=-1)
-    parser.add_argument("--warmup", action="store_true")
+    parser.add_argument("--steps", type=int, default=100)
+    parser.add_argument("--num-dims", type=int, default=1)
     parser.add_argument("--eval-steps", type=int, default=25)
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)
