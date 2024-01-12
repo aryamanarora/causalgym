@@ -12,14 +12,12 @@ from utils import MODELS, WEIGHTS, get_last_token
 from data import make_data
 from eval import calculate_loss, eval, eval_sentence
 
-# add align-transformers to path
-sys.path.append("../align-transformers/")
-from models.utils import format_token, sm, count_parameters
-from models.configuration_alignable_model import (
-    AlignableRepresentationConfig,
-    AlignableConfig,
+from pyvene.models.basic_utils import format_token, sm, count_parameters
+from pyvene.models.configuration_intervenable_model import (
+    IntervenableRepresentationConfig,
+    IntervenableConfig,
 )
-from models.alignable_base import AlignableModel
+from pyvene.models.intervenable_base import IntervenableModel
 from interventions import (
     LowRankRotatedSpaceIntervention,
     BoundlessRotatedSpaceIntervention,
@@ -29,20 +27,20 @@ from interventions import (
 def intervention_config(model_type, intervention_type, layer, num_dims, intervention_obj=None):
     if intervention_obj is None:
         intervention_obj = BoundlessRotatedSpaceIntervention if num_dims == -1 else LowRankRotatedSpaceIntervention
-    alignable_config = AlignableConfig(
-        alignable_model_type=model_type,
-        alignable_representations=[
-            AlignableRepresentationConfig(
+    intervenable_config = IntervenableConfig(
+        intervenable_model_type=model_type,
+        intervenable_representations=[
+            IntervenableRepresentationConfig(
                 layer,  # layer
                 intervention_type,  # intervention type
                 "pos",  # intervention unit
                 1,  # max number of unit
-                alignable_low_rank_dimension=num_dims,  # low rank dimension
+                intervenable_low_rank_dimension=num_dims,  # low rank dimension
             ),
         ],
-        alignable_interventions_type=intervention_obj
+        intervenable_interventions_type=intervention_obj
     )
-    return alignable_config
+    return intervenable_config
 
 def experiment(
     model: str,
