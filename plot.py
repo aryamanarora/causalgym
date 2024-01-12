@@ -4,6 +4,10 @@ from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
 import json
 import pandas as pd
 import torch
+import glob
+from data import make_data
+from transformers import AutoTokenizer
+from utils import format_token
 
 
 def plot_benchmark():
@@ -90,6 +94,33 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
 
     plot.save(loc)
 
+
+def plot_pos_acc(df: pd.DataFrame, title="position acc", loc="figs/das/pos_acc.pdf", sentence=None):
+    """Plot position acc for DAS."""
+
+    # get last step
+    last_step = df["step"].max()
+    df = df[df["step"] == last_step]
+    
+    # group df by pos and layer
+    df = df[["pos", "layer", "acc"]]
+    df = df.groupby(["pos", "layer"]).mean().reset_index()
+    df["acc_formatted"] = df["acc"].apply(lambda x: f"{x:.2f}")
+
+    # plot
+    plot = (
+        ggplot(df, aes(x="pos", y="layer"))
+        + geom_tile(aes(fill="acc")) + scale_fill_cmap("Purples", limits=[0,1])
+        + geom_text(aes(label="acc_formatted"), color="black", size=10) + ggtitle(title)
+    )
+
+    # modify x axis labels to use sentence
+    if sentence is not None:
+        plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
+        plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
+
+    plot.save(loc)
+
 def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/cos_sim.pdf"):
     # collect data
     directions = {}
@@ -144,8 +175,34 @@ def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
 
     plot.save(loc)
 
+
+def plot_benchmark2():
+    tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
+    tokenizer.pad_token = tokenizer.eos_token
+    for file in glob.glob("logs/das/pythia-70m__*__2024*.json"):
+        data = json.load(open(file, "r"))
+        df = pd.DataFrame(data["data"])
+        method = data["metadata"]["intervention"]
+        dataset = data["metadata"]["dataset"]
+
+        # load sent
+        evalset, _ = make_data(tokenizer, dataset, 1, 1, 1, position=0, seed=420)
+        dataset = dataset.split('/')[-1]
+        sentence = evalset[0].pair[0].input_ids[0]
+        other_sentence = evalset[0].pair[1].input_ids[0]
+        labels = []
+        for i in range(len(sentence)):
+            if sentence[i] != other_sentence[i]:
+                labels.append(format_token(tokenizer, sentence[i]) + ' / ' + format_token(tokenizer, other_sentence[i]))
+            else:
+                labels.append(format_token(tokenizer, sentence[i]))
+
+        plot_pos_iia(df, title=f"{method}, {dataset} (iia)", loc=f"figs/das/benchmark/{dataset}__{method}_iia.pdf", sentence=labels)
+        if method.startswith("probe"):
+            plot_pos_acc(df, title=f"{method}, {dataset} (acc)", loc=f"figs/das/benchmark/{dataset}__{method}_acc.pdf", sentence=labels)
+
 if __name__ == "__main__":
-    plot_benchmark()
+    plot_benchmark2()
     # with open("logs/das/pythia-70m__gender_basic__20231231234245.json", "r") as f:
     #     data = json.load(f)
     #     plot_weights(data["weights"])
