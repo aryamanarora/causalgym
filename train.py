@@ -262,7 +262,7 @@ def train_feature_direction(method, intervenable, tokenizer, activations, evalse
     intervenable2.set_device(intervenable.get_device())
 
     # eval
-    data, stats = eval(intervenable2, tokenizer, evalset, layer_i, 0, tokens, None, accuracy=accuracy, method=method)
+    data, stats = eval(intervenable2, tokenizer, evalset, layer_i, -1, tokens, None, accuracy=accuracy, method=method)
 
     # done
     intervenable2._cleanup_states()

@@ -114,6 +114,10 @@ def experiment(
                         layer_i, pos_i, intervention_site, tokens
                     )
                     print(method, more_stats)
+                    data.extend(more_data)
+                
+                df = pd.DataFrame(data)
+
             elif intervention == "vanilla":
                 more_data, more_stats = eval(intervenable, tokenizer, evalset,
                                              layer_i, 0, tokens, num_dims)

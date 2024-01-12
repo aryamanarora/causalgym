@@ -5,7 +5,7 @@ def run_command(dataset):
     steps = 100
     # command = f"python das.py --model EleutherAI/pythia-70m --intervention {method} --dataset {dataset} --position each --num-tokens 1 --num-dims 1 --steps {steps}"
     experiment(
-        model="EleutherAI/pythia-70m",
+        model="EleutherAI/pythia-160m",
         dataset=dataset,
         steps=steps,
         intervention="das",
