@@ -31,8 +31,6 @@ def intervention_config(
     if intervention_obj is None:
         if num_dims == -1:
             intervention_class = BoundlessRotatedSpaceIntervention
-        elif num_dims is None:
-            intervention_class = CollectIntervention
         elif num_dims > 0:
             intervention_class = LowRankRotatedSpaceIntervention
     else:
@@ -43,6 +41,12 @@ def intervention_config(
         intervenable_model_type=model_type,
         intervenable_representations=[
             IntervenableRepresentationConfig(
+                layer,
+                intervention_type,
+                "pos",
+                1,
+            ),
+            IntervenableRepresentationConfig(
                 layer,                                  # layer
                 intervention_type,                      # intervention type
                 "pos",                                  # intervention unit
@@ -50,10 +54,33 @@ def intervention_config(
                 intervenable_low_rank_dimension=num_dims,  # low rank dimension
             ),
         ],
-        intervenable_interventions_type=intervention_class,
+        intervenable_interventions_type=[CollectIntervention, intervention_class],
+        intervenable_interventions=[CollectIntervention(intervention_obj.embed_dim), intervention_obj] if intervention_obj is not None else [None]
+    )
+    return intervenable_config
+
+
+def intervention_config_with_intervention_obj(
+    model_type, intervention_type,
+    layer, intervention_obj=None
+):
+    # init
+    intervenable_config = IntervenableConfig(
+        intervenable_model_type=model_type,
+        intervenable_representations=[
+            IntervenableRepresentationConfig(
+                layer,                                  # layer
+                intervention_type,                      # intervention type
+                "pos",                                  # intervention unit
+                1,                                      # max number of unit
+                intervenable_low_rank_dimension=1,  # low rank dimension
+            ),
+        ],
+        intervenable_interventions_type=LowRankRotatedSpaceIntervention,
         intervenable_interventions=[intervention_obj]
     )
     return intervenable_config
+        
 
 
 def activation_addition_position_config(

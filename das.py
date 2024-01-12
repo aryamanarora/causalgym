@@ -98,26 +98,29 @@ def experiment(
 
             # training
             if intervention == "das":
-                _, more_data, more_weights = train_das(
+
+                # actual DAS which collects activations
+                _, more_data, more_weights, activations = train_das(
                     intervenable, tokenizer, trainset, evalset, layer_i,
                     pos_i, num_dims, steps, warmup, eval_steps, grad_steps,
                     store_weights, tokens
                 )
-                weights.extend(more_weights)
+                data.extend(more_data)
+                
+                # test other methods
+                for method in ["mean_diff", "kmeans", "probe", "probe_sklearn", "pca"]:
+                    more_data, more_stats = train_feature_direction(
+                        method, intervenable, tokenizer, activations, evalset,
+                        layer_i, pos_i, intervention_site, tokens
+                    )
+                    print(method, more_stats)
             elif intervention == "vanilla":
                 more_data, more_stats = eval(intervenable, tokenizer, evalset,
                                              layer_i, 0, tokens, num_dims)
                 iterator.set_postfix(more_stats)
-            elif intervention in ["mean_diff", "kmeans", "probe", "probe_sklearn", "pca"]:
-                more_data, more_stats = train_feature_direction(
-                    intervention, intervenable, tokenizer, trainset, evalset,
-                    layer_i, pos_i, intervention_site, tokens
-                )
-                iterator.set_postfix(more_stats)
                 
             # store obj
             layer_objs[layer_i] = intervenable
-            data.extend(more_data)
         
         pos_i += 1
 

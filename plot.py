@@ -81,6 +81,7 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
         ggplot(df, aes(x="pos", y="layer"))
         + geom_tile(aes(fill="iia")) + scale_fill_cmap("Purples", limits=[0,1])
         + geom_text(aes(label="iia_formatted"), color="black", size=10) + ggtitle(title)
+        + facet_wrap("method")
     )
 
     # modify x axis labels to use sentence

@@ -6,10 +6,12 @@ from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
+from sklearn.utils._testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 from eval import calculate_loss, eval
 from utils import get_last_token
-from interventions import intervention_config, IntervenableModel, LowRankRotatedSpaceIntervention
+from interventions import intervention_config, intervention_config_with_intervention_obj, IntervenableModel, LowRankRotatedSpaceIntervention
 
 from pyvene.models.basic_utils import sm, count_parameters
 
@@ -73,6 +75,7 @@ def train_das(
     # train
     iterator = tqdm(range(total_steps))
     total_loss = torch.tensor(0.0).to(intervenable.get_device())
+    activations = []
 
     for step in iterator:
         # get weights
@@ -91,11 +94,16 @@ def train_das(
         for i in range(2):
 
             # inference
-            _, counterfactual_outputs = intervenable(
+            base_outputs, counterfactual_outputs = intervenable(
                 pair[0],
-                [pair[1]],
-                {"sources->base": (pos_interv, pos_interv)},
+                [None, pair[1]],
+                {"sources->base": ([None, pos_interv[0]], [pos_interv[0], pos_interv[0]])},
             )
+
+            # store activations/labels for training non-causal methods
+            for batch_i in range(len(base_outputs[-1])):
+                activation = base_outputs[-1][batch_i].detach().reshape(-1)
+                activations.append((activation, base_label[batch_i].item()))
 
             # get last token logits
             logits = get_last_token(counterfactual_outputs.logits, pair[0].attention_mask)
@@ -140,7 +148,7 @@ def train_das(
         total_step += 1
     
     # return data
-    return intervenable, data, weights
+    return intervenable, data, weights, activations
 
 
 # mean diff
@@ -164,9 +172,10 @@ def mean_diff(activations):
     return vec / torch.norm(vec), None
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def kmeans_diff(activations):
     # fit kmeans
-    kmeans = KMeans(n_clusters=2, random_state=0).fit([activation for activation, _ in activations])
+    kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit([activation for activation, _ in activations])
     
     # make vector
     vecs = kmeans.cluster_centers_
@@ -208,7 +217,6 @@ def probing_diff(activations):
             prob = torch.sigmoid(logit).item()
             if (prob > 0.5 and label == label_0) or (prob < 0.5 and label != label_0):
                 acc += 1
-        print("linear probing acc:", acc / len(activations))
 
     weight_vector = weight.detach() / torch.norm(weight.detach())
     weight_vector.requires_grad = False
@@ -220,7 +228,6 @@ def probing_diff_sklearn(activations):
     labels = [label for _, label in activations]
     lr = LogisticRegression(random_state=0, max_iter=1000, fit_intercept=False).fit([activation for activation, _ in activations], labels)
     accuracy = lr.score([activation for activation, _ in activations], labels)
-    print("accuracy:", accuracy)
 
     # extract weight
     vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
@@ -236,48 +243,26 @@ method_to_class_mapping = {
 }
 
 
-def train_feature_direction(method, intervenable, tokenizer, trainset, evalset, layer_i, pos_i, intervention_site, tokens):
+def train_feature_direction(method, intervenable, tokenizer, activations, evalset, layer_i, pos_i, intervention_site, tokens):
     """Train/compute an intervention direction on some activations."""
-    # collect activations
-    activations = []
-    with torch.no_grad():
-        for (pair, src_label, base_label, pos_interv, src_label_o, base_label_o) in tqdm(trainset):
-            # inference
-            intervenable(
-                pair[0],
-                [pair[1]],
-                {"sources->base": (pos_interv, pos_interv)},
-            )
 
-            # get activations
-            activations_base, activations_src = list(intervenable.interventions.values())[0][0].get_stored_vals()
-            activations_base = activations_base.to("cpu")
-            activations_src = activations_src.to("cpu")
-
-            # per-batch
-            for i in range(2):
-                for batch_i in range(activations_base.shape[0]):
-                    key = base_label_o[batch_i]
-                    activations.append((activations_base[batch_i], key))
-                src_label, base_label = base_label, src_label
-                src_label_o, base_label_o = base_label_o, src_label_o
-                activations_base, activations_src = activations_src, activations_base
-    
-    # get means
+    # get diff vector based on method
     diff_vector, accuracy = method_to_class_mapping[method](activations)
     diff_vector = diff_vector.to(intervenable.get_device())
 
-    # set up addition config
+    # set up 1D intervention w that vector
     intervenable._cleanup_states()
     intervention = LowRankRotatedSpaceIntervention(activations[0][0].shape[-1], proj_dim=1)
     intervention.to(intervenable.get_device())
-    intervention.set_rotate_layer_weight(diff_vector.unsqueeze(1))
-    eval_config = intervention_config(type(intervenable.model), intervention_site, layer_i, None, intervention)
+    intervention.rotate_layer.weight = diff_vector.unsqueeze(1)
+
+    # new config
+    eval_config = intervention_config(type(intervenable.model), intervention_site, layer_i, 1, intervention)
     intervenable2 = IntervenableModel(eval_config, intervenable.model)
     intervenable2.set_device(intervenable.get_device())
 
     # eval
-    data, stats = eval(intervenable2, tokenizer, evalset, layer_i, 0, tokens, None, accuracy=accuracy)
+    data, stats = eval(intervenable2, tokenizer, evalset, layer_i, 0, tokens, None, accuracy=accuracy, method=method)
 
     # done
     intervenable2._cleanup_states()
