@@ -1,7 +1,6 @@
+from turtle import pos
 import torch
 import os
-import random
-import sys
 import argparse
 import pandas as pd
 from tqdm import tqdm
@@ -9,7 +8,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from utils import WEIGHTS, format_token
 from data import make_data
 from eval import eval
-from train import *
+from train import train_das, train_feature_direction, method_to_class_mapping
 import plot
 import datetime
 import json
@@ -72,7 +71,7 @@ def experiment(
     layer_objs = {}
     
     # entering train loops
-    max_loop, pos_i = 1, 0
+    max_loop, pos_i = 2, 1
     while pos_i < (max_loop if position == "each" else 1):
 
         # train and eval sets
@@ -92,7 +91,7 @@ def experiment(
             intervenable_config = intervention_config(
                 type(gpt), intervention_site, layer_i, num_dims
             )
-            intervenable = IntervenableModel(intervenable_config, gpt)
+            intervenable = IntervenableModel(intervenable_config, gpt, use_fast=(position == "each"))
             intervenable.set_device(device)
             intervenable.disable_model_gradients()
 
@@ -108,15 +107,13 @@ def experiment(
                 data.extend(more_data)
                 
                 # test other methods
-                for method in ["mean_diff", "kmeans", "probe", "probe_sklearn", "pca"]:
+                for method in method_to_class_mapping.keys():
                     more_data, more_stats = train_feature_direction(
                         method, intervenable, tokenizer, activations, evalset,
-                        layer_i, pos_i, intervention_site, tokens
+                        layer_i, position, intervention_site, tokens
                     )
                     print(method, more_stats)
                     data.extend(more_data)
-                
-                df = pd.DataFrame(data)
 
             elif intervention == "vanilla":
                 more_data, more_stats = eval(intervenable, tokenizer, evalset,

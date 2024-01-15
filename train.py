@@ -1,17 +1,11 @@
 import torch
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup
-from collections import defaultdict
-
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 
 from eval import calculate_loss, eval
 from utils import get_last_token
 from interventions import intervention_config, intervention_config_with_intervention_obj, IntervenableModel, LowRankRotatedSpaceIntervention
+from diff_methods import method_to_class_mapping
 
 from pyvene.models.basic_utils import sm, count_parameters
 
@@ -151,114 +145,24 @@ def train_das(
     return intervenable, data, weights, activations
 
 
-# mean diff
-def mean_diff(activations):
-    means, counts = {}, defaultdict(int)
-
-    # accumulate
-    for activation, label in activations:
-        if label not in means:
-            means[label] = torch.zeros_like(activation)
-        means[label] += activation
-        counts[label] += 1
-
-    # calc means
-    for k in means:
-        means[k] /= counts[k]
-    
-    # make vector
-    vecs = list(means.values())
-    vec = vecs[1] - vecs[0]
-    return vec / torch.norm(vec), None
-
-
-@ignore_warnings(category=ConvergenceWarning)
-def kmeans_diff(activations):
-    # fit kmeans
-    kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit([activation for activation, _ in activations])
-    
-    # make vector
-    vecs = kmeans.cluster_centers_
-    vec = torch.tensor(vecs[0] - vecs[1], dtype=torch.float32)
-    return vec / torch.norm(vec), None
-
-
-def pca_diff(activations):
-    # fit pca
-    pca = PCA(n_components=1).fit([activation for activation, _ in activations])
-
-    # get first component
-    vec = torch.tensor(pca.components_[0], dtype=torch.float32)
-    return vec / torch.norm(vec), None
-
-
-def probing_diff(activations):
-    labels = set([label for _, label in activations])
-    assert len(labels) == 2
-    label_0 = list(labels)[0]
-
-    # fit linear model
-    weight = torch.nn.Parameter(torch.zeros_like(activations[0][0]))
-    weight.requires_grad = True
-
-    # train
-    optimizer = torch.optim.Adam([weight], lr=1e-3)
-    for epoch in range(1):
-        for i, (activation, label) in enumerate(activations):
-            logit = torch.matmul(weight, activation)
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(logit, torch.tensor(1.0 if label == label_0 else 0.0))
-            loss.backward()
-            optimizer.step()
-    
-        # print acc
-        acc = 0
-        for activation, label in activations:
-            logit = torch.matmul(weight, activation)
-            prob = torch.sigmoid(logit).item()
-            if (prob > 0.5 and label == label_0) or (prob < 0.5 and label != label_0):
-                acc += 1
-
-    weight_vector = weight.detach() / torch.norm(weight.detach())
-    weight_vector.requires_grad = False
-    return weight_vector, acc / len(activations)
-
-
-def probing_diff_sklearn(activations):
-    # fit lr
-    labels = [label for _, label in activations]
-    lr = LogisticRegression(random_state=0, max_iter=1000, fit_intercept=False).fit([activation for activation, _ in activations], labels)
-    accuracy = lr.score([activation for activation, _ in activations], labels)
-
-    # extract weight
-    vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
-    return vec / torch.norm(vec), accuracy
-
-
-method_to_class_mapping = {
-    "mean_diff": mean_diff,
-    "kmeans": kmeans_diff,
-    "probe": probing_diff,
-    "probe_sklearn": probing_diff_sklearn,
-    "pca": pca_diff
-}
-
-
-def train_feature_direction(method, intervenable, tokenizer, activations, evalset, layer_i, pos_i, intervention_site, tokens):
+def train_feature_direction(method, intervenable, tokenizer, activations, evalset, layer_i, position, intervention_site, tokens):
     """Train/compute an intervention direction on some activations."""
 
     # get diff vector based on method
-    diff_vector, accuracy = method_to_class_mapping[method](activations)
+    labels = [label for _, label in activations]
+    activations = [activation for activation, _ in activations]
+    diff_vector, accuracy = method_to_class_mapping[method](activations, labels)
     diff_vector = diff_vector.to(intervenable.get_device())
 
     # set up 1D intervention w that vector
     intervenable._cleanup_states()
-    intervention = LowRankRotatedSpaceIntervention(activations[0][0].shape[-1], proj_dim=1)
+    intervention = LowRankRotatedSpaceIntervention(activations[0].shape[-1], proj_dim=1)
     intervention.to(intervenable.get_device())
     intervention.rotate_layer.weight = diff_vector.unsqueeze(1)
 
     # new config
     eval_config = intervention_config(type(intervenable.model), intervention_site, layer_i, 1, intervention)
-    intervenable2 = IntervenableModel(eval_config, intervenable.model)
+    intervenable2 = IntervenableModel(eval_config, intervenable.model, use_fast=(position == "each"))
     intervenable2.set_device(intervenable.get_device())
 
     # eval
