@@ -1,5 +1,5 @@
 {
-    "agreement_number_subj-relc": {
+    "agr_sv_num_subj-relc": {
         "templates": [
             "The {subject} that {verbed} the {object}"
         ],
@@ -21,7 +21,7 @@
             ]
         }
     },
-    "agreement_number_obj-relc": {
+    "agr_sv_num_obj-relc": {
         "templates": [
             "The {subject} that the {object} {verbed}"
         ],
@@ -43,7 +43,7 @@
             ]
         }
     },
-    "agreement_number_pp": {
+    "agr_sv_num_pp": {
         "templates": [
             "The {subject} {prep} the {object}"
         ],
@@ -65,76 +65,7 @@
             ]
         }
     },
-    "agreement_number_reflexive_obj-relc2": {
-        "templates": [
-            "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
-        ],
-        "label": ["subject", "embed_np"],
-        "label_prepend_space": true,
-        "labels": {
-            "plural": ["themselves", "themselves"],
-            "singular": ["herself", "himself"]
-        },
-        "variables": {
-            "subject": {
-                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
-            },
-            "embed_np": {
-                "singular": ["actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators"],
-                "plural": ["doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"]
-            },
-            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
-            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
-        }
-    },
-    "agreement_number_reflexive_obj-relc": {
-        "templates": [
-            "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
-        ],
-        "label": "subject",
-        "label_prepend_space": true,
-        "labels": {
-            "plural": ["themselves", "themselves"],
-            "singular": ["herself", "himself"]
-        },
-        "variables": {
-            "subject": {
-                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
-            },
-            "embed_np": [
-                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
-                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
-            ],
-            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
-            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
-        }
-    },
-    "agreement_number_reflexive_pp": {
-        "templates": [
-            "The {subject} {prep} the {object} {matrix_v}"
-        ],
-        "label": "subject",
-        "label_prepend_space": true,
-        "labels": {
-            "plural": ["themselves", "themselves"],
-            "singular": ["herself", "himself"]
-        },
-        "variables": {
-            "subject": {
-                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
-            },
-            "prep": ["in front of", "near", "to the side of", "next to", "across from", "behind"],
-            "object": [
-                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
-                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
-            ],
-            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
-        }
-    },
-    "agreement_number_reflexive_subj-relc": {
+    "agr_refl_num_subj-relc": {
         "templates": [
             "The {subject} that {embed_vp} the {embed_np} {matrix_v}"
         ],
@@ -157,127 +88,75 @@
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "fillergap_subj": {
+    "agr_refl_num_obj-relc": {
         "templates": [
-            "{prefix} {comp}"
+            "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
-        "label": "comp",
+        "label": "subject",
         "label_prepend_space": true,
         "labels": {
-            "wh": ["did"],
-            "th": ["there"]
+            "plural": ["themselves", "themselves"],
+            "singular": ["herself", "himself"]
         },
         "variables": {
-            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "comp": {
-                "wh": ["who"],
-                "th": ["that"]
-            }
-        }
-    },
-    "fillergap_obj-him": {
-        "templates": [
-            "{prefix} {comp} {np1} {verb}"
-        ],
-        "label": "comp",
-        "label_prepend_space": true,
-        "labels": {
-            "wh": ["when"],
-            "th": ["him"]
-        },
-        "variables": {
-            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "comp": {
-                "wh": ["who"],
-                "th": ["that"]
+            "subject": {
+                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
             },
-            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
-            "verb": ["killed", "met", "attacked", "saw"]
+            "embed_np": [
+                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
+                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
+            ],
+            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "fillergap_obj-it": {
+    "agr_refl_num_pp": {
         "templates": [
-            "{prefix} {comp} {np1} {verb}"
+            "The {subject} {prep} the {object} {matrix_v}"
         ],
-        "label": "comp",
+        "label": "subject",
         "label_prepend_space": true,
         "labels": {
-            "wh": ["when"],
-            "th": ["it"]
+            "plural": ["themselves", "themselves"],
+            "singular": ["herself", "himself"]
         },
         "variables": {
-            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "comp": {
-                "wh": ["what"],
-                "th": ["that"]
+            "subject": {
+                "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
+                "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
             },
-            "np1": ["our new friend", "the star student", "the nurse", "the student", "the movie star", "the man", "the convict", "the collector", "our uncle", "her rival", "my good friend", "the suspect", "the businessman"],
-            "verb": ["grabbed", "caught", "stole", "forged", "derailed", "will get", "will be awarded", "placed", "repaired", "dragged"]
+            "prep": ["in front of", "near", "to the side of", "next to", "across from", "behind"],
+            "object": [
+                "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
+                "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
+            ],
+            "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
-    "fillergap_passive_subj-pp": {
+    "npi_any_subj-relc": {
         "templates": [
-            "{prefix} {wh} the {subject} was {verb} by"
+            "{det1} {np} that {rc_verb} {det2} {rc_obj} {matrix_v}"
         ],
-        "label": "wh",
+        "label": "det1",
         "label_prepend_space": true,
         "labels": {
-            "why": ["them"],
-            "who": ["."]
+            "any": ["any"],
+            "some": ["some"]
         },
         "variables": {
-            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-            "wh": {
-                "why": ["why"],
-                "who": ["who"]
+            "det1": {
+                "any": ["No"],
+                "some": ["The"]
             },
-            "verb": ["killed", "attacked", "admired", "amazed", "impressed", "disturbed", "injured", "hurt", "shot"]
+            "np": ["farmer", "executive", "architect", "customer", "athlete", "officer", "taxi driver", "pilot", "minister", "secretary", "author", "teacher", "manager", "journalist", "farmer", "executive", "senator", "architect", "actor", "clerk", "consultant", "guard", "doctor"],
+            "det2": ["the", "no"],
+            "rc_obj": ["chef", "teachers", "senator", "senators", "managers", "athlete", "officer", "assistant", "consultants", "architects", "farmers", "clerks", "customers", "guard", "farmer", "secretaries", "executives", "authors", "customer", "doctors", "taxi driver", "journalists", "architect", "officers", "pilot", "pilots", "surgeon", "ministers", "dancer", "taxi drivers", "consultant", "executive", "guards", "minister", "teacher", "manager"],
+            "rc_verb": ["knew", "loved", "impressed", "helped", "praised", "hated", "respected", "contacted", "discussed", "admired", "liked"],
+            "matrix_v": ["has completed", "have landed", "have crashed", "have caught", "has crashed", "have had", "have failed", "has passed up", "have advocated", "have purchased", "has broken", "has seen", "has spent", "have missed", "have burned", "has fired", "has failed", "have refused", "has passed", "has burned", "has missed", "have read", "have broken", "has shown", "have planted", "have passed", "has had", "have arrested", "has known"]
         }
     },
-    "fillergap_ditransitive_recipient": {
-        "templates": [
-            "{prefix} {wh} the {subject} {verb} the {object} to"
-        ],
-        "label": "wh",
-        "label_prepend_space": true,
-        "labels": {
-            "that": ["them"],
-            "who": ["."]
-        },
-        "variables": {
-            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-            "wh": {
-                "that": ["that"],
-                "who": ["who"]
-            },
-            "object": ["box", "toy", "present", "gift", "package", "letter", "card", "book", "note", "envelope", "package", "ball", "flower", "message", "email", "bill", "check", "money", "package", "parcel"],
-            "verb": ["showed", "gave", "presented", "offered", "sent", "handed", "delivered", "sold"]
-        }
-    },
-    "fillergap_ditransitive_time": {
-        "templates": [
-            "{prefix} {wh} the {subject} {verb} the {object} to them"
-        ],
-        "label": "wh",
-        "label_prepend_space": true,
-        "labels": {
-            "that": ["today"],
-            "when": ["."]
-        },
-        "variables": {
-            "prefix": ["Our neighbor reminded us", "Our neighbor said", "My sister told me", "The shop owner told me", "My friend reported", "My friend remembers", "My friend told me", "We all remember", "Our friend knew", "The mayor told me", "The newspaper said", "She told me", "She can guess", "I know", "I do not know", "You remember", "The newspaper reported", "I remember", "We recall", "She can not believe", "We remember", "My neighbor told me", "She knows"],
-            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-            "wh": {
-                "that": ["that"],
-                "when": ["when"]
-            },
-            "object": ["box", "toy", "present", "gift", "package", "letter", "card", "book", "note", "envelope", "package", "ball", "flower", "message", "email", "bill", "check", "money", "package", "parcel"],
-            "verb": ["showed", "gave", "presented", "offered", "sent", "handed", "delivered", "sold"]
-        }
-    },
-    "npi_obj-relc": {
+    "npi_any_obj-relc": {
         "templates": [
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
         ],
@@ -292,55 +171,53 @@
                 "any": ["No"],
                 "some": ["The"]
             },
-            "np": ["consultant", "taxi driver", "farmer", "architects", "pilots", "architect", "athlete", "authors", "journalists", "secretaries", "pilot", "minister", "clerks", "senators", "clerk", "ministers", "dancer", "officers", "athletes", "secretary", "senator", "farmers", "guard", "author", "manager", "doctors", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
+            "np": ["farmer", "executive", "architect", "customer", "athlete", "officer", "taxi driver", "pilot", "minister", "secretary", "author", "teacher", "manager", "journalist", "farmer", "executive", "senator", "architect", "actor", "clerk", "consultant", "guard", "doctor"],
             "det2": ["the", "no"],
             "rc_subj": ["consultant", "taxi driver", "architects", "farmer", "pilots", "architect", "journalists", "authors", "athlete", "secretaries", "clerks", "minister", "pilot", "senators", "clerk", "ministers", "dancer", "officers", "secretary", "senator", "farmers", "guard", "doctors", "manager", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
             "rc_verb": ["helped", "liked", "admired", "contacted", "respected", "discussed", "impressed", "praised", "knew", "hated", "loved"],
             "matrix_v": ["has shown", "has fired", "has broken", "have planted", "has passed up", "have had", "has spent", "have missed", "has seen", "has had", "have landed", "has crashed", "have refused", "have passed", "has missed", "has known", "have failed", "has burned", "have advocated", "has completed", "have caught", "has failed", "has passed", "have purchased", "have broken", "have read", "have crashed", "have burned", "have arrested"]
         }
     },
-    "npi_obj-relc2": {
+    "npi_ever_subj-relc": {
         "templates": [
-            "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
+            "{det1} {np} that {rc_verb} {det2} {rc_obj} has"
         ],
-        "label": ["det1", "det2"],
+        "label": "det1",
         "label_prepend_space": true,
         "labels": {
-            "any": ["any"],
-            "some": ["some"]
+            "ever": ["ever"],
+            "verb": ["never"]
         },
         "variables": {
             "det1": {
-                "any": ["No"],
-                "some": ["The"]
+                "ever": ["No"],
+                "verb": ["The"]
             },
-            "np": ["consultant", "taxi driver", "farmer", "architects", "pilots", "architect", "athlete", "authors", "journalists", "secretaries", "pilot", "minister", "clerks", "senators", "clerk", "ministers", "dancer", "officers", "athletes", "secretary", "senator", "farmers", "guard", "author", "manager", "doctors", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
-            "det2": {
-                "any": ["the"],
-                "some": ["no"]
-            },
-            "rc_subj": ["consultant", "taxi driver", "architects", "farmer", "pilots", "architect", "journalists", "authors", "athlete", "secretaries", "clerks", "minister", "pilot", "senators", "clerk", "ministers", "dancer", "officers", "secretary", "senator", "farmers", "guard", "doctors", "manager", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
-            "rc_verb": ["helped", "liked", "admired", "contacted", "respected", "discussed", "impressed", "praised", "knew", "hated", "loved"],
-            "matrix_v": ["has shown", "has fired", "has broken", "have planted", "has passed up", "have had", "has spent", "have missed", "has seen", "has had", "have landed", "has crashed", "have refused", "have passed", "has missed", "has known", "have failed", "has burned", "have advocated", "has completed", "have caught", "has failed", "has passed", "have purchased", "have broken", "have read", "have crashed", "have burned", "have arrested"]
+            "np": ["farmer", "executive", "architect", "customer", "athlete", "officer", "taxi driver", "pilot", "minister", "secretary", "author", "teacher", "manager", "journalist", "farmer", "executive", "senator", "architect", "actor", "clerk", "consultant", "guard", "doctor"],
+            "det2": ["the", "no"],
+            "rc_obj": ["farmer", "executive", "architect", "athletes", "officers", "athlete", "customer", "pilots", "taxi driver", "minister", "ministers", "secretary", "teacher", "secretaries", "doctor", "managers", "clerk", "farmers", "pilot", "senator", "manager", "teachers", "executives", "senators", "architects", "guards", "clerks", "consultant", "actor", "taxi drivers", "actors", "consultants", "authors", "customers", "officer", "guard", "doctors"],
+            "rc_verb": ["liked", "hated", "impressed", "met", "loved", "discussed", "respected", "contacted", "admired", "helped"]
         }
     },
-    "passive": {
+    "npi_ever_obj-relc": {
         "templates": [
-            "The {subject} {hadwas} {verb}"
+            "{det1} {np} that {det2} {rc_obj} {rc_verb} has"
         ],
-        "label": "hadwas",
+        "label": "det1",
         "label_prepend_space": true,
         "labels": {
-            "had": ["him"],
-            "was": ["by"]
+            "ever": ["ever"],
+            "verb": ["never"]
         },
         "variables": {
-            "subject": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
-            "hadwas": {
-                "had": ["had"],
-                "was": ["was"]
+            "det1": {
+                "ever": ["No"],
+                "verb": ["The"]
             },
-            "verb": ["killed", "attacked", "admired", "amazed", "impressed", "disturbed", "injured", "hurt", "shot"]
+            "np": ["farmer", "executive", "architect", "customer", "athlete", "officer", "taxi driver", "pilot", "minister", "secretary", "author", "teacher", "manager", "journalist", "farmer", "executive", "senator", "architect", "actor", "clerk", "consultant", "guard", "doctor"],
+            "det2": ["the", "no"],
+            "rc_obj": ["farmer", "executive", "architect", "athletes", "officers", "athlete", "customer", "pilots", "taxi driver", "minister", "ministers", "secretary", "teacher", "secretaries", "doctor", "managers", "clerk", "farmers", "pilot", "senator", "manager", "teachers", "executives", "senators", "architects", "guards", "clerks", "consultant", "actor", "taxi drivers", "actors", "consultants", "authors", "customers", "officer", "guard", "doctors"],
+            "rc_verb": ["liked", "hated", "impressed", "met", "loved", "discussed", "respected", "contacted", "admired", "helped"]
         }
     }
 }

@@ -177,7 +177,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
 
 
 def load_from_syntaxgym():
-    for suite_file in glob.glob("data/test_suites/filler_gap_subject.json"):
+    for suite_file in glob.glob("data/test_suites/npi_ever.json"):
         print(suite_file.split('/')[-1])
         with open(suite_file, "r") as f:
             suite = json.load(f)
