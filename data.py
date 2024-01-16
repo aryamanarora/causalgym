@@ -58,7 +58,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
         label_vars = [label_vars]
     variables = data["variables"]
     labels = data["labels"] if "labels" in data else {label_opt: [label_opt] for label_opt in variables[label_vars[0]]}
-    labels = {label_opt: [" " + label for label in labels[label_opt]] for label_opt in labels}
+    labels = {label_opt: [(" " + label if data["result_prepend_space"] else label) for label in labels[label_opt]] for label_opt in labels}
     all_labels = list(set([label for label_opt in labels for label in labels[label_opt]]))
     data["templates"] = ["<|endoftext|>" + template for template in data["templates"]]
 
@@ -81,6 +81,13 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             for option in variables[label_var][label_opt]:
                 token = ' ' + option if data["label_prepend_space"] else option
                 grouped_by_tokens[LabelSet(label_var, len(tokenizer(token)["input_ids"]))][label_opt].append(option)
+
+    # 0 tokens can be used for any #
+    zeros = [label_set for label_set in grouped_by_tokens if label_set.num_tokens == 0]
+    for label_set in zeros:
+        for label_set_other in grouped_by_tokens:
+            if label_set_other.num_tokens != 0 and label_set.label_var == label_set_other.label_var:
+                grouped_by_tokens[label_set_other].update(grouped_by_tokens[label_set])
 
     # apply limits
     original_num_options = len(labels)
@@ -131,9 +138,13 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
             src.append(src_i)
 
             # add labels (enforce same position in lists, assumes pairing)
-            pos = random.randint(0, len(labels[label]) - 1)
-            label_tok = tokenizer.encode(labels[label][pos])[0]
-            other_label_tok = tokenizer.encode(labels[other_label][pos])[0]
+            if len(labels[label]) == len(labels[other_label]):
+                pos = random.randint(0, len(labels[label]) - 1)
+                label_tok = tokenizer.encode(labels[label][pos])[0]
+                other_label_tok = tokenizer.encode(labels[other_label][pos])[0]
+            else:
+                label_tok = tokenizer.encode(random.choice(labels[label]))[0]
+                other_label_tok = tokenizer.encode(random.choice(labels[other_label]))[0]
             src_labels.append(other_label_tok)
             base_labels.append(label_tok)
 
@@ -177,7 +188,7 @@ def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, d
 
 
 def load_from_syntaxgym():
-    for suite_file in glob.glob("data/test_suites/npi_ever.json"):
+    for suite_file in glob.glob("data/test_suites/npz_obj.json"):
         print(suite_file.split('/')[-1])
         with open(suite_file, "r") as f:
             suite = json.load(f)

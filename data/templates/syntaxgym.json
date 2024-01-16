@@ -5,6 +5,7 @@
         ],
         "label": "subject",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
             "singular": ["knows", "brings", "is", "interests", "enjoys", "likes"]
@@ -27,6 +28,7 @@
         ],
         "label": "subject",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
             "singular": ["knows", "brings", "is", "interests", "enjoys", "likes"]
@@ -49,6 +51,7 @@
         ],
         "label": "subject",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
             "singular": ["knows", "brings", "is", "interests", "enjoys", "likes"]
@@ -71,6 +74,7 @@
         ],
         "label": "subject",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
             "singular": ["herself", "himself"]
@@ -94,6 +98,7 @@
         ],
         "label": "subject",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
             "singular": ["herself", "himself"]
@@ -117,6 +122,7 @@
         ],
         "label": "subject",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
             "singular": ["herself", "himself"]
@@ -140,6 +146,7 @@
         ],
         "label": "det1",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "any": ["any"],
             "some": ["some"]
@@ -162,6 +169,7 @@
         ],
         "label": "det1",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "any": ["any"],
             "some": ["some"]
@@ -184,6 +192,7 @@
         ],
         "label": "det1",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "ever": ["ever"],
             "verb": ["never"]
@@ -205,6 +214,7 @@
         ],
         "label": "det1",
         "label_prepend_space": true,
+        "result_prepend_space": true,
         "labels": {
             "ever": ["ever"],
             "verb": ["never"]
@@ -218,6 +228,71 @@
             "det2": ["the", "no"],
             "rc_obj": ["farmer", "executive", "architect", "athletes", "officers", "athlete", "customer", "pilots", "taxi driver", "minister", "ministers", "secretary", "teacher", "secretaries", "doctor", "managers", "clerk", "farmers", "pilot", "senator", "manager", "teachers", "executives", "senators", "architects", "guards", "clerks", "consultant", "actor", "taxi drivers", "actors", "consultants", "authors", "customers", "officer", "guard", "doctors"],
             "rc_verb": ["liked", "hated", "impressed", "met", "loved", "discussed", "respected", "contacted", "admired", "helped"]
+        }
+    },
+    "garden_mvrr": {
+        "templates": [
+            "The {noun}{insert} {ambig_verb} {rc}"
+        ],
+        "label": "insert",
+        "label_prepend_space": false,
+        "result_prepend_space": false,
+        "labels": {
+            "rr": [" was"],
+            "mv": ["."]
+        },
+        "variables": {
+            "noun": ["infant", "lawyer", "child", "couple", "student", "prisoner", "fan", "girl", "convict", "player", "refugee", "boy", "man", "artist", "woman"],
+            "insert": {
+                "rr": [" who was"],
+                "mv": [""]
+            },
+            "ambig_verb": ["jumped", "hit", "steered", "sheltered", "carried", "tossed", "kicked", "raced", "walked"],
+            "rc": ["to the sea", "into the dark cell", "past the swings", "off course", "in the neighborhood", "down the hall", "at the concert", "on the beach", "past the barn", "in the basement", "three weeks ago", "during the night", "into the parking lot", "for hours and hours", "in the chaos", "in the mountains", "into an empire"]
+        }
+    },
+    "garden_mvrr_mod": {
+        "templates": [
+            "The {noun}{insert} {ambig_verb} {intervener} {rc}"
+        ],
+        "label": "insert",
+        "label_prepend_space": false,
+        "result_prepend_space": false,
+        "labels": {
+            "rr": [" was"],
+            "mv": ["."]
+        },
+        "variables": {
+            "noun": ["infant", "lawyer", "child", "couple", "student", "prisoner", "fan", "girl", "convict", "player", "refugee", "boy", "man", "artist", "woman"],
+            "insert": {
+                "rr": [" who was"],
+                "mv": [""]
+            },
+            "ambig_verb": ["jumped", "hit", "steered", "sheltered", "carried", "tossed", "kicked", "raced", "walked"],
+            "intervener": ["due to security issues", "of the school", "on a cable channel", "in the countryside", "filled with people", "due to great hunger", "of the woman", "by the sea", "in the winter", "by most of the residents", "during the game", "by the performers", "with a new microwave", "with new wood floors", "spanning multiple countries", "in the Pacific Ocean", "in the morning", "in the middle of winter", "for no good reason", "for the holidays", "in the park", "in the castle", "among the masses"],
+            "rc": ["to the sea", "into the dark cell", "past the swings", "off course", "in the neighborhood", "down the hall", "at the concert", "on the beach", "past the barn", "in the basement", "three weeks ago", "during the night", "into the parking lot", "in the chaos", "in the mountains", "into an empire"]
+        }
+    },
+    "garden_npz_obj": {
+        "templates": [
+            "{subordinator} the {noun} {verb}{comma} {npz}"
+        ],
+        "label": "comma",
+        "label_prepend_space": false,
+        "result_prepend_space": false,
+        "labels": {
+            "yes_comma": [" was"],
+            "no_comma": [","]
+        },
+        "variables": {
+            "subordinator": ["While", "After", "When", "As long as", "Because", "Though"],
+            "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
+            "verb": ["dressed", "asked", "wiped", "discussed", "attacked", "shot", "interrupted", "cheered", "taught", "stopped", "applauded", "telephoned", "grabbed", "visited"],
+            "comma": {
+                "yes_comma": [","],
+                "no_comma": [""]
+            },
+            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
         }
     }
 }

@@ -59,9 +59,9 @@ def benchmark(model=None, task=None, debug=False):
                     if debug:
                         print(base_probs[base_label[i]] > base_probs[src_label[i]] and src_probs[src_label[i]] > src_probs[base_label[i]])
                         print(tokenizer.decode(pair[0].input_ids[i]))
+                        top_vals(tokenizer, base_probs, n=5, highlight=[base_label[i], src_label[i]])
                         print(tokenizer.decode(pair[1].input_ids[i]))
-                        top_vals(tokenizer, base_probs, highlight=[base_label[i], src_label[i]])
-                        top_vals(tokenizer, src_probs, highlight=[base_label[i], src_label[i]])
+                        top_vals(tokenizer, src_probs, n=5, highlight=[base_label[i], src_label[i]])
                         input()
 
                     count += 1
