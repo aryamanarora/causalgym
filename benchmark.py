@@ -15,7 +15,7 @@ def benchmark(model=None, task=None, debug=False):
 
     # get models, data
     if model is None:
-        models = MODELS
+        models = reversed(MODELS)
     else:
         models = [model]
     datasets = [dataset for dataset in list_datasets() if dataset.startswith(f"syntaxgym/{task if task is not None else ''}")]
