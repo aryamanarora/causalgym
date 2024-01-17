@@ -68,6 +68,7 @@ def benchmark(model=None, task=None, debug=False):
 
             # store stats
             data.append({
+                "model": model,
                 "dataset": dataset,
                 "count": count,
                 "correct": correct,

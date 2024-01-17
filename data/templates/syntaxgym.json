@@ -285,7 +285,7 @@
             "no_comma": [","]
         },
         "variables": {
-            "subordinator": ["While", "After", "When", "As long as", "Because", "Though"],
+            "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
             "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
             "verb": ["dressed", "asked", "wiped", "discussed", "attacked", "shot", "interrupted", "cheered", "taught", "stopped", "applauded", "telephoned", "grabbed", "visited"],
             "comma": {
@@ -293,6 +293,123 @@
                 "no_comma": [""]
             },
             "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
+        }
+    },
+    "garden_npz_obj_mod": {
+        "templates": [
+            "{subordinator} the {noun} {verb}{comma} {npz} {mod}"
+        ],
+        "label": "comma",
+        "label_prepend_space": false,
+        "result_prepend_space": false,
+        "labels": {
+            "yes_comma": [" was"],
+            "no_comma": [","]
+        },
+        "variables": {
+            "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
+            "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
+            "verb": ["dressed", "asked", "wiped", "discussed", "attacked", "shot", "interrupted", "cheered", "taught", "stopped", "applauded", "telephoned", "grabbed", "visited"],
+            "mod": ["who told bad jokes", "who was waiting", "who was very caring", "with the young boy", "in the elegant dress", "who was in charge", "attending the exercise", "who was wearing masks", "who sat by the fire", "who looked so good", "from the other school", "in the bizarre outfit"],
+            "comma": {
+                "yes_comma": [","],
+                "no_comma": [""]
+            },
+            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
+        }
+    },
+    "garden_npz_v-trans": {
+        "templates": [
+            "{subordinator} the {noun} {verb} {npz}"
+        ],
+        "label": "verb",
+        "label_prepend_space": true,
+        "result_prepend_space": false,
+        "labels": {
+            "intransitive": [" was"],
+            "transitive": [","]
+        },
+        "variables": {
+            "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
+            "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
+            "verb": {
+                "transitive": ["signaled", "wiped", "telephoned", "cheered", "stopped", "considered", "interrupted", "shot", "applauded", "decorated", "ate", "grabbed", "asked", "governed", "bit", "crossed", "dressed", "watched", "visited", "taught"],
+                "intransitive": ["struggled", "departed", "fled", "yelled", "drifted", "went out", "looked", "negotiated", "slept", "complained", "arrived", "talked"]
+            },
+            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
+        }
+    },
+    "garden_npz_v-trans_mod": {
+        "templates": [
+            "{subordinator} the {noun} {verb} {npz} {mod}"
+        ],
+        "label": "verb",
+        "label_prepend_space": true,
+        "result_prepend_space": false,
+        "labels": {
+            "intransitive": [" was"],
+            "transitive": [","]
+        },
+        "variables": {
+            "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
+            "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
+            "verb": {
+                "transitive": ["signaled", "wiped", "telephoned", "cheered", "stopped", "considered", "interrupted", "shot", "applauded", "decorated", "ate", "grabbed", "asked", "governed", "bit", "crossed", "dressed", "watched", "visited", "taught"],
+                "intransitive": ["struggled", "departed", "fled", "yelled", "drifted", "went out", "looked", "negotiated", "slept", "complained", "arrived", "talked"]
+            },
+            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"],
+            "mod": ["who told bad jokes", "who was waiting", "who was very caring", "with the young boy", "in the elegant dress", "who was in charge", "attending the exercise", "who was wearing masks", "who sat by the fire", "who looked so good", "from the other school", "in the bizarre outfit"]
+        }
+    },
+    "gss_subord": {
+        "templates": [
+            "{subordinator}{the} {np1} {clause}"
+        ],
+        "label": ["subordinator", "the"],
+        "label_prepend_space": false,
+        "result_prepend_space": false,
+        "labels": {
+            "non-null": [","],
+            "null": [" and"]
+        },
+        "variables": {
+            "subordinator": {
+                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Athough"],
+                "null": [""]
+            },
+            "the": {
+                "non-null": [" the"],
+                "null": ["The"]
+            },
+            "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
+            "clause": ["lost the plans", "lost her documents", "reviewed the contract", "printed the documents", "found new evidence", "delivered the speech", "shot the bird", "broke the computer", "presented the file", "entered the camp", "delivered the newspaper", "studied the book", "read the guide", "liked the draft", "enjoyed the novel", "read the magazine", "did not like the material", "passed the new law", "praised the new building", "handed in their papers", "read the plans", "wrote the letter", "practiced the music"]
+        }
+    },
+    "gss_subord_subj-relc": {
+        "templates": [
+            "{subordinator}{the} {np1} who the {subj_mod_np} {subj_mod_v} {clause} {obj_relc}"
+        ],
+        "label": ["subordinator", "the"],
+        "label_prepend_space": false,
+        "result_prepend_space": false,
+        "labels": {
+            "non-null": [","],
+            "null": [" and"]
+        },
+        "variables": {
+            "subordinator": {
+                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Athough"],
+                "null": [""]
+            },
+            "the": {
+                "non-null": [" the"],
+                "null": ["The"]
+            },
+            "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
+            "subj_mod_np": ["spy", "teacher", "author", "principle", "citizens", "director", "client", "officer", "boss", "committee", "dog", "critic", "coaches", "doctor", "officer", "contractor", "friend", "mayor", "locals", "chef", "lobbyists", "administrator", "mayor"],
+            "subj_mod_v": ["had contacted repeatedly", "had in her class", "knew well", "had disciplined", "liked greatly", "praised openly", "had hired", "had given a uniform", "moved down the hall", "had praised", "feared", "did not like", "had bribed handsomely", "had met only once", "had given pistols", "had recommended", "had helped", "had invited", "found strange", "had yelled at", "trusted", "had recently hired", "respected very much"],
+            "clause": ["studied the book", "broke the computer", "found new evidence", "wrote the letter", "liked the draft", "enjoyed the novel", "entered the camp", "lost her documents", "shot the bird", "delivered the newspaper", "printed the documents", "did not like the material", "passed the new law", "read the magazine", "reviewed the contract", "handed in their papers", "praised the new building", "practiced the music", "read the guide", "presented the file", "delivered the speech", "lost the plans", "read the proposal"],
+            "obj_relc": ["that the resident had ordered", "that the businessman had built downtown", "that the lawyers had written", "that the celebrity had written", "that the author had written yesterday", "that the administrator moved to the basement", "that the city planners had drafted", "that the school administrator had written", "that the client never requested", "that the maid had given them", "that all the shop owners strongly opposed", "that the housing authority drafted", "that she had bought from an expensive store", "that the lawyer threw away", "that the colonel constructed two years ago", "that the suspect had hidden", "that the shift manager left behind", "that the assistant had written", "that he had been tracking secretly", "that the teacher assigned them", "that the composer had written", "that colleagues had written on cancer therapy", "that the teacher used to cover evolution"]
         }
     }
 }

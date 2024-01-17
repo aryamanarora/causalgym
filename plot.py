@@ -13,6 +13,8 @@ from utils import format_token
 def plot_benchmark():
     data = json.load(open("logs/benchmark.json", "r"))
     df = pd.DataFrame(data)
+    df["series"] = (df["model"].str.contains("gpt2"))
+    df["series"] = df["series"].apply(lambda x: "gpt2" if x else "pythia")
     plot = (
         ggplot(df, aes(x="factor(parameters)", y="iia", group="dataset"))
         + geom_line()
@@ -205,4 +207,4 @@ def plot_benchmark2():
         plot_pos_acc(df, title=f"{model}: {method}, {dataset} (acc)", loc=f"figs/das/benchmark/{dataset}__{method}_acc.pdf", sentence=labels)
 
 if __name__ == "__main__":
-    plot_benchmark2()
+    plot_benchmark()
