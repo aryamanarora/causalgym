@@ -1,1 +1,1 @@
-[{"dataset": "syntaxgym/garden_npz_obj", "count": 400, "correct": 234, "iia": 0.585, "parameters": 124439808}]
+[{"dataset": "syntaxgym/gss_subord", "count": 400, "correct": 120, "iia": 0.3, "parameters": 162322944}, {"dataset": "syntaxgym/gss_subord_subj-relc", "count": 400, "correct": 15, "iia": 0.0375, "parameters": 162322944}]
