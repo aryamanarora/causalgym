@@ -5,6 +5,7 @@ import json
 import pandas as pd
 import torch
 from data import Dataset
+import argparse
 
 
 def plot_benchmark():
@@ -179,6 +180,12 @@ def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
 
 
 if __name__ == "__main__":
-    with open('logs/das/pythia-1b__agr_gender__20240117231206.json', 'r') as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--plot", type=str, default="pos_iia")
+    parser.add_argument("--file", type=str, required=True)
+    args = parser.parse_args()
+
+    with open(args.file, 'r') as f:
         log = json.load(f)
-        plot_pos_iia(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+        if args.plot == "pos_iia":
+            plot_pos_iia(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
