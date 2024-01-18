@@ -4,10 +4,7 @@ from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
 import json
 import pandas as pd
 import torch
-import glob
-from data import make_data
-from transformers import AutoTokenizer
-from utils import format_token
+from data import Dataset
 
 
 def plot_benchmark():
@@ -179,30 +176,5 @@ def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
     plot.save(loc)
 
 
-def plot_benchmark2():
-    tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
-    tokenizer.pad_token = tokenizer.eos_token
-    for file in glob.glob("logs/das/pythia-70m__gender_basic__20240112125834.json"):
-        data = json.load(open(file, "r"))
-        df = pd.DataFrame(data["data"])
-        method = data["metadata"]["intervention"]
-        dataset = data["metadata"]["dataset"]
-        model = data["metadata"]["model"]
-
-        # load sent
-        evalset, _ = make_data(tokenizer, dataset, 1, 1, 1, position=0, seed=420)
-        dataset = dataset.split('/')[-1]
-        sentence = evalset[0].pair[0].input_ids[0]
-        other_sentence = evalset[0].pair[1].input_ids[0]
-        labels = []
-        for i in range(len(sentence)):
-            if sentence[i] != other_sentence[i]:
-                labels.append(format_token(tokenizer, sentence[i]) + ' / ' + format_token(tokenizer, other_sentence[i]))
-            else:
-                labels.append(format_token(tokenizer, sentence[i]))
-
-        plot_pos_iia(df, title=f"{model}: {method}, {dataset} (iia)", loc=f"figs/das/benchmark/{dataset}__{method}_iia.pdf", sentence=labels)
-        plot_pos_acc(df, title=f"{model}: {method}, {dataset} (acc)", loc=f"figs/das/benchmark/{dataset}__{method}_acc.pdf", sentence=labels)
-
 if __name__ == "__main__":
-    plot_benchmark2()
+    pass

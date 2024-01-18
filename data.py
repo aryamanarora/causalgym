@@ -5,185 +5,263 @@ import torch
 from collections import defaultdict, namedtuple, Counter
 import json
 import glob
+from typing import Union
+import re
 
 random.seed(42)
-Batch = namedtuple("Batch", ["pair", "src_labels", "base_labels", "pos_i", "src_label_overall", "base_label_overall"])
-LabelSet = namedtuple("LabelSet", ["label_var", "num_tokens"])
+Tokenized = namedtuple("Tokenized", ["base", "src", "alignment_base", "alignment_src"])
 
 
-def load_data(template_file):
-    """Load data templates."""
-    data = json.load(open(f"data/templates/{template_file}.json", "r"))
-    return data
+class Pair:
+    """
+    A pair of sentences where all features except one are held constant.
 
+    Each pair has a base sentence and a source sentence. These two sentences
+    have different "types" (the value of the differing feature) and different
+    "labels" (expected continuation of the sentence).
+    """
 
-def list_datasets():
-    keys = []
-    for file in glob.glob("data/templates/*.json"):
-        prefix = file.split('/')[-1].split('.')[0]
-        keys.extend([prefix + '/' + x for x in load_data(prefix).keys()])
-    return keys
+    base: list[str]
+    src: list[str]
+    base_type: str
+    src_type: str
+    base_label: str
+    src_label: str
 
-
-def fill_variables(template, variables, grouped_by_tokens, label_vars, label, other_label):
-    """Fill variables in a template sentence."""
-    base, src = template, template
-    for var in variables:
-        if var in label_vars:
-            label_sets = [label_set for label_set in grouped_by_tokens if label_set.label_var == var]
-            label_set = random.choice(label_sets)
-            base = base.replace(f"{{{var}}}", random.choice(grouped_by_tokens[label_set][label]))
-            src = src.replace(f"{{{var}}}", random.choice(grouped_by_tokens[label_set][other_label]))
-        else:
-            val = random.choice(variables[var])
-            base = base.replace(f"{{{var}}}", val)
-            src = src.replace(f"{{{var}}}", val)
-    return base, src
-
-
-def make_data(tokenizer, experiment, batch_size, batches, num_tokens_limit=-1, device="cpu", position="all", seed=42):
-    """Make data for an experiment."""
-
-    # load data
-    random.seed(seed)
-    template_file = "data"
-    if '/' in experiment:
-        template_file, experiment = experiment.split('/')
-    data = load_data(template_file)[experiment]
-
-    # get vars
-    label_vars = data["label"]
-    if isinstance(label_vars, str):
-        label_vars = [label_vars]
-    variables = data["variables"]
-    labels = data["labels"] if "labels" in data else {label_opt: [label_opt] for label_opt in variables[label_vars[0]]}
-    labels = {label_opt: [(" " + label if data["result_prepend_space"] else label) for label in labels[label_opt]] for label_opt in labels}
-    all_labels = list(set([label for label_opt in labels for label in labels[label_opt]]))
-    data["templates"] = ["<|endoftext|>" + template for template in data["templates"]]
-
-    # count possible
-    possible = 1
-    per_label = defaultdict(lambda: 1)
-    for var in variables:
-        if isinstance(variables[var], dict):
-            for opt in variables[var]:
-                per_label[opt] *= len(set(variables[var][opt]))
-        else:
-            possible *= len(set(variables[var]))
-    total = sum(list(per_label.values())) * possible
-    print(f"{experiment} possible:", total)
-
-    # group by # tokens
-    grouped_by_tokens = defaultdict(lambda: defaultdict(list))
-    for label_var in label_vars:
-        for label_opt in variables[label_var]:
-            for option in variables[label_var][label_opt]:
-                token = ' ' + option if data["label_prepend_space"] else option
-                grouped_by_tokens[LabelSet(label_var, len(tokenizer(token)["input_ids"]))][label_opt].append(option)
-
-    # 0 tokens can be used for any #
-    zeros = [label_set for label_set in grouped_by_tokens if label_set.num_tokens == 0]
-    for label_set in zeros:
-        for label_set_other in grouped_by_tokens:
-            if label_set_other.num_tokens != 0 and label_set.label_var == label_set_other.label_var:
-                grouped_by_tokens[label_set_other].update(grouped_by_tokens[label_set])
-
-    # apply limits
-    original_num_options = len(labels)
-    for label_set in list(grouped_by_tokens.keys()):
-        for label_opt in list(grouped_by_tokens[label_set].keys()):
-            # delete options that don't match num_tokens_limit
-            if num_tokens_limit != -1 and label_set.num_tokens != num_tokens_limit:
-                del grouped_by_tokens[label_set][label_opt]
-            
-            # delete incomplete label sets
-            if len(grouped_by_tokens[label_set]) < original_num_options:
-                del grouped_by_tokens[label_set]
-                break
+    def __init__(self, base: list[str], src: list[str], base_type: str, src_type: str, base_label: str, src_label: str):
+        self.base = base
+        self.src = src
+        self.base_type = base_type
+        self.src_type = src_type
+        self.base_label = base_label
+        self.src_label = src_label
     
-    # delete vars that are not most common token length
-    if isinstance(position, int):
-        assert num_tokens_limit != -1, "Must specify num-tokens when using position=each"
-        for var in variables:
-            if var in label_vars:
-                continue
-            max_count = Counter([len(tokenizer(' ' + option)["input_ids"]) for option in variables[var]]).most_common(1)[0][0]
-            variables[var] = [option for option in variables[var] if len(tokenizer(' ' + option)["input_ids"]) == max_count]
+    def tokenize(self, tokenizer: AutoTokenizer, device: str="cpu", strategy: str="suffix") -> Tokenized:
+        """
+        Tokenize the pair and produce alignments.
 
-    # make token options
-    token_opts = list(labels.keys())
+        There are many strategies for producing token-level alignments. So far,
+        we try to align the suffixes or prefixes of the spans in the pair. E.g.
+        given a pair like "Jeff_rey walked because" and "Emily walked because",
+        we can align like [0, 2, 3] ~ [0, 1, 2] or [1, 2, 3] ~ [0, 1, 2] since
+        the # of tokens between the names is different.
+        """
+
+        # produce alignments
+        alignment_base, alignment_src = [], []
+        pos_base, pos_src = 0, 0
+        for span_i in range(len(self.base)):
+
+            # get span lengths in tokens
+            tok_base = tokenizer.tokenize(self.base[span_i])
+            tok_src = tokenizer.tokenize(self.src[span_i])
+            alignment = [[], []]
+
+            # different strategies for producing alignments
+            if strategy == "suffix":
+                max_suffix = min(len(tok_base), len(tok_src))
+                for suffix_i in range(max_suffix):
+                    alignment[0].append(pos_base + len(tok_base) - max_suffix + suffix_i)
+                    alignment[1].append(pos_src + len(tok_src) - max_suffix + suffix_i)
+            elif strategy == "prefix":
+                max_prefix = min(len(tok_base), len(tok_src))
+                for prefix_i in range(max_prefix):
+                    alignment[0].append(pos_base + prefix_i)
+                    alignment[1].append(pos_src + prefix_i)
+            
+            # update positions
+            alignment_base.append(alignment[0])
+            alignment_src.append(alignment[1])
+            pos_base += len(tok_base)
+            pos_src += len(tok_src)
+
+        # tokenize full pair and return
+        base_tok = tokenizer(''.join(self.base), return_tensors="pt", padding=True).to(device)
+        src_tok = tokenizer(''.join(self.src), return_tensors="pt", padding=True).to(device)
+        return Tokenized(base=base_tok, src=src_tok, alignment_base=alignment_base, alignment_src=alignment_src)
     
-    # make batches
-    result = []
-    for batch in range(batches):
-        base, src, src_labels, base_labels, pos_i, src_labels_overall, base_labels_overall = [], [], [], [], [], [], []
+    def __repr__(self):
+        return f"Pair('{self.base}' > '{self.base_label}', '{self.src}' > '{self.src_label}', {self.base_type}, {self.src_type})"
 
-        # make sents
-        for _ in range(batch_size):
-            template = random.choice(data["templates"])
-            label_opts = list(labels.keys())
-            
-            # pick label
-            label = random.choice(label_opts)
-            other_label = random.choice(label_opts)
-            src_labels_overall.append(other_label)
-            base_labels_overall.append(label)
-            while other_label == label:
-                other_label = random.choice(label_opts)
-            
-            # fill vars in rest of template
-            base_i, src_i = fill_variables(template, variables, grouped_by_tokens, label_vars, label, other_label)
-            base.append(base_i)
-            src.append(src_i)
 
-            # add labels (enforce same position in lists, assumes pairing)
-            if len(labels[label]) == len(labels[other_label]):
-                pos = random.randint(0, len(labels[label]) - 1)
-                label_tok = tokenizer.encode(labels[label][pos])[0]
-                other_label_tok = tokenizer.encode(labels[other_label][pos])[0]
+class Batch:
+    """
+    A Batch is a collection of Pairs that have been tokenized and padded.
+    The messy part is figuring out where to do interventions, so a Batch
+    encapsulates the functions for computing pos_i for the intervention
+    at inference time, using the tokenized pair and alignments.
+    """
+
+    def __init__(self, pairs: list[Pair], tokenizer: AutoTokenizer, device: str="cpu", strategy: str="suffix/last"):
+        self.pairs = pairs
+
+        # tokenize base and src
+        tok_strategy, pos_strategy = strategy.split('/')
+        self.pos_strategy = pos_strategy
+        tokenized = [pair.tokenize(tokenizer, device, tok_strategy) for pair in pairs]
+        self.base = self._stack_and_pad([x.base for x in tokenized])
+        self.src = self._stack_and_pad([x.src for x in tokenized])
+        self.alignment_base = [x.alignment_base for x in tokenized]
+        self.alignment_src = [x.alignment_src for x in tokenized]
+
+        # labels
+        self.base_labels = torch.LongTensor([tokenizer.encode(pair.base_label)[0] for pair in pairs]).to(device)
+        self.src_labels = torch.LongTensor([tokenizer.encode(pair.src_label)[0] for pair in pairs]).to(device)
+        self.base_types = [pair.base_type for pair in pairs]
+        self.src_types = [pair.src_type for pair in pairs]
+    
+
+    def swap(self):
+        """Flip base and src."""
+        self.base, self.src = self.src, self.base
+        self.base_labels, self.src_labels = self.src_labels, self.base_labels
+        self.base_types, self.src_types = self.src_types, self.base_types
+        self.alignment_base, self.alignment_src = self.alignment_src, self.alignment_base
+    
+
+    @property
+    def pos(self):
+        return self._compute_pos().to(self.base_labels.device)
+    
+
+    def _compute_pos(self) -> torch.LongTensor:
+        """Compute pos alignments as tensors."""
+
+        # shape of alignment: [batch_size, 2, num_spans, tokens_in_span]
+        # not a proper tensor though! tokens_in_span is variable, rest is constant
+        ret = []
+        if self.pos_strategy == "last":
+            for batch_i in range(len(self.pairs)):
+                ret.append([
+                    [x[-1] for x in self.alignment_src[batch_i]],
+                    [x[-1] for x in self.alignment_base[batch_i]]
+                ])
+        elif self.pos_strategy == "first":
+            for batch_i in range(len(self.pairs)):
+                ret.append([
+                    [x[0] for x in self.alignment_src[batch_i]],
+                    [x[0] for x in self.alignment_base[batch_i]]
+                ])
+        
+        # shape: [2, 1, batch_size, length]
+        # dim 0 -> src, base (the intervention code wants src first)
+        ret = torch.LongTensor(ret).permute(1, 0, 2).unsqueeze(-1)
+        return ret
+
+
+    def _stack_and_pad(self, input_list: dict, pad_token: int=0) -> dict:
+        """Stack and pad a list of tensors outputs from a tokenizer."""
+        max_len = max([x.input_ids.shape[-1] for x in input_list])
+        input_ids = torch.stack([torch.nn.functional.pad(x.input_ids[0], (0, max_len - x.input_ids.shape[-1]), mode='constant', value=pad_token) for x in input_list])
+        attention_mask = torch.stack([torch.nn.functional.pad(x.attention_mask[0], (0, max_len - x.attention_mask.shape[-1]), mode='constant', value=0) for x in input_list])
+        return {"input_ids": input_ids, "attention_mask": attention_mask}
+
+
+class Dataset:
+    """
+    A Dataset is a template for generating minimal pairs that is loaded
+    from a JSON specification.
+
+    We importantly want examples generated from a dataset to include token-
+    level alignments.
+    """
+
+    templates: list[str]
+    label_vars: list[str]
+    labels: dict[str, list[str]]
+    variables: dict[str, Union[list[str], dict[str, list[str]]]]
+    label_prepend_space: bool
+    result_prepend_space: bool
+
+
+    def __init__(self, data: dict):
+        self.templates = data["templates"]
+        self.template = re.split(r"(?<=\})|(?= \{)|(?<! )(?=\{)", '<|endoftext|>' + random.choice(self.templates))
+        print(self.template)
+        self.vars_per_span, self.span_names = [], []
+        for token_i in range(len(self.template)):
+            var = re.findall(r"\{(.+?)\}", self.template[token_i])
+            self.vars_per_span.append(var)
+            self.span_names.append("{" + var[0] + "}" if len(var) == 1 else self.template[token_i].replace(' ', '_'))
+        print(self.template)
+
+        self.label_vars = data["label"] if isinstance(data["label"], list) else [data["label"]]
+        self.labels = data["labels"]
+        self.types = list(self.labels.keys())
+        self.variables = data["variables"]
+        self.label_prepend_space = data["label_prepend_space"]
+        self.result_prepend_space = data["result_prepend_space"]
+
+        if self.label_prepend_space:
+            self.labels = {label_opt: [(" " + label) for label in self.labels[label_opt]] for label_opt in self.labels}
+    
+
+    @classmethod
+    def load_from(self, template: str) -> "Dataset":
+        """Load a Dataset from a json template."""
+        template_file, template_name = template.split('/')
+        data = json.load(open(f"data/templates/{template_file}.json", "r"))
+        return Dataset(data[template_name])
+    
+
+    @property
+    def length(self) -> int:
+        return len(self.template)
+    
+
+    def sample_pair(self) -> Pair:
+        """Sample a minimal pair from the dataset."""
+        # pick types (should differ)
+        base_type = random.choice(self.types)
+        src_type = base_type
+        while src_type == base_type:
+            src_type = random.choice(self.types)
+
+        # make template
+        base, src = self.template[:], self.template[:]
+
+        # go token by token
+        for token_i in range(len(self.template)):
+            var = self.vars_per_span[token_i]
+            if len(var) == 0: continue
+            var = var[0]
+            var_temp = '{' + var + '}'
+
+            # set label vars (different)
+            if var in self.label_vars:
+                base_choice = random.choice(self.variables[var][base_type])
+                src_choice = random.choice(self.variables[var][src_type])
+                if self.label_prepend_space:
+                    base_choice = " " + base_choice
+                    src_choice = " " + src_choice
+                base[token_i] = base[token_i].replace(var_temp, base_choice)
+                src[token_i] = src[token_i].replace(var_temp, src_choice)
+            # set other vars (same for both)
             else:
-                label_tok = tokenizer.encode(random.choice(labels[label]))[0]
-                other_label_tok = tokenizer.encode(random.choice(labels[other_label]))[0]
-            src_labels.append(other_label_tok)
-            base_labels.append(label_tok)
+                choice = random.choice(self.variables[var])
+                base[token_i] = base[token_i].replace(var_temp, choice)
+                src[token_i] = src[token_i].replace(var_temp, choice)
+        
+        # get continuations
+        base_label = random.choice(self.labels[base_type])
+        src_label = random.choice(self.labels[src_type])
+        if self.result_prepend_space:
+            base_label = " " + base_label
+            src_label = " " + src_label
 
-        # tokenize
-        pair = [
-            tokenizer(base, return_tensors="pt", padding=True).to(device),
-            tokenizer(src, return_tensors="pt", padding=True).to(device),
-        ]
+        return Pair(base, src, base_type, src_type, base_label, src_label)
 
-        # positions to intervene on
-        if position == "all":
-            shape = pair[0].input_ids.shape
-            pos_i = torch.arange(shape[1]).repeat(shape[0], 1).unsqueeze(0)
-            pos_i = pos_i.tolist()
-        elif position == "label":
-            not_matching = pair[0].input_ids != pair[1].input_ids
-            non_matching_indices = [torch.nonzero(pair[0].input_ids[p] != pair[1].input_ids[p], as_tuple=False).reshape(-1) for p in range(batch_size)]
-            max_length = max(len(indices) for indices in non_matching_indices)
-            padded_indices = [torch.nn.functional.pad(indices, (0, max_length - len(indices)), mode='constant', value=0) for indices in non_matching_indices]
-            padded_indices_2d_tensor = torch.stack(padded_indices).unsqueeze(0)
-            pos_i = padded_indices_2d_tensor.tolist()
-        elif position == "first+last":
-            last_token_indices = pair[0].attention_mask.sum(1) - 1
-            for i in range(batch_size):
-                pos_i.append([1, last_token_indices[i]])
-            pos_i = [pos_i,]
-        elif position == "last":
-            last_token_indices = pair[0].attention_mask.sum(1) - 1
-            for i in range(batch_size):
-                pos_i.append([last_token_indices[i]])
-            pos_i = [pos_i,]
-        elif isinstance(position, int):
-            pos_i = [[[position,]] * batch_size]
-        else:
-            raise ValueError(f"Invalid position {position}")
 
-        # return
-        result.append(Batch(pair, torch.LongTensor(src_labels), torch.LongTensor(base_labels), pos_i, src_labels_overall, base_labels_overall))
-    
-    return result, all_labels
+    def sample_batch(self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu", strategy="suffix/last") -> Batch:
+        """Sample a batch of minimal pairs from the dataset."""
+        pairs = [self.sample_pair() for _ in range(batch_size)]
+        return Batch(pairs, tokenizer, device, strategy)
+
+
+    def sample_batches(self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int, device: str="cpu", strategy="suffix/last", seed: int=42) -> list[Batch]:
+        """Sample a list of batches of minimal pairs from the dataset."""
+        random.seed(seed)
+        return [self.sample_batch(tokenizer, batch_size, device, strategy) for _ in range(num_batches)]
 
 
 def load_from_syntaxgym():
@@ -206,20 +284,6 @@ def load_from_syntaxgym():
         print(json.dumps(region_numbers, indent=2).replace("'", '"'))
         input()
 
-
-def test():
-    tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
-    tokenizer.pad_token = tokenizer.eos_token
-    device = "cpu"
-    data, label_opts = make_data(tokenizer, "subject_verb_number_agreement_with_subject_relative_clause", 3, 2, -1, device, "label", template_file="data/templates/syntaxgym.json")
-    for d in data:
-        print(d[0][0])
-        print(d[0][1])
-        for i in range(len(d[0][0].input_ids)):
-            print(tokenizer.decode(d[0][0].input_ids[i]))
-            print(tokenizer.decode(d[0][1].input_ids[i]))
-            print('---')
-    print(data)
 
 if __name__ == "__main__":
     print(load_from_syntaxgym())
