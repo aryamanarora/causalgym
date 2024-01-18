@@ -84,7 +84,7 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
     plot = (
         ggplot(df, aes(x="pos", y="layer"))
         + geom_tile(aes(fill="iia")) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label="iia_formatted"), color="black", size=10) + ggtitle(title)
+        + geom_text(aes(label="iia_formatted"), color="black", size=5) + ggtitle(title)
         + facet_wrap("~method")
     )
 
@@ -179,4 +179,6 @@ def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
 
 
 if __name__ == "__main__":
-    pass
+    with open('logs/das/pythia-1b__agr_gender__20240117231206.json', 'r') as f:
+        log = json.load(f)
+        plot_pos_iia(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])

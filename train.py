@@ -119,7 +119,7 @@ def train_feature_direction(method, intervenable, activations, evalset, layer_i,
 
     # get diff vector based on method
     labels = [label for _, label in activations]
-    activations = [activation for activation, _ in activations]
+    activations = [activation.type(torch.float32) for activation, _ in activations]
     diff_vector, accuracy = method_to_class_mapping[method](activations, labels)
     diff_vector = diff_vector.to(intervenable.get_device())
 
@@ -136,7 +136,8 @@ def train_feature_direction(method, intervenable, activations, evalset, layer_i,
 
     # eval
     data, summary = eval(intervenable2, evalset, layer_i, pos_i)
+    summary["accuracy"] = f"{accuracy:.3%}"
 
     # done
     intervenable2._cleanup_states()
-    return augment_data(data, {"method": method, "step": -1}), summary
+    return augment_data(data, {"method": method, "step": -1, "accuracy": accuracy}), summary
