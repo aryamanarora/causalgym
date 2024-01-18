@@ -41,8 +41,8 @@ def eval(intervenable: IntervenableModel, evalset: list[Batch], layer_i: int, po
 
             # store stats
             data.append({
-                "src_label": src_label,
-                "base_label": base_label,
+                "src_label": src_label.item(),
+                "base_label": base_label.item(),
                 "loss": loss.item(),
                 "iia": 1 if logits[batch_i][src_label].item() > logits[batch_i][base_label].item() else 0,
                 "layer": layer_i,

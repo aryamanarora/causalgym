@@ -59,10 +59,10 @@ def experiment(
     evalset = data_source.sample_batches(tokenizer, batch_size, 20, device, strategy="suffix/last", seed=420)
     
     # entering train loops
-    for pos_i in range(data_source.length):
+    for pos_i in range(1):
 
         # per-layer training loop
-        iterator = tqdm(range(gpt.config.num_hidden_layers))
+        iterator = tqdm(range(1))
         for layer_i in iterator:
             tqdm.write(f"position {pos_i} ({data_source.span_names[pos_i]}), layer {layer_i}")
             data = []
