@@ -28,6 +28,7 @@ class Pair:
     base_label: str
     src_label: str
 
+
     def __init__(self, base: list[str], src: list[str], base_type: str, src_type: str, base_label: str, src_label: str):
         self.base = base
         self.src = src
@@ -36,6 +37,7 @@ class Pair:
         self.base_label = base_label
         self.src_label = src_label
     
+
     def tokenize(self, tokenizer: AutoTokenizer, device: str="cpu", strategy: str="suffix") -> Tokenized:
         """
         Tokenize the pair and produce alignments.
@@ -80,6 +82,12 @@ class Pair:
         src_tok = tokenizer(''.join(self.src), return_tensors="pt", padding=True).to(device)
         return Tokenized(base=base_tok, src=src_tok, alignment_base=alignment_base, alignment_src=alignment_src)
     
+
+    def swap(self) -> "Pair":
+        """Swap the base and src sentences."""
+        return Pair(self.src, self.base, self.src_type, self.base_type, self.src_label, self.base_label)
+
+    
     def __repr__(self):
         return f"Pair('{self.base}' > '{self.base_label}', '{self.src}' > '{self.src_label}', {self.base_type}, {self.src_type})"
 
@@ -99,8 +107,9 @@ class Batch:
         tok_strategy, pos_strategy = strategy.split('/')
         self.pos_strategy = pos_strategy
         tokenized = [pair.tokenize(tokenizer, device, tok_strategy) for pair in pairs]
-        self.base = self._stack_and_pad([x.base for x in tokenized])
-        self.src = self._stack_and_pad([x.src for x in tokenized])
+        max_len = max([max(x.base.input_ids.shape[-1], x.src.input_ids.shape[-1]) for x in tokenized])
+        self.base = self._stack_and_pad([x.base for x in tokenized], max_len=max_len)
+        self.src = self._stack_and_pad([x.src for x in tokenized], max_len=max_len)
         self.alignment_base = [x.alignment_base for x in tokenized]
         self.alignment_src = [x.alignment_src for x in tokenized]
 
@@ -109,14 +118,6 @@ class Batch:
         self.src_labels = torch.LongTensor([tokenizer.encode(pair.src_label)[0] for pair in pairs]).to(device)
         self.base_types = [pair.base_type for pair in pairs]
         self.src_types = [pair.src_type for pair in pairs]
-    
-
-    def swap(self):
-        """Flip base and src."""
-        self.base, self.src = self.src, self.base
-        self.base_labels, self.src_labels = self.src_labels, self.base_labels
-        self.base_types, self.src_types = self.src_types, self.base_types
-        self.alignment_base, self.alignment_src = self.alignment_src, self.alignment_base
     
 
     @property
@@ -149,9 +150,8 @@ class Batch:
         return ret
 
 
-    def _stack_and_pad(self, input_list: dict, pad_token: int=0) -> dict:
+    def _stack_and_pad(self, input_list: dict, pad_token: int=0, max_len: int=100) -> dict:
         """Stack and pad a list of tensors outputs from a tokenizer."""
-        max_len = max([x.input_ids.shape[-1] for x in input_list])
         input_ids = torch.stack([torch.nn.functional.pad(x.input_ids[0], (0, max_len - x.input_ids.shape[-1]), mode='constant', value=pad_token) for x in input_list])
         attention_mask = torch.stack([torch.nn.functional.pad(x.attention_mask[0], (0, max_len - x.attention_mask.shape[-1]), mode='constant', value=0) for x in input_list])
         return {"input_ids": input_ids, "attention_mask": attention_mask}
@@ -255,6 +255,8 @@ class Dataset:
     def sample_batch(self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu", strategy="suffix/last") -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
         pairs = [self.sample_pair() for _ in range(batch_size)]
+        for i in range(batch_size):
+            pairs.append(pairs[i].swap())
         return Batch(pairs, tokenizer, device, strategy)
 
 

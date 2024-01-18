@@ -61,30 +61,25 @@ def train_das(
 
     for step, batch in enumerate(iterator):
 
-        for _ in range(2):
-            
-            # inference
-            pos_interv = batch.pos[:, :, pos_i].tolist()
-            base_outputs, counterfactual_outputs = intervenable(
-                batch.base,
-                [None, batch.src],
-                {"sources->base": ([None, pos_interv[1]], pos_interv)},
-            )
+        # inference
+        pos_interv = batch.pos[:, :, pos_i].tolist()
+        base_outputs, counterfactual_outputs = intervenable(
+            batch.base,
+            [None, batch.src],
+            {"sources->base": ([None, pos_interv[1]], pos_interv)},
+        )
 
-            # store activations/labels for training non-causal methods
-            for batch_i in range(len(batch.pairs)):
-                activation = base_outputs[-1][batch_i].detach().reshape(-1).cpu()
-                activations.append((activation, batch.base_labels[batch_i].item()))
+        # store activations/labels for training non-causal methods
+        for batch_i in range(len(batch.pairs)):
+            activation = base_outputs[-1][batch_i].detach().reshape(-1).cpu()
+            activations.append((activation, batch.base_labels[batch_i].item()))
 
-            # get last token logits
-            logits = get_last_token(counterfactual_outputs.logits, batch.base['attention_mask'])
+        # get last token logits
+        logits = get_last_token(counterfactual_outputs.logits, batch.base['attention_mask'])
 
-            # loss and backprop
-            loss = calculate_loss(logits, batch.src_labels)
-            total_loss += loss
-
-            # swap
-            batch.swap()
+        # loss and backprop
+        loss = calculate_loss(logits, batch.src_labels)
+        total_loss += loss
 
         # gradient accumulation
         if total_step % grad_steps == 0:
