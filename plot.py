@@ -10,6 +10,8 @@ from data import Dataset
 def plot_benchmark():
     data = json.load(open("logs/benchmark.json", "r"))
     df = pd.DataFrame(data)
+    df["series"] = (df["model"].str.contains("gpt2"))
+    df["series"] = df["series"].apply(lambda x: "gpt2" if x else "pythia")
     plot = (
         ggplot(df, aes(x="factor(parameters)", y="iia", group="dataset"))
         + geom_line()
