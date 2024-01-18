@@ -6,18 +6,11 @@ from eval import augment_data, calculate_loss, eval
 from utils import get_last_token
 from interventions import intervention_config, IntervenableModel, LowRankRotatedSpaceIntervention, BoundlessRotatedSpaceIntervention
 from diff_methods import method_to_class_mapping
-
-from pyvene.models.basic_utils import sm, count_parameters
+from data import Batch
 
 def train_das(
-    intervenable,
-    trainset,
-    evalset,
-    layer_i,
-    pos_i,
-    eval_steps,
-    grad_steps,
-):
+        intervenable: IntervenableModel, trainset: list[Batch], evalset: list[Batch],
+        layer_i: int, pos_i: int, eval_steps: int, grad_steps: int):
     """Train DAS or Boundless DAS on a model."""
 
     # setup
@@ -114,8 +107,10 @@ def train_das(
     return intervenable, data, activations
 
 
-def train_feature_direction(method, intervenable, activations, evalset, layer_i, pos_i, intervention_site):
-    """Train/compute an intervention direction on some activations."""
+def train_feature_direction(
+        method: str, intervenable: IntervenableModel, activations: list[tuple[torch.tensor, str]],
+        evalset: list[Batch], layer_i: int, pos_i: int, intervention_site: str):
+    """Train/compute and evaluate an intervention direction on some activations."""
 
     # get diff vector based on method
     labels = [label for _, label in activations]
@@ -136,7 +131,8 @@ def train_feature_direction(method, intervenable, activations, evalset, layer_i,
 
     # eval
     data, summary = eval(intervenable2, evalset, layer_i, pos_i)
-    summary["accuracy"] = f"{accuracy:.3%}"
+    if accuracy is not None:
+        summary["accuracy"] = f"{accuracy:.3%}"
 
     # done
     intervenable2._cleanup_states()

@@ -1,12 +1,13 @@
 import json
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModel
 import random
 import torch
-from collections import defaultdict, namedtuple, Counter
+from collections import defaultdict, namedtuple
 import json
 import glob
 from typing import Union
 import re
+from tqdm import tqdm
 
 random.seed(42)
 Tokenized = namedtuple("Tokenized", ["base", "src", "alignment_base", "alignment_src"])
@@ -175,16 +176,16 @@ class Dataset:
 
 
     def __init__(self, data: dict):
+        # load template and split it up into spans
         self.templates = data["templates"]
         self.template = re.split(r"(?<=\})|(?= \{)|(?<! )(?=\{)", '<|endoftext|>' + random.choice(self.templates))
-        print(self.template)
         self.vars_per_span, self.span_names = [], []
         for token_i in range(len(self.template)):
             var = re.findall(r"\{(.+?)\}", self.template[token_i])
             self.vars_per_span.append(var)
             self.span_names.append("{" + var[0] + "}" if len(var) == 1 else self.template[token_i].replace(' ', '_'))
-        print(self.template)
 
+        # other stuff
         self.label_vars = data["label"] if isinstance(data["label"], list) else [data["label"]]
         self.labels = data["labels"]
         self.types = list(self.labels.keys())
@@ -250,20 +251,50 @@ class Dataset:
             src_label = " " + src_label
 
         return Pair(base, src, base_type, src_type, base_label, src_label)
+    
+
+    @torch.no_grad()
+    def _sample_doable_pair(self, model: AutoModel, tokenizer: AutoTokenizer, device: str="cpu") -> Pair:
+        """Sample a minimal pair from the dataset that is correctly labelled by a model."""
+        
+        # keep resampling until we get a pair that is correctly labelled
+        correct = False
+        while not correct:
+            pair = self.sample_pair()
+            base = tokenizer(''.join(pair.base), return_tensors="pt").to(device)
+            src = tokenizer(''.join(pair.src), return_tensors="pt").to(device)
+            base_logits = model(**base).logits[0, -1]
+            src_logits = model(**src).logits[0, -1]
+            base_label = tokenizer.encode(pair.base_label)[0]
+            src_label = tokenizer.encode(pair.src_label)[0]
+            if base_logits[base_label] > base_logits[src_label] and src_logits[src_label] > src_logits[base_label]:
+                correct = True
+            
+        return pair
 
 
-    def sample_batch(self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu", strategy="suffix/last") -> Batch:
+    def sample_batch(
+            self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu",
+            strategy="suffix/last", model: Union[AutoModel, None]=None) -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
-        pairs = [self.sample_pair() for _ in range(batch_size)]
-        for i in range(batch_size):
+        pairs = [
+            self.sample_pair()
+            if model is None else
+            self._sample_doable_pair(model, tokenizer, device)
+            for _ in range(batch_size // 2)
+        ]
+        for i in range(batch_size // 2):
             pairs.append(pairs[i].swap())
         return Batch(pairs, tokenizer, device, strategy)
 
 
-    def sample_batches(self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int, device: str="cpu", strategy="suffix/last", seed: int=42) -> list[Batch]:
+    def sample_batches(
+            self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int,
+            device: str="cpu", strategy="suffix/last", seed: int=42,
+            model: Union[AutoModel, None]=None) -> list[Batch]:
         """Sample a list of batches of minimal pairs from the dataset."""
         random.seed(seed)
-        return [self.sample_batch(tokenizer, batch_size, device, strategy) for _ in range(num_batches)]
+        return [self.sample_batch(tokenizer, batch_size, device, strategy, model) for _ in tqdm(range(num_batches))]
 
 
 def load_from_syntaxgym():
