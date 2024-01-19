@@ -55,8 +55,8 @@ def experiment(
 
     # make dataset
     data_source = Dataset.load_from(dataset)
-    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, strategy="suffix/last", seed=42, model=gpt)
-    evalset = data_source.sample_batches(tokenizer, batch_size, 20, device, strategy="suffix/last", seed=420, model=gpt)
+    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, strategy="last", seed=42, model=gpt)
+    evalset = data_source.sample_batches(tokenizer, batch_size, 20, device, strategy="last", seed=420, model=gpt)
     
     # entering train loops
     for pos_i in range(data_source.length):
