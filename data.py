@@ -148,7 +148,7 @@ class Batch:
                 ret_src.append(self.alignment_src[batch_i][span_i][position])
             ret.append([ret_base, ret_src])
         
-        # shape: [2, 1, batch_size, length]
+        # shape: [2, batch_size, length, 1]
         # dim 0 -> src, base (the intervention code wants src first)
         ret = torch.LongTensor(ret).permute(1, 0, 2).unsqueeze(-1)
         return ret

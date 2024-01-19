@@ -60,7 +60,7 @@ def experiment(
     
     # entering train loops
     for pos_i in range(data_source.length):
-        if trainset[0].pos[0, 0, 0, pos_i] == -1:
+        if trainset[0].pos[0, 0, pos_i, 0] == -1:
             continue
 
         # per-layer training loop
