@@ -3,9 +3,9 @@ from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geo
 from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
 import json
 import pandas as pd
-import torch
-from data import Dataset
+import glob
 import argparse
+from eval import augment_data
 
 
 def plot_benchmark():
@@ -22,70 +22,25 @@ def plot_benchmark():
     plot.save("logs/benchmark.pdf", width=10, height=10)
 
 
-def plot_bounds(df: pd.DataFrame, title="intervention boundary", loc="figs/das/bound.pdf"):
-    """Plot boundless DAS boundary dim."""
-    plot = (
-        ggplot(df, aes(x="step", y="bound", color="factor(layer)"))
-        + geom_line()
-        + ggtitle(title)
-    )
-    plot.save(loc)
-
-
-def plot_label_loss(df: pd.DataFrame, title="per-label loss", loc="figs/das/loss.pdf"):
-    """Plot per-label loss for DAS."""
-    plot = (
-        ggplot(df, aes(x="step", y="loss", color="factor(label)"))
-        + facet_wrap("layer")
-        + geom_point(alpha=0.1)
-        + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle(title)
-    )
-    plot.save(loc)
-
-
-def plot_label_prob(df: pd.DataFrame, title="per-label prob", loc="figs/das/prob.pdf"):
-    """Plot per-label probability for DAS."""
-    plot = (
-        ggplot(df, aes(x="step", y="prob", color="factor(label_token)"))
-        + facet_wrap("layer")
-        + geom_point(alpha=0.1)
-        + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle(title)
-    )
-    plot.save(loc)
-
-
-def plot_label_logit(df: pd.DataFrame, title="per-label logit", loc="figs/das/logit.pdf"):
-    """Plot per-label logits for DAS."""
-    plot = (
-        ggplot(df, aes(x="step", y="logit", color="factor(label_token)"))
-        + facet_wrap("layer")
-        + geom_point(alpha=0.1)
-        + geom_line(stat='summary', fun_y=lambda x: x.mean())
-        + ggtitle(title)
-    )
-    plot.save(loc)
-
-
-def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.pdf", sentence=None):
+def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sentence=None):
     """Plot position iia for DAS."""
 
     # get last step
+    title = f"position {metric}"
     last_step = df["step"].max()
     df = df[(df["step"] == last_step) | (df["step"] == -1)]
     print(df["method"].unique())
     
     # group df by pos and layer
-    df = df[["pos", "layer", "iia", "method"]]
+    df = df[["pos", "layer", metric, "method"]]
     df = df.groupby(["pos", "layer", "method"]).mean().reset_index()
-    df["iia_formatted"] = df["iia"].apply(lambda x: f"{x:.2f}")
+    df[f"{metric}_formatted"] = df[metric].apply(lambda x: f"{x:.2f}")
 
     # plot
     plot = (
         ggplot(df, aes(x="pos", y="layer"))
-        + geom_tile(aes(fill="iia")) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label="iia_formatted"), color="black", size=5) + ggtitle(title)
+        + geom_tile(aes(fill=metric)) + scale_fill_cmap("Purples", limits=[0,1])
+        + geom_text(aes(label=f"{metric}_formatted"), color="black", size=10) + ggtitle(title)
         + facet_wrap("~method")
     )
 
@@ -93,99 +48,88 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
     if sentence is not None:
         plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
         plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
+    plot.save(loc, width=10, height=10)
 
-    plot.save(loc)
 
+def summarise(directory: str):
 
-def plot_pos_acc(df: pd.DataFrame, title="position acc", loc="figs/das/pos_acc.pdf", sentence=None):
-    """Plot position acc for DAS."""
-
-    # get last step
+    # collect all data
+    all_data = []
+    for f in glob.glob(f"{args.file}/*.json"):
+        with open(f, 'r') as f:
+            j = json.load(f)
+            data = j['data']
+            data = augment_data(data, {"dataset": j["metadata"]["dataset"], "model": j["metadata"]["model"]})
+            all_data.extend(data)
+    
+    # df
+    df = pd.DataFrame(all_data)
     last_step = df["step"].max()
     df = df[(df["step"] == last_step) | (df["step"] == -1)]
-    
-    # group df by pos and layer
-    df = df[["pos", "layer", "acc", "method"]]
-    df = df.groupby(["pos", "layer", "method"]).mean().reset_index()
-    df["acc_formatted"] = df["acc"].apply(lambda x: f"{x:.2f}")
+    df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
 
-    # plot
-    plot = (
-        ggplot(df, aes(x="pos", y="layer"))
-        + geom_tile(aes(fill="acc")) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label="acc_formatted"), color="black", size=10) + ggtitle(title)
-        + facet_wrap("~method")
-    )
+    # get average iia over layers, max'd 
+    df = df[["dataset", "model", "method", "layer", "pos", "iia"]]
+    df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
+    df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
+    df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
 
-    # modify x axis labels to use sentence
-    if sentence is not None:
-        plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
-        plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
+    # make latex table
+    for model in df["model"].unique():
+        split = df[df["model"] == model][["dataset", "method", "iia"]]
+        split["dataset"] = split["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
 
-    plot.save(loc)
+        # make table with rows = method, cols = dataset
+        split = split.pivot(index="dataset", columns="method", values="iia")
+        split = split.reset_index()
+        
+        # take average over rows and append to bottom
+        avg = split.drop(columns=["dataset"]).mean(axis=0)
+        avg["dataset"] = "Average"
+        avg = avg[["dataset"] + list(avg.drop(columns=["dataset"]).index)]
 
-def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/cos_sim.pdf"):
-    # collect data
-    directions = {}
-    cos_sims = []
-    for layer in layer_objs:
-        alignable = layer_objs[layer]
-        for key in alignable.interventions:
-            intervention_object = alignable.interventions[key][0]
-            direction = intervention_object.rotate_layer.weight.detach().cpu().reshape(-1)
-            directions[layer] = direction
-    for layer in directions:
-        direction = directions[layer]
-        for other_layer in directions:
-            cos_sim = torch.nn.functional.cosine_similarity(direction, directions[other_layer], dim=0).mean().abs().item()
-            cos_sims.append({"layer": layer, "other_layer": other_layer, "cos_sim": cos_sim})
-        directions[layer] = direction
-    
-    # plot sims
-    cos_sims_df = pd.DataFrame(cos_sims)
-    cos_sims_df["cos_sim_formatted"] = cos_sims_df["cos_sim"].apply(lambda x: f"{x:.2f}")
-    plot = (
-        ggplot(cos_sims_df, aes(x="layer", y="other_layer"))
-        + geom_tile(aes(fill="cos_sim")) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label="cos_sim_formatted"), color="black", size=10)
-        + ggtitle(title)
-    )
-    plot.save(loc)
+        # to dict
+        avg = avg.to_dict()
+        split = pd.concat([split, pd.DataFrame([avg])], ignore_index=True)
+        
+        # bold the largest per row
+        for i, row in split.iterrows():
+            # ignore dataset col
+            max_val = row[1:].max()
+            for col in split.columns:
+                # format as percentage
+                if col != "dataset":
+                    split.loc[i, col] = f"{row[col] * 100:.2f}"
+                if row[col] == max_val:
+                    split.loc[i, col] = "\\textbf{" + split.loc[i, col] + "}"
+        
+        # reorder columns by avg, high to low
+        order = split.iloc[-1].sort_values(ascending=False).index
 
+        # remove vanilla, place at end
+        order = list(order)
+        order.remove("vanilla")
+        order.remove("dataset")
+        order.append("vanilla")
+        split = split[["dataset"] + list(order)]
 
-def plot_weights(weights, title="DAS weights", loc="figs/das/weights.png"):
-    """Plot DAS weights."""
-    
-    df = pd.DataFrame(weights, columns=["step", "layer", "pos", "weight", "dim"])
-
-    # df = df[df["layer"] == 0]
-    # print(len(df))
-    # plot = (
-    #     ggplot(df, aes(x="step", y="weight", group="factor(dim)"))
-    #     + facet_grid("layer~pos")
-    #     + geom_line(alpha=0.1)
-    #     + ggtitle(title)
-    # )
-
-    df = df[df["step"] == df["step"].max()]
-    print(len(df))
-    plot = (
-        ggplot(df, aes(x="weight"))
-        + geom_histogram(bins=50)
-        + facet_grid("layer~pos")
-        + ggtitle(title)
-    )
-
-    plot.save(loc)
+        print(split.to_latex(index=False))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plot", type=str, default="pos_iia")
-    parser.add_argument("--file", type=str, required=True)
+    parser.add_argument("--plot", type=str, default="iia")
+    parser.add_argument("--file", type=str)
     args = parser.parse_args()
 
-    with open(args.file, 'r') as f:
-        log = json.load(f)
-        if args.plot == "pos_iia":
-            plot_pos_iia(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+    if args.plot in ["iia", "acc"]:
+        with open(args.file, 'r') as f:
+            log = json.load(f)
+            if args.plot == "iia":
+                plot_per_pos(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+            elif args.plot == "acc":
+                plot_per_pos(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+    elif args.plot == "benchmark":
+        plot_benchmark()
+    elif args.plot == "all":
+        summarise(args.file)

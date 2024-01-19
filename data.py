@@ -322,5 +322,16 @@ def load_from_syntaxgym():
         input()
 
 
+def list_datasets() -> list[str]:
+    """List all available datasets."""
+    datasets = []
+    for template_file in glob.glob("data/templates/*.json"):
+        name = template_file.split("/")[-1].split(".json")[0]
+        with open(template_file, "r") as f:
+            data = json.load(f)
+            datasets.extend([name + "/" + x for x in data.keys()])
+    return datasets
+
+
 if __name__ == "__main__":
     print(load_from_syntaxgym())
