@@ -85,7 +85,7 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
     plot = (
         ggplot(df, aes(x="pos", y="layer"))
         + geom_tile(aes(fill="iia")) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label="iia_formatted"), color="black", size=5) + ggtitle(title)
+        + geom_text(aes(label="iia_formatted"), color="black", size=10) + ggtitle(title)
         + facet_wrap("~method")
     )
 
@@ -94,7 +94,7 @@ def plot_pos_iia(df: pd.DataFrame, title="position iia", loc="figs/das/pos_iia.p
         plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
         plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
 
-    plot.save(loc)
+    plot.save(loc, width=10, height=10)
 
 
 def plot_pos_acc(df: pd.DataFrame, title="position acc", loc="figs/das/pos_acc.pdf", sentence=None):
@@ -105,15 +105,15 @@ def plot_pos_acc(df: pd.DataFrame, title="position acc", loc="figs/das/pos_acc.p
     df = df[(df["step"] == last_step) | (df["step"] == -1)]
     
     # group df by pos and layer
-    df = df[["pos", "layer", "acc", "method"]]
+    df = df[["pos", "layer", "accuracy", "method"]]
     df = df.groupby(["pos", "layer", "method"]).mean().reset_index()
-    df["acc_formatted"] = df["acc"].apply(lambda x: f"{x:.2f}")
+    df["accuracy_formatted"] = df["accuracy"].apply(lambda x: f"{x:.2f}")
 
     # plot
     plot = (
         ggplot(df, aes(x="pos", y="layer"))
-        + geom_tile(aes(fill="acc")) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label="acc_formatted"), color="black", size=10) + ggtitle(title)
+        + geom_tile(aes(fill="accuracy")) + scale_fill_cmap("Purples", limits=[0,1])
+        + geom_text(aes(label="accuracy_formatted"), color="black", size=10) + ggtitle(title)
         + facet_wrap("~method")
     )
 
@@ -122,7 +122,7 @@ def plot_pos_acc(df: pd.DataFrame, title="position acc", loc="figs/das/pos_acc.p
         plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
         plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
 
-    plot.save(loc)
+    plot.save(loc, width=10, height=10)
 
 def plot_das_cos_sim(layer_objs, title="DAS cosine similarity", loc="figs/das/cos_sim.pdf"):
     # collect data
@@ -189,3 +189,5 @@ if __name__ == "__main__":
         log = json.load(f)
         if args.plot == "pos_iia":
             plot_pos_iia(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+        elif args.plot == "pos_acc":
+            plot_pos_acc(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
