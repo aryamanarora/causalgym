@@ -1,11 +1,12 @@
 from data import list_datasets
 from das import experiment
+import argparse
 
-def run_command(dataset):
+def run_command(model: str, dataset: str):
     # command = f"python das.py --model EleutherAI/pythia-70m --intervention {method} --dataset {dataset} --position each --num-tokens 1 --num-dims 1 --steps {steps}"
     print(dataset)
     experiment(
-        model="EleutherAI/pythia-70m",
+        model=model,
         dataset=dataset,
         steps=200,
         eval_steps=25,
@@ -14,10 +15,13 @@ def run_command(dataset):
         intervention_site="block_output",
     )
 
-def main():
+def main(model: str):
     datasets = [d for d in list_datasets() if d.startswith("syntaxgym/")]
     for dataset in datasets:
-        run_command(dataset)
+        run_command(model, dataset)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
+    args = parser.parse_args()
+    main(args.model)
