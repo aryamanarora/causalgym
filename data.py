@@ -40,18 +40,8 @@ class Pair:
         self.src_label = src_label
     
 
-    def tokenize(self, tokenizer: AutoTokenizer, device: str="cpu", strategy: str="suffix") -> Tokenized:
-        """
-        Tokenize the pair and produce alignments.
-
-        There are many strategies for producing token-level alignments. So far,
-        we try to align the suffixes or prefixes of the spans in the pair. E.g.
-        given a pair like "Jeff_rey walked because" and "Emily walked because",
-        we can align like [0, 2, 3] ~ [0, 1, 2] or [1, 2, 3] ~ [0, 1, 2] since
-        the # of tokens between the names is different.
-        """
-
-        # produce alignments
+    def tokenize(self, tokenizer: AutoTokenizer, device: str="cpu") -> Tokenized:
+        """Tokenize the pair and produce alignments."""
         alignment_base, alignment_src = [], []
         pos_base, pos_src = 0, 0
         for span_i in range(len(self.base)):
@@ -59,19 +49,10 @@ class Pair:
             # get span lengths in tokens
             tok_base = tokenizer.tokenize(self.base[span_i])
             tok_src = tokenizer.tokenize(self.src[span_i])
-            alignment = [[], []]
-
-            # different strategies for producing alignments
-            if strategy == "suffix":
-                max_suffix = min(len(tok_base), len(tok_src))
-                for suffix_i in range(max_suffix):
-                    alignment[0].append(pos_base + len(tok_base) - max_suffix + suffix_i)
-                    alignment[1].append(pos_src + len(tok_src) - max_suffix + suffix_i)
-            elif strategy == "prefix":
-                max_prefix = min(len(tok_base), len(tok_src))
-                for prefix_i in range(max_prefix):
-                    alignment[0].append(pos_base + prefix_i)
-                    alignment[1].append(pos_src + prefix_i)
+            alignment = [
+                list(range(pos_base, pos_base + len(tok_base))),
+                list(range(pos_src, pos_src + len(tok_src)))
+            ]
             
             # update positions
             alignment_base.append(alignment[0])
@@ -104,19 +85,18 @@ class Batch:
 
     def __init__(
             self, pairs: list[Pair], tokenizer: AutoTokenizer, device: str="cpu",
-            strategy: str="suffix/last"):
+            strategy: str="last"):
         self.pairs = pairs
 
         # tokenize base and src
-        tok_strategy, pos_strategy = strategy.split('/')
-        self.pos_strategy = pos_strategy
-        tokenized = [pair.tokenize(tokenizer, device, tok_strategy) for pair in pairs]
+        self.pos_strategy = strategy
+        tokenized = [pair.tokenize(tokenizer, device) for pair in pairs]
         max_len = max([max(x.base.input_ids.shape[-1], x.src.input_ids.shape[-1]) for x in tokenized])
         self.base = self._stack_and_pad([x.base for x in tokenized], max_len=max_len)
         self.src = self._stack_and_pad([x.src for x in tokenized], max_len=max_len)
         self.alignment_base = [x.alignment_base for x in tokenized]
         self.alignment_src = [x.alignment_src for x in tokenized]
-
+        
         # labels
         self.base_labels = torch.LongTensor([tokenizer.encode(pair.base_label)[0] for pair in pairs]).to(device)
         self.src_labels = torch.LongTensor([tokenizer.encode(pair.src_label)[0] for pair in pairs]).to(device)
@@ -279,7 +259,7 @@ class Dataset:
 
     def sample_batch(
             self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu",
-            strategy="suffix/last", model: Union[AutoModel, None]=None) -> Batch:
+            strategy="last", model: Union[AutoModel, None]=None) -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
         pairs = [
             self.sample_pair()
@@ -294,7 +274,7 @@ class Dataset:
 
     def sample_batches(
             self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int,
-            device: str="cpu", strategy="suffix/last", seed: int=42,
+            device: str="cpu", strategy="last", seed: int=42,
             model: Union[AutoModel, None]=None) -> list[Batch]:
         """Sample a list of batches of minimal pairs from the dataset."""
         random.seed(seed)
