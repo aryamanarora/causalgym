@@ -8,6 +8,7 @@ import glob
 from typing import Union
 import re
 from tqdm import tqdm
+from utils import top_vals
 
 random.seed(42)
 Tokenized = namedtuple("Tokenized", ["base", "src", "alignment_base", "alignment_src"])
@@ -101,7 +102,9 @@ class Batch:
     at inference time, using the tokenized pair and alignments.
     """
 
-    def __init__(self, pairs: list[Pair], tokenizer: AutoTokenizer, device: str="cpu", strategy: str="suffix/last"):
+    def __init__(
+            self, pairs: list[Pair], tokenizer: AutoTokenizer, device: str="cpu",
+            strategy: str="suffix/last"):
         self.pairs = pairs
 
         # tokenize base and src
@@ -171,14 +174,13 @@ class Dataset:
     label_vars: list[str]
     labels: dict[str, list[str]]
     variables: dict[str, Union[list[str], dict[str, list[str]]]]
-    label_prepend_space: bool
     result_prepend_space: bool
 
 
     def __init__(self, data: dict):
         # load template and split it up into spans
         self.templates = data["templates"]
-        self.template = re.split(r"(?<=\})|(?= \{)|(?<! )(?=\{)", '<|endoftext|>' + random.choice(self.templates))
+        self.template = [x for x in re.split(r"(?<=\})|(?= \{)|(?<! )(?=\{)", '<|endoftext|>' + random.choice(self.templates)) if x != '']
         self.vars_per_span, self.span_names = [], []
         for token_i in range(len(self.template)):
             var = re.findall(r"\{(.+?)\}", self.template[token_i])
@@ -190,11 +192,7 @@ class Dataset:
         self.labels = data["labels"]
         self.types = list(self.labels.keys())
         self.variables = data["variables"]
-        self.label_prepend_space = data["label_prepend_space"]
         self.result_prepend_space = data["result_prepend_space"]
-
-        if self.label_prepend_space:
-            self.labels = {label_opt: [(" " + label) for label in self.labels[label_opt]] for label_opt in self.labels}
     
 
     @classmethod
@@ -232,9 +230,6 @@ class Dataset:
             if var in self.label_vars:
                 base_choice = random.choice(self.variables[var][base_type])
                 src_choice = random.choice(self.variables[var][src_type])
-                if self.label_prepend_space:
-                    base_choice = " " + base_choice
-                    src_choice = " " + src_choice
                 base[token_i] = base[token_i].replace(var_temp, base_choice)
                 src[token_i] = src[token_i].replace(var_temp, src_choice)
             # set other vars (same for both)
@@ -256,9 +251,9 @@ class Dataset:
     @torch.no_grad()
     def _sample_doable_pair(self, model: AutoModel, tokenizer: AutoTokenizer, device: str="cpu") -> Pair:
         """Sample a minimal pair from the dataset that is correctly labelled by a model."""
-        
+
         # keep resampling until we get a pair that is correctly labelled
-        correct = False
+        correct, ct = False, 0
         while not correct:
             pair = self.sample_pair()
             base = tokenizer(''.join(pair.base), return_tensors="pt").to(device)
@@ -269,6 +264,15 @@ class Dataset:
             src_label = tokenizer.encode(pair.src_label)[0]
             if base_logits[base_label] > base_logits[src_label] and src_logits[src_label] > src_logits[base_label]:
                 correct = True
+            ct += 1
+            if ct == 20 and not correct:
+                print(pair.base, f"'{pair.base_label}'")
+                top_vals(tokenizer, base_logits.softmax(-1), n=5, highlight=[base_label, src_label])
+                print(pair.src, f"'{pair.src_label}'")
+                top_vals(tokenizer, src_logits.softmax(-1), n=5, highlight=[base_label, src_label])
+                input()
+                print("WARNING: could not find a doable pair after 20 iterations")
+                break
             
         return pair
 

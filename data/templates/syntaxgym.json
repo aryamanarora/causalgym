@@ -4,7 +4,6 @@
             "{name} {completion} because"
         ],
         "label": "name",
-        "label_prepend_space": false,
         "result_prepend_space": true,
         "labels": {
             "he": ["he"],
@@ -25,7 +24,6 @@
             "The {subject} that {verbed} the {object}"
         ],
         "label": "subject",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
@@ -48,7 +46,6 @@
             "The {subject} that the {object} {verbed}"
         ],
         "label": "subject",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
@@ -71,7 +68,6 @@
             "The {subject} {prep} the {object}"
         ],
         "label": "subject",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
@@ -94,7 +90,6 @@
             "The {subject} that {embed_vp} the {embed_np} {matrix_v}"
         ],
         "label": "subject",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
@@ -118,7 +113,6 @@
             "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
         "label": "subject",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
@@ -142,7 +136,6 @@
             "The {subject} {prep} the {object} {matrix_v}"
         ],
         "label": "subject",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "plural": ["themselves", "themselves"],
@@ -166,7 +159,6 @@
             "{det1} {np} that {rc_verb} {det2} {rc_obj} {matrix_v}"
         ],
         "label": "det1",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "any": ["any"],
@@ -189,7 +181,6 @@
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
         ],
         "label": "det1",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "any": ["any"],
@@ -212,7 +203,6 @@
             "{det1} {np} that {rc_verb} {det2} {rc_obj} has"
         ],
         "label": "det1",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "ever": ["ever"],
@@ -234,7 +224,6 @@
             "{det1} {np} that {det2} {rc_obj} {rc_verb} has"
         ],
         "label": "det1",
-        "label_prepend_space": true,
         "result_prepend_space": true,
         "labels": {
             "ever": ["ever"],
@@ -256,7 +245,6 @@
             "The {noun}{insert} {ambig_verb} {rc}"
         ],
         "label": "insert",
-        "label_prepend_space": false,
         "result_prepend_space": false,
         "labels": {
             "rr": [" was"],
@@ -277,7 +265,6 @@
             "The {noun}{insert} {ambig_verb} {intervener} {rc}"
         ],
         "label": "insert",
-        "label_prepend_space": false,
         "result_prepend_space": false,
         "labels": {
             "rr": [" was"],
@@ -299,7 +286,6 @@
             "{subordinator} the {noun} {verb}{comma} {npz}"
         ],
         "label": "comma",
-        "label_prepend_space": false,
         "result_prepend_space": false,
         "labels": {
             "yes_comma": [" was"],
@@ -321,7 +307,6 @@
             "{subordinator} the {noun} {verb}{comma} {npz} {mod}"
         ],
         "label": "comma",
-        "label_prepend_space": false,
         "result_prepend_space": false,
         "labels": {
             "yes_comma": [" was"],
@@ -344,7 +329,6 @@
             "{subordinator} the {noun} {verb} {npz}"
         ],
         "label": "verb",
-        "label_prepend_space": true,
         "result_prepend_space": false,
         "labels": {
             "intransitive": [" was"],
@@ -365,7 +349,6 @@
             "{subordinator} the {noun} {verb} {npz} {mod}"
         ],
         "label": "verb",
-        "label_prepend_space": true,
         "result_prepend_space": false,
         "labels": {
             "intransitive": [" was"],
@@ -387,7 +370,6 @@
             "{subordinator}{the} {np1} {clause}"
         ],
         "label": ["subordinator", "the"],
-        "label_prepend_space": false,
         "result_prepend_space": false,
         "labels": {
             "non-null": [","],
@@ -411,7 +393,6 @@
             "{subordinator}{the} {np1} who the {subj_mod_np} {subj_mod_v} {clause} {obj_relc}"
         ],
         "label": ["subordinator", "the"],
-        "label_prepend_space": false,
         "result_prepend_space": false,
         "labels": {
             "non-null": [","],
