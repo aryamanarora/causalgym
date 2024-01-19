@@ -135,18 +135,18 @@ class Batch:
         # shape of alignment: [batch_size, 2, num_spans, tokens_in_span]
         # not a proper tensor though! tokens_in_span is variable, rest is constant
         ret = []
-        if self.pos_strategy == "last":
-            for batch_i in range(len(self.pairs)):
-                ret.append([
-                    [x[-1] for x in self.alignment_src[batch_i]],
-                    [x[-1] for x in self.alignment_base[batch_i]]
-                ])
-        elif self.pos_strategy == "first":
-            for batch_i in range(len(self.pairs)):
-                ret.append([
-                    [x[0] for x in self.alignment_src[batch_i]],
-                    [x[0] for x in self.alignment_base[batch_i]]
-                ])
+        position = 0 if self.pos_strategy == "first" else -1
+        for batch_i in range(len(self.pairs)):
+            ret_base, ret_src = [], []
+            for span_i in range(len(self.alignment_src[batch_i])):
+                # skip null alignments
+                if len(self.alignment_base[batch_i][span_i]) == 0 or len(self.alignment_src[batch_i][span_i]) == 0:
+                    ret_base.append(-1)
+                    ret_src.append(-1)
+                    continue
+                ret_base.append(self.alignment_base[batch_i][span_i][position])
+                ret_src.append(self.alignment_src[batch_i][span_i][position])
+            ret.append([ret_base, ret_src])
         
         # shape: [2, 1, batch_size, length]
         # dim 0 -> src, base (the intervention code wants src first)

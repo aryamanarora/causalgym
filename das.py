@@ -60,6 +60,8 @@ def experiment(
     
     # entering train loops
     for pos_i in range(data_source.length):
+        if trainset[0].pos[0, 0, 0, pos_i] == -1:
+            continue
 
         # per-layer training loop
         iterator = tqdm(range(gpt.config.num_hidden_layers))
