@@ -65,7 +65,7 @@ def train_das(
         # store activations/labels for training non-causal methods
         for batch_i in range(len(batch.pairs)):
             activation = base_outputs[-1][batch_i].detach().reshape(-1).cpu()
-            activations.append((activation, batch.base_labels[batch_i].item()))
+            activations.append((activation, batch.base_types[batch_i]))
 
         # get last token logits
         logits = get_last_token(counterfactual_outputs.logits, batch.base['attention_mask'])

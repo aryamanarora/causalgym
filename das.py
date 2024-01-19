@@ -125,7 +125,7 @@ def experiment(
     }
 
     # log
-    log_file = f"logs/das/{short_model_name}__{short_dataset_name}__{NOW}.json"
+    log_file = f"logs/das/{NOW}__{short_model_name}__{short_dataset_name}.json"
     print(f"logging to {log_file}")
     with open(log_file, "w") as f:
         json.dump(filedump, f)
