@@ -4,7 +4,7 @@ Check if a model produces the expected output for a task.
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from data import make_data, list_datasets
+from data import Dataset, list_datasets
 from utils import WEIGHTS, MODELS, top_vals, format_token, get_last_token
 import argparse
 from tqdm import tqdm
@@ -39,16 +39,23 @@ def benchmark(model=None, task=None, debug=False):
 
         # make data
         for dataset in datasets:
-            trainset, _ = make_data(tokenizer, dataset, 4, 100, -1, device)
+            data_source = Dataset.load_from(dataset)
+            trainset = data_source.sample_batches(tokenizer, 4, 100, device, strategy="last", seed=42)
             count, correct = 0, 0
-            probs_base, probs_src = [], []
+            probs = {}
 
-            for (pair, src_label, base_label, _, _, _) in tqdm(trainset):
+            for batch in tqdm(trainset):
+                # vars
+                base_label = batch.base_labels
+                src_label = batch.src_labels
+                base_type = batch.base_types
+                src_type = batch.src_types
+
                 # inference
-                base_output = gpt(**pair[0])
-                src_output = gpt(**pair[1])
-                base_logits = get_last_token(base_output.logits, pair[0].attention_mask)
-                src_logits = get_last_token(src_output.logits, pair[1].attention_mask)
+                base_output = gpt(**batch.base)
+                src_output = gpt(**batch.src)
+                base_logits = get_last_token(base_output.logits, batch.base['attention_mask'])
+                src_logits = get_last_token(src_output.logits, batch.src['attention_mask'])
 
                 # check for batch accuracy
                 for i in range(4):
@@ -58,12 +65,17 @@ def benchmark(model=None, task=None, debug=False):
                         correct += 1
                     if debug:
                         print(base_probs[base_label[i]] > base_probs[src_label[i]] and src_probs[src_label[i]] > src_probs[base_label[i]])
-                        print(tokenizer.decode(pair[0].input_ids[i]))
+                        print(tokenizer.decode(batch.base['input_ids'][i]))
                         top_vals(tokenizer, base_probs, n=5, highlight=[base_label[i], src_label[i]])
-                        print(tokenizer.decode(pair[1].input_ids[i]))
+                        print(tokenizer.decode(batch.src['input_ids'][i]))
                         top_vals(tokenizer, src_probs, n=5, highlight=[base_label[i], src_label[i]])
                         input()
-
+                    if count == 0:
+                        probs[base_type[i]] = base_probs
+                        probs[src_type[i]] = src_probs
+                    else:
+                        probs[base_type[i]] += base_probs
+                        probs[src_type[i]] += src_probs
                     count += 1
 
             # store stats
@@ -76,6 +88,16 @@ def benchmark(model=None, task=None, debug=False):
                 "parameters": gpt.num_parameters(),
             })
             print(f"{dataset:<30} {correct / count:>10.2%} ({correct} / {count})")
+            for k, v in probs.items():
+                probs[k] = (v / count)
+                print(k.upper())
+                top_vals(tokenizer, probs[k], n=10)
+                print('---')
+            print("DIFF")
+            top_vals(tokenizer, list(probs.values())[1] - list(probs.values())[0], n=5)
+            print('---')
+            top_vals(tokenizer, list(probs.values())[0] - list(probs.values())[1], n=5)
+            print('---')
     
     # save data
     with open("logs/benchmark.json", "w") as f:

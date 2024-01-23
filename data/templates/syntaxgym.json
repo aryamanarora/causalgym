@@ -173,7 +173,7 @@
             "det2": ["the", "no"],
             "rc_obj": ["chef", "teachers", "senator", "senators", "managers", "athlete", "officer", "assistant", "consultants", "architects", "farmers", "clerks", "customers", "guard", "farmer", "secretaries", "executives", "authors", "customer", "doctors", "taxi driver", "journalists", "architect", "officers", "pilot", "pilots", "surgeon", "ministers", "dancer", "taxi drivers", "consultant", "executive", "guards", "minister", "teacher", "manager"],
             "rc_verb": ["knew", "loved", "impressed", "helped", "praised", "hated", "respected", "contacted", "discussed", "admired", "liked"],
-            "matrix_v": ["has completed", "have landed", "have crashed", "have caught", "has crashed", "have had", "have failed", "has passed up", "have advocated", "have purchased", "has broken", "has seen", "has spent", "have missed", "have burned", "has fired", "has failed", "have refused", "has passed", "has burned", "has missed", "have read", "have broken", "has shown", "have planted", "have passed", "has had", "have arrested", "has known"]
+            "matrix_v": ["has completed", "has landed", "has crashed", "has caught", "has crashed", "has had", "has failed", "has passed up", "has advocated", "has purchased", "has broken", "has seen", "has spent", "has missed", "has burned", "has fired", "has failed", "has refused", "has passed", "has burned", "has missed", "has read", "has broken", "has shown", "has planted", "has passed", "has had", "has arrested", "has known"]
         }
     },
     "npi_any_obj-relc": {
@@ -195,7 +195,7 @@
             "det2": ["the", "no"],
             "rc_subj": ["consultant", "taxi driver", "architects", "farmer", "pilots", "architect", "journalists", "authors", "athlete", "secretaries", "clerks", "minister", "pilot", "senators", "clerk", "ministers", "dancer", "officers", "secretary", "senator", "farmers", "guard", "doctors", "manager", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
             "rc_verb": ["helped", "liked", "admired", "contacted", "respected", "discussed", "impressed", "praised", "knew", "hated", "loved"],
-            "matrix_v": ["has shown", "has fired", "has broken", "have planted", "has passed up", "have had", "has spent", "have missed", "has seen", "has had", "have landed", "has crashed", "have refused", "have passed", "has missed", "has known", "have failed", "has burned", "have advocated", "has completed", "have caught", "has failed", "has passed", "have purchased", "have broken", "have read", "have crashed", "have burned", "have arrested"]
+            "matrix_v": ["has shown", "has fired", "has broken", "has planted", "has passed up", "has had", "has spent", "has missed", "has seen", "has had", "has landed", "has crashed", "has refused", "has passed", "has missed", "has known", "has failed", "has burned", "has advocated", "has completed", "has caught", "has failed", "has passed", "has purchased", "has broken", "has read", "has crashed", "has burned", "has arrested"]
         }
     },
     "npi_ever_subj-relc": {
@@ -396,7 +396,7 @@
         "result_prepend_space": false,
         "labels": {
             "non-null": [","],
-            "null": [" and"]
+            "null": ["."]
         },
         "variables": {
             "subordinator": {
