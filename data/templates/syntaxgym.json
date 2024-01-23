@@ -1,5 +1,6 @@
 {
     "agr_gender": {
+        "source": "new",
         "templates": [
             "{name} {completion} because"
         ],
@@ -20,6 +21,7 @@
         }
     },
     "agr_sv_num_subj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=261",
         "templates": [
             "The {subject} that {verbed} the {object}"
         ],
@@ -42,6 +44,7 @@
         }
     },
     "agr_sv_num_obj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=275",
         "templates": [
             "The {subject} that the {object} {verbed}"
         ],
@@ -64,6 +67,7 @@
         }
     },
     "agr_sv_num_pp": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=259",
         "templates": [
             "The {subject} {prep} the {object}"
         ],
@@ -86,6 +90,7 @@
         }
     },
     "agr_refl_num_subj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=260",
         "templates": [
             "The {subject} that {embed_vp} the {embed_np} {matrix_v}"
         ],
@@ -100,15 +105,16 @@
                 "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
                 "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
             },
+            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
             "embed_np": [
                 "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
                 "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
             ],
-            "embed_vp": ["loved", "liked", "discussed", "met", "hated"],
             "matrix_v": ["embarrassed", "disguised", "injured", "suspected", "doubted", "hated", "hurt", "trusted"]
         }
     },
     "agr_refl_num_obj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=276",
         "templates": [
             "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
         ],
@@ -132,6 +138,7 @@
         }
     },
     "agr_refl_num_pp": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=248",
         "templates": [
             "The {subject} {prep} the {object} {matrix_v}"
         ],
@@ -155,6 +162,7 @@
         }
     },
     "npi_any_subj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=256",
         "templates": [
             "{det1} {np} that {rc_verb} {det2} {rc_obj} {matrix_v}"
         ],
@@ -177,6 +185,7 @@
         }
     },
     "npi_any_obj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=255",
         "templates": [
             "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
         ],
@@ -199,6 +208,7 @@
         }
     },
     "npi_ever_subj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=257",
         "templates": [
             "{det1} {np} that {rc_verb} {det2} {rc_obj} has"
         ],
@@ -220,6 +230,7 @@
         }
     },
     "npi_ever_obj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=258",
         "templates": [
             "{det1} {np} that {det2} {rc_obj} {rc_verb} has"
         ],
@@ -241,6 +252,7 @@
         }
     },
     "garden_mvrr": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=265",
         "templates": [
             "The {noun}{insert} {ambig_verb} {rc}"
         ],
@@ -261,6 +273,7 @@
         }
     },
     "garden_mvrr_mod": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=273",
         "templates": [
             "The {noun}{insert} {ambig_verb} {intervener} {rc}"
         ],
@@ -282,6 +295,7 @@
         }
     },
     "garden_npz_obj": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=274",
         "templates": [
             "{subordinator} the {noun} {verb}{comma} {npz}"
         ],
@@ -303,6 +317,7 @@
         }
     },
     "garden_npz_obj_mod": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=251",
         "templates": [
             "{subordinator} the {noun} {verb}{comma} {npz} {mod}"
         ],
@@ -325,6 +340,7 @@
         }
     },
     "garden_npz_v-trans": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=253",
         "templates": [
             "{subordinator} the {noun} {verb} {npz}"
         ],
@@ -345,14 +361,15 @@
         }
     },
     "garden_npz_v-trans_mod": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=270",
         "templates": [
             "{subordinator} the {noun} {verb} {npz} {mod}"
         ],
         "label": "verb",
         "result_prepend_space": false,
         "labels": {
-            "intransitive": [" was"],
-            "transitive": [","]
+            "intransitive": [" was", " said", " had"],
+            "transitive": [" for"]
         },
         "variables": {
             "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
@@ -366,6 +383,7 @@
         }
     },
     "gss_subord": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=263",
         "templates": [
             "{subordinator}{the} {np1} {clause}"
         ],
@@ -373,7 +391,7 @@
         "result_prepend_space": false,
         "labels": {
             "non-null": [","],
-            "null": [" and"]
+            "null": ["."]
         },
         "variables": {
             "subordinator": {
@@ -389,6 +407,7 @@
         }
     },
     "gss_subord_subj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=272",
         "templates": [
             "{subordinator}{the} {np1} who the {subj_mod_np} {subj_mod_v} {clause} {obj_relc}"
         ],
