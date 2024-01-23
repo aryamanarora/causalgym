@@ -28,8 +28,8 @@
         "label": "subject",
         "result_prepend_space": true,
         "labels": {
-            "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
-            "singular": ["knows", "brings", "is", "interests", "enjoys", "likes"]
+            "plural": ["are", "were", "have"],
+            "singular": ["is", "was", "has"]
         },
         "variables": {
             "subject": {
@@ -51,8 +51,8 @@
         "label": "subject",
         "result_prepend_space": true,
         "labels": {
-            "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
-            "singular": ["knows", "brings", "is", "interests", "enjoys", "likes"]
+            "plural": ["are", "were", "have"],
+            "singular": ["is", "was", "has"]
         },
         "variables": {
             "subject": {
@@ -74,8 +74,8 @@
         "label": "subject",
         "result_prepend_space": true,
         "labels": {
-            "plural": ["know", "bring", "are", "interest", "enjoy", "like"],
-            "singular": ["knows", "brings", "is", "interests", "enjoys", "likes"]
+            "plural": ["are", "were", "have"],
+            "singular": ["is", "was", "has"]
         },
         "variables": {
             "subject": {
@@ -97,8 +97,8 @@
         "label": "subject",
         "result_prepend_space": true,
         "labels": {
-            "plural": ["themselves", "themselves"],
-            "singular": ["herself", "himself"]
+            "plural": ["themselves"],
+            "singular": ["himself"]
         },
         "variables": {
             "subject": {
@@ -121,8 +121,8 @@
         "label": "subject",
         "result_prepend_space": true,
         "labels": {
-            "plural": ["themselves", "themselves"],
-            "singular": ["herself", "himself"]
+            "plural": ["themselves"],
+            "singular": ["himself"]
         },
         "variables": {
             "subject": {
@@ -145,8 +145,8 @@
         "label": "subject",
         "result_prepend_space": true,
         "labels": {
-            "plural": ["themselves", "themselves"],
-            "singular": ["herself", "himself"]
+            "plural": ["themselves"],
+            "singular": ["himself"]
         },
         "variables": {
             "subject": {
@@ -297,13 +297,13 @@
     "garden_npz_obj": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=274",
         "templates": [
-            "{subordinator} the {noun} {verb}{comma} {npz}"
+            "{subordinator} the {noun} {verb}{comma} the {npz}"
         ],
         "label": "comma",
         "result_prepend_space": false,
         "labels": {
             "yes_comma": [" was"],
-            "no_comma": [","]
+            "no_comma": [" for"]
         },
         "variables": {
             "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
@@ -313,19 +313,19 @@
                 "yes_comma": [","],
                 "no_comma": [""]
             },
-            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
+            "npz": ["comedian", "child", "manager", "guard", "soldier", "thief", "actor", "doctor", "woman", "teacher", "coach", "visitor", "farmer", "nurse"]
         }
     },
     "garden_npz_obj_mod": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=251",
         "templates": [
-            "{subordinator} the {noun} {verb}{comma} {npz} {mod}"
+            "{subordinator} the {noun} {verb}{comma} the {npz} {mod}"
         ],
         "label": "comma",
         "result_prepend_space": false,
         "labels": {
             "yes_comma": [" was"],
-            "no_comma": [","]
+            "no_comma": [" for"]
         },
         "variables": {
             "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
@@ -336,39 +336,18 @@
                 "yes_comma": [","],
                 "no_comma": [""]
             },
-            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
+            "npz": ["comedian", "child", "manager", "guard", "soldier", "thief", "actor", "doctor", "woman", "teacher", "coach", "visitor", "farmer", "nurse"]
         }
     },
     "garden_npz_v-trans": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=253",
         "templates": [
-            "{subordinator} the {noun} {verb} {npz}"
+            "{subordinator} the {noun} {verb} the {npz}"
         ],
         "label": "verb",
         "result_prepend_space": false,
         "labels": {
             "intransitive": [" was"],
-            "transitive": [","]
-        },
-        "variables": {
-            "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
-            "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
-            "verb": {
-                "transitive": ["signaled", "wiped", "telephoned", "cheered", "stopped", "considered", "interrupted", "shot", "applauded", "decorated", "ate", "grabbed", "asked", "governed", "bit", "crossed", "dressed", "watched", "visited", "taught"],
-                "intransitive": ["struggled", "departed", "fled", "yelled", "drifted", "went out", "looked", "negotiated", "slept", "complained", "arrived", "talked"]
-            },
-            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"]
-        }
-    },
-    "garden_npz_v-trans_mod": {
-        "source": "https://syntaxgym.org/test_suite/items?test_suite=270",
-        "templates": [
-            "{subordinator} the {noun} {verb} {npz} {mod}"
-        ],
-        "label": "verb",
-        "result_prepend_space": false,
-        "labels": {
-            "intransitive": [" was", " said", " had"],
             "transitive": [" for"]
         },
         "variables": {
@@ -378,7 +357,28 @@
                 "transitive": ["signaled", "wiped", "telephoned", "cheered", "stopped", "considered", "interrupted", "shot", "applauded", "decorated", "ate", "grabbed", "asked", "governed", "bit", "crossed", "dressed", "watched", "visited", "taught"],
                 "intransitive": ["struggled", "departed", "fled", "yelled", "drifted", "went out", "looked", "negotiated", "slept", "complained", "arrived", "talked"]
             },
-            "npz": ["the comedian", "her children", "the manager", "the guards", "the soldiers", "the thieves", "the actor", "the doctor", "the woman", "the teacher", "the coach", "the children", "the visitors", "the farmer", "the nurse"],
+            "npz": ["comedian", "child", "manager", "guard", "soldier", "thief", "actor", "doctor", "woman", "teacher", "coach", "visitor", "farmer", "nurse"]
+        }
+    },
+    "garden_npz_v-trans_mod": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=270",
+        "templates": [
+            "{subordinator} the {noun} {verb} {npz} the {mod}"
+        ],
+        "label": "verb",
+        "result_prepend_space": false,
+        "labels": {
+            "intransitive": [" was"],
+            "transitive": [" for"]
+        },
+        "variables": {
+            "subordinator": ["While", "After", "When", "As", "As long as", "Because", "Though"],
+            "noun": ["students", "soldier", "host", "king", "customer", "guard", "manager", "young man", "patient", "audience", "criminal", "newcomers", "class", "prisoners", "woman", "athlete", "woman", "baby", "crowd", "professor"],
+            "verb": {
+                "transitive": ["signaled", "wiped", "telephoned", "cheered", "stopped", "considered", "interrupted", "shot", "applauded", "decorated", "ate", "grabbed", "asked", "governed", "bit", "crossed", "dressed", "watched", "visited", "taught"],
+                "intransitive": ["struggled", "departed", "fled", "yelled", "drifted", "went out", "looked", "negotiated", "slept", "complained", "arrived", "talked"]
+            },
+            "npz": ["comedian", "child", "manager", "guard", "soldier", "thief", "actor", "doctor", "woman", "teacher", "coach", "visitor", "farmer", "nurse"],
             "mod": ["who told bad jokes", "who was waiting", "who was very caring", "with the young boy", "in the elegant dress", "who was in charge", "attending the exercise", "who was wearing masks", "who sat by the fire", "who looked so good", "from the other school", "in the bizarre outfit"]
         }
     },
@@ -390,26 +390,26 @@
         "label": ["subordinator", "the"],
         "result_prepend_space": false,
         "labels": {
-            "non-null": [","],
+            "non-null": [" they"],
             "null": ["."]
         },
         "variables": {
             "subordinator": {
-                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Athough"],
+                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Although"],
                 "null": [""]
             },
             "the": {
                 "non-null": [" the"],
                 "null": ["The"]
             },
-            "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
-            "clause": ["lost the plans", "lost her documents", "reviewed the contract", "printed the documents", "found new evidence", "delivered the speech", "shot the bird", "broke the computer", "presented the file", "entered the camp", "delivered the newspaper", "studied the book", "read the guide", "liked the draft", "enjoyed the novel", "read the magazine", "did not like the material", "passed the new law", "praised the new building", "handed in their papers", "read the plans", "wrote the letter", "practiced the music"]
+            "np1": ["lawyers", "clerks", "policemen", "architects", "tourists", "nurses", "students", "actors", "officials", "generals", "editors", "delivery men", "men", "maids", "pianists", "diplomats", "politicians", "scientists", "ministers", "assistants", "doctors"],
+            "clause": ["lost the plans", "lost the documents", "reviewed the contract", "printed the documents", "found new evidence", "delivered the speech", "shot the bird", "broke the computer", "presented the file", "entered the camp", "delivered the newspaper", "studied the book", "read the guide", "liked the draft", "enjoyed the novel", "read the magazine", "did not like the material", "passed the new law", "praised the new building", "handed in their papers", "read the plans", "wrote the letter", "practiced the music"]
         }
     },
     "gss_subord_subj-relc": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=272",
         "templates": [
-            "{subordinator}{the} {np1} who the {subj_mod_np} {subj_mod_v} {clause} {obj_relc}"
+            "{subordinator}{the} {np1} who {subj.verb} {subj.rel} {clause.verb} the {clause.np2} that {clause.subj_relc}"
         ],
         "label": ["subordinator", "the"],
         "result_prepend_space": false,
@@ -419,7 +419,35 @@
         },
         "variables": {
             "subordinator": {
-                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Athough"],
+                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Although"],
+                "null": [""]
+            },
+            "the": {
+                "non-null": [" the"],
+                "null": ["The"]
+            },
+            "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
+            "subj.verb": ["wore", "was carrying", "were in", "wore", "feared", "were from", "had", "were from", "was wearing", "wore", "was from", "had", "had", "were in", "had", "worked", "was from", "wore", "were from", "were from", "wore", "carried", "were from"],
+            "subj.rel": ["white lab jackets", "a gun", "the teacher's class", "a green uniform", "the dog", "a city", "very high standards", "a neighboring research hospital", "blue pants", "a black suit", "a rival firm", "a loud voice", "long fingers", "seventh grade", "an overwhelmingly negative attitude", "all alone down the hall", "a friendly country", "dark suits and ties", "the town", "the countryside", "dark suits", "pistols on their belts", "foreign countries"],
+            "clause.verb": ["studied", "found", "wrote", "liked", "enjoyed", "entered", "lost", "shot", "delivered", "printed", "did not like", "passed", "read", "reviewed", "handed in", "praised", "practiced", "read", "presented", "delivered", "lost"],
+            "clause.np2": ["book", "evidence", "letter", "draft", "novel", "camp", "documents", "bird", "newspaper", "documents", "material", "law", "magazine", "contract", "papers", "building", "music", "guide", "file", "speech", "plans"],
+            "clause.subj_relc": ["described several advances in cancer therapy", "was relevant to the murder", "exposed corruption and bribery", "described many local politicians", "was about the civil war", "stood in the middle of camp", "were allowed in court", "was running away from him", "was from another city", "were purchased from the expensive jewelry store", "covered the evolution of the human skeleton", "raised taxes on businesses and corporations", "encouraged home repair and restoration", "promised increased annual salaries", "were about modern art", "was built by the square", "was written long ago", "described local customs and practices", "expressed hope for cooperation", "questioned the meaning of life", "described the building specifications"]
+        }
+    },
+    "gss_subord_obj-relc": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=250",
+        "templates": [
+            "{subordinator}{the} {np1} who the {subj_mod_np} {subj_mod_v} {clause.verb} the {clause.np2} that the {clause.obj_relc}"
+        ],
+        "label": ["subordinator", "the"],
+        "result_prepend_space": false,
+        "labels": {
+            "non-null": [","],
+            "null": ["."]
+        },
+        "variables": {
+            "subordinator": {
+                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Although"],
                 "null": [""]
             },
             "the": {
@@ -429,8 +457,80 @@
             "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
             "subj_mod_np": ["spy", "teacher", "author", "principle", "citizens", "director", "client", "officer", "boss", "committee", "dog", "critic", "coaches", "doctor", "officer", "contractor", "friend", "mayor", "locals", "chef", "lobbyists", "administrator", "mayor"],
             "subj_mod_v": ["had contacted repeatedly", "had in her class", "knew well", "had disciplined", "liked greatly", "praised openly", "had hired", "had given a uniform", "moved down the hall", "had praised", "feared", "did not like", "had bribed handsomely", "had met only once", "had given pistols", "had recommended", "had helped", "had invited", "found strange", "had yelled at", "trusted", "had recently hired", "respected very much"],
-            "clause": ["studied the book", "broke the computer", "found new evidence", "wrote the letter", "liked the draft", "enjoyed the novel", "entered the camp", "lost her documents", "shot the bird", "delivered the newspaper", "printed the documents", "did not like the material", "passed the new law", "read the magazine", "reviewed the contract", "handed in their papers", "praised the new building", "practiced the music", "read the guide", "presented the file", "delivered the speech", "lost the plans", "read the proposal"],
-            "obj_relc": ["that the resident had ordered", "that the businessman had built downtown", "that the lawyers had written", "that the celebrity had written", "that the author had written yesterday", "that the administrator moved to the basement", "that the city planners had drafted", "that the school administrator had written", "that the client never requested", "that the maid had given them", "that all the shop owners strongly opposed", "that the housing authority drafted", "that she had bought from an expensive store", "that the lawyer threw away", "that the colonel constructed two years ago", "that the suspect had hidden", "that the shift manager left behind", "that the assistant had written", "that he had been tracking secretly", "that the teacher assigned them", "that the composer had written", "that colleagues had written on cancer therapy", "that the teacher used to cover evolution"]
+            "clause.verb": ["studied", "shot", "did not like", "entered", "delivered", "printed", "liked", "lost", "broke", "praised", "read", "delivered", "practiced", "enjoyed", "read", "wrote", "presented", "reviewed", "lost", "read", "passed", "found", "handed in"],
+            "clause.np2": ["book", "bird", "material", "camp", "newspaper", "documents", "draft", "documents", "computer", "building", "plans", "speech", "music", "novel", "magazine", "letter", "file", "contract", "plans", "guide", "law", "evidence", "papers"],
+            "clause.obj_relc": ["that colleagues had written on cancer therapy", "that he had been tracking secretly", "that the teacher used to cover evolution", "that the colonel constructed two years ago", "that the resident had ordered", "that the client never requested", "that the celebrity had written", "that she had bought from an expensive store", "that the administrator moved to the basement", "that the businessman had built downtown", "that the housing authority drafted", "that the author had written yesterday", "that the composer had written", "that the school administrator had written", "that the shift manager left behind", "that the lawyer threw away", "that the assistant had written", "that the lawyers had written", "that the city planners had drafted", "that the maid had given them", "that all the shop owners strongly opposed", "that the suspect had hidden", "that the teacher assigned them"]
+        }
+    },
+    "gss_subord_pp": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=268",
+        "templates": [
+            "{subordinator}{the} {np1} {pp1} {clause.verb} the {clause.np2} {clause.pp}"
+        ],
+        "label": ["subordinator", "the"],
+        "result_prepend_space": false,
+        "labels": {
+            "non-null": [","],
+            "null": ["."]
+        },
+        "variables": {
+            "subordinator": {
+                "non-null": ["While", "Because", "When", "Since", "Before", "After", "As", "Although"],
+                "null": [""]
+            },
+            "the": {
+                "non-null": [" the"],
+                "null": ["The"]
+            },
+            "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
+            "pp1": ["in a long white lab jacket", "with a very expensive gun", "in the teacher 's third grade class", "in the green uniform and black shoes", "with the friendly face", "from the city up north", "with higher standards than anyone", "from the neighboring hospital down the street", "in blue pants and gloves", "in the dark suit and white tie", "from the rival firm across town", "with the loud singing voice", "with the long fingers", "in the third year class", "with an abrasive and negative attitude", "from the crowded office down the hall", "from the friendly country in Africa", "in dark suits and bright ties", "in the New England town", "from the village far away", "with white hair expensive suits", "from the small town in Alabama", "from foreign countries in Europe"],
+            "clause": ["studied the book", "shot the bird", "did not like the material", "entered the camp", "delivered the newspaper", "printed the documents", "liked the draft", "lost her documents", "broke the computer", "praised the new building", "read the plans", "delivered the speech", "practiced the music", "enjoyed the novel", "read the magazine", "wrote the letter", "presented the file", "reviewed the contract", "lost the plans", "read the guide", "passed the new law", "found new evidence", "handed in their papers"],
+            "clause.verb": ["studied", "shot", "did not like", "entered", "delivered", "printed", "liked", "lost", "broke", "praised", "read", "delivered", "practiced", "enjoyed", "read", "wrote", "presented", "reviewed", "lost", "read", "passed", "found", "handed in"],
+            "clause.np2": ["book", "bird", "material", "camp", "newspaper", "documents", "draft", "documents", "computer", "building", "plans", "speech", "music", "novel", "magazine", "letter", "file", "contract", "plans", "guide", "law", "evidence", "papers"],
+            "clause.pp": ["about several recent advances in cancer therapy", "on the run for its life", "on the evolution of the human skeleton", "in the middle of the busy camp", "from a city far away", "on very expensive recycled paper", "about the failed local politicians", "from the expensive jewelry store down the street", "in the basement of the office building", "on the town 's main square", "from the local housing authority", "on the true meaning of life", "with a difficult time signature", "about life during the civil war", "on home repair and backyard maintenance", "about potential corruption and bribery", "on international peace and cooperation", "for increased salaries and bonuses", "for the broken water system", "on local customs and religious practices", "on tax reform and student debt", "about the alleged art theft", "on the modern art world"]
+        }
+    },
+    "filler_gap_embed_3": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=279",
+        "templates": [
+            "{prefix} {gap} {subj} {embedding} {verb}"
+        ],
+        "label": "gap",
+        "result_prepend_space": false,
+        "labels": {
+            "that": [" that"],
+            "wh": ["."]
+        },
+        "variables": {
+            "prefix": ["I know", "The accountant knew", "The assistant told me", "We discovered", "The neighbors found out", "My friend knows", "The commissioner discovered", "We all know", "I know", "The newspaper reported", "Her friend found out", "I realized", "The novel revealed", "We all know", "I know", "My friends all know", "The visitor said", "I know", "The colleagues realized", "She said", "We all know"],
+            "gap": {
+                "that": ["that"],
+                "wh": ["what"]
+            },
+            "embedding": ["our mother said her friend remarked that the park attendant reported", "the security guard believed his friend knew the assistant reported", "the man knew his friend recalled the woman said", "the delivery boy remarked that the worker said that the gardener knew", "her mother heard the newspaper reported the mayor said", "the judge thought the cop said the man testified", "the report stated the television host thought the man reported", "the accountant said his colleague recalled the partners knew", "the secretary said the journalist remarked that the workers decided", "the investigator thought the businessman believed the banker said", "my friend believes the professor said his colleague noticed", "the painter believed his rival suspected the colonel said", "our friend thought the reporter knows her contact said", "my neighbor said her associate knew a mutual friend stated", "their friend said the secretary believed the worker thinks", "her friend knew the delivery man believed the cop believes", "my friend said her mother knew the minister stated", "the woman believed the secretary said her friend recalled", "her mother stated a friend said her husband knew", "the politician stated his press secretary said the chief of staff thought", "the old man thinks the woman knows the young boy said"],
+            "subj": ["your friend", "the secretary", "the pilot", "the funny actor", "the young woman", "the successful architect", "the police detective", "the investor", "the business man", "the boss", "the visitor", "the suffering artist", "the young politician", "the young professional", "the elderly lady", "the single mother", "the human resources officer", "the five star general", "the journalist", "the reporter", "the teacher"],
+            "verb": ["sent", "told", "handed", "lent", "repaid", "promised", "sold", "told", "said", "described", "gave"]
+        }
+    },
+    "filler_gap_hierarchy": {
+        "templates": [
+            "The fact that the {subj} {verb} {gap} the {subj_embed} {verb_embed}"
+        ],
+        "label": "gap",
+        "result_prepend_space": false,
+        "labels": {
+            "that": [" the"],
+            "wh": [" was"]
+        },
+        "variables": {
+            "subj": ["brother", "cop", "guard", "real estate agent", "journalist", "mother", "lawyers", "chef", "assistant", "reporter", "banker", "social worker", "clerk", "solder", "father", "detective", "man", "friend", "doctor"],
+            "verb": ["said", "knows", "said", "knew", "stated", "does not know", "acknowledged", "knew", "disclosed", "signaled", "knew", "said", "stated", "stated", "found out", "forgot", "indicated", "recalled", "knew", "confirmed", "knew", "said", "knew", "recalled"],
+            "gap": {
+                "that": ["that"],
+                "wh": ["who"]
+            },
+            "subj_embed": ["friend", "criminal", "convict", "old couple", "president", "client", "assistant", "mayor", "police", "man", "witness", "congressman", "author", "senator", "colleague", "officer", "brother", "friend", "suspect", "old woman", "cop", "patient"],
+            "verb_embed": ["trusted", "shot", "kicked", "saw", "fired", "trusts", "represented", "cut", "talked with", "observed", "identified", "bribed", "liked", "will nominate", "does not like", "recommended", "talked with", "would wed", "does not like", "followed", "hit", "saved", "likes"]
         }
     }
 }

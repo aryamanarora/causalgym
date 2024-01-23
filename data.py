@@ -171,6 +171,14 @@ class Dataset:
         self.labels = data["labels"]
         self.types = list(self.labels.keys())
         self.variables = data["variables"]
+        length = {}
+        for var in self.variables:
+            if '.' in var:
+                head_var = var.split('.')[0]
+                if head_var not in length:
+                    length[head_var] = len(self.variables[var])
+                else:
+                    assert length[head_var] == len(self.variables[var]), f"Variable {var} has length {len(self.variables[var])} but {head_var} has length {length[head_var]}"
         self.result_prepend_space = data["result_prepend_space"]
     
 
@@ -199,6 +207,7 @@ class Dataset:
         base, src = self.template[:], self.template[:]
 
         # go token by token
+        stored_choices = {}
         for token_i in range(len(self.template)):
             var = self.vars_per_span[token_i]
             if len(var) == 0: continue
@@ -212,6 +221,12 @@ class Dataset:
                 base[token_i] = base[token_i].replace(var_temp, base_choice)
                 src[token_i] = src[token_i].replace(var_temp, src_choice)
             # set other vars (same for both)
+            elif '.' in var:
+                head_var = var.split('.')[0]
+                if head_var not in stored_choices:
+                    stored_choices[head_var] = random.randint(0, len(self.variables[var]) - 1)
+                base[token_i] = base[token_i].replace(var_temp, self.variables[var][stored_choices[head_var]])
+                src[token_i] = src[token_i].replace(var_temp, self.variables[var][stored_choices[head_var]])
             else:
                 choice = random.choice(self.variables[var])
                 base[token_i] = base[token_i].replace(var_temp, choice)
@@ -281,7 +296,7 @@ class Dataset:
 
 
 def load_from_syntaxgym():
-    for suite_file in glob.glob("data/test_suites/subordination.json"):
+    for suite_file in glob.glob("data/test_suites/gss_subord_pp.json"):
         print(suite_file.split('/')[-1])
         with open(suite_file, "r") as f:
             suite = json.load(f)
@@ -289,16 +304,14 @@ def load_from_syntaxgym():
             continue
         print(len(suite["items"]))
 
-        region_numbers = defaultdict(set)
+        region_numbers = defaultdict(list)
         for i, item in enumerate(suite["items"]):
             for condition in item["conditions"]:
                 for region in condition["regions"]:
-                    region_numbers[f"{condition['condition_name']}_{region['region_number']}"].add(region["content"])
+                    region_numbers[f"{condition['condition_name']}_{region['region_number']}"].append(region["content"])
 
-        # convert sets to lists
-        region_numbers = {k: str(list(v)) for k, v in region_numbers.items()}
-        print(json.dumps(region_numbers, indent=2).replace("'", '"'))
-        input()
+        for key in region_numbers:
+            print(key, json.dumps(region_numbers[key]))
 
 
 def list_datasets() -> list[str]:

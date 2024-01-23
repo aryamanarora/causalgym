@@ -28,7 +28,7 @@ WEIGHTS = {
     "EleutherAI/pythia-70m": float32,
     "EleutherAI/pythia-160m": float32,
     "EleutherAI/pythia-410m": float32,
-    "EleutherAI/pythia-1b": bfloat16,
+    "EleutherAI/pythia-1b": float32,
     "EleutherAI/pythia-1.4b": float32,
     "EleutherAI/pythia-2.8b": float32,
     "EleutherAI/pythia-6.9b": float16,

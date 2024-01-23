@@ -11,7 +11,7 @@ from tqdm import tqdm
 import json
 
 @torch.no_grad()
-def benchmark(model=None, task=None, debug=False):
+def benchmark(model=None, task=None, debug=False, rank=False):
 
     # get models, data
     if model is None:
@@ -33,9 +33,9 @@ def benchmark(model=None, task=None, debug=False):
             revision="main",
             torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32,
         ).to(device)
-        print(model)
-        print(gpt.config.num_hidden_layers)
         gpt.eval()
+        # print model dtype
+        print(f"{model:<30} {gpt.dtype}")
 
         # make data
         for dataset in datasets:
@@ -88,16 +88,17 @@ def benchmark(model=None, task=None, debug=False):
                 "parameters": gpt.num_parameters(),
             })
             print(f"{dataset:<30} {correct / count:>10.2%} ({correct} / {count})")
-            for k, v in probs.items():
-                probs[k] = (v / count)
-                print(k.upper())
-                top_vals(tokenizer, probs[k], n=10)
+            if rank:
+                for k, v in probs.items():
+                    probs[k] = (v / count)
+                    print(k.upper())
+                    top_vals(tokenizer, probs[k], n=10)
+                    print('---')
+                print("DIFF")
+                top_vals(tokenizer, list(probs.values())[1] - list(probs.values())[0], n=10)
                 print('---')
-            print("DIFF")
-            top_vals(tokenizer, list(probs.values())[1] - list(probs.values())[0], n=5)
-            print('---')
-            top_vals(tokenizer, list(probs.values())[0] - list(probs.values())[1], n=5)
-            print('---')
+                top_vals(tokenizer, list(probs.values())[0] - list(probs.values())[1], n=10)
+                print('---')
     
     # save data
     with open("logs/benchmark.json", "w") as f:
@@ -109,6 +110,7 @@ def main():
     parser.add_argument("--model", type=str, default=None)
     parser.add_argument("--task", type=str, default=None)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--rank", action="store_true")
     args = parser.parse_args()
     benchmark(**vars(args))
 
