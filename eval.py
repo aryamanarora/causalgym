@@ -32,9 +32,9 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int,
 
         # get last token probs
         logits = get_last_token(counterfactual_outputs.logits, batch.base['attention_mask'])
-        probs = logits.softmax(dim=-1)
+        probs = logits.log_softmax(dim=-1)
         base_logits = get_last_token(base_outputs[0].logits, batch.base['attention_mask'])
-        base_probs = base_logits.softmax(dim=-1)
+        base_probs = base_logits.log_softmax(dim=-1)
         loss = calculate_loss(logits, batch.src_labels)
 
         # get probs
@@ -42,7 +42,7 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int,
             src_label = batch.src_labels[batch_i]
             base_label = batch.base_labels[batch_i]
             riia = 1 if logits[batch_i][src_label].item() > logits[batch_i][base_label].item() else 0
-            odds_ratio = (base_probs[batch_i][base_label] / base_probs[batch_i][src_label]) * (probs[batch_i][src_label] / probs[batch_i][base_label])
+            odds_ratio = (base_probs[batch_i][base_label] - base_probs[batch_i][src_label]) + (probs[batch_i][src_label] - probs[batch_i][base_label])
 
             # store stats
             data.append({

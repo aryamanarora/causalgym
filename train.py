@@ -58,9 +58,9 @@ def train_das(
         # inference
         pos_interv = batch.pos[:, :, pos_i].tolist()
         base_outputs, counterfactual_outputs = intervenable(
-            batch.base,
-            [None, batch.src],
-            {"sources->base": ([None, pos_interv[1]], pos_interv)},
+            base=batch.base,
+            sources=[None, batch.src],
+            unit_locations={"sources->base": ([None, pos_interv[1]], pos_interv)},
         )
 
         # store activations/labels for training non-causal methods

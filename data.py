@@ -111,7 +111,6 @@ class Batch:
 
     def _compute_pos(self) -> torch.LongTensor:
         """Compute pos alignments as tensors."""
-
         # shape of alignment: [batch_size, 2, num_spans, tokens_in_span]
         # not a proper tensor though! tokens_in_span is variable, rest is constant
         ret = []
@@ -126,7 +125,7 @@ class Batch:
                     continue
                 ret_base.append(self.alignment_base[batch_i][span_i][position])
                 ret_src.append(self.alignment_src[batch_i][span_i][position])
-            ret.append([ret_base, ret_src])
+            ret.append([ret_src, ret_base])
         
         # shape: [2, batch_size, length, 1]
         # dim 0 -> src, base (the intervention code wants src first)

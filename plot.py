@@ -1,7 +1,5 @@
-from h11 import Data
-from matplotlib import axis
 from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text, geom_smooth, facet_grid
-from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
+from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous, scale_fill_gradient2
 import json
 import pandas as pd
 import glob
@@ -9,6 +7,7 @@ import argparse
 from data import Dataset
 from eval import augment_data
 from itertools import combinations
+from math import log
 
 
 def plot_benchmark():
@@ -42,10 +41,14 @@ def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sen
     # plot
     plot = (
         ggplot(df, aes(x="pos", y="layer"))
-        + geom_tile(aes(fill=metric)) + scale_fill_cmap("Purples", limits=[0,1])
+        + geom_tile(aes(fill=metric))
         + geom_text(aes(label=f"{metric}_formatted"), color="black", size=7) + ggtitle(title)
         + facet_wrap("~method")
     )
+    if metric != "odds_ratio":
+        plot += scale_fill_cmap("Purples", limits=[0,1])
+    else:
+        plot += scale_fill_gradient2(low="orange", mid="white", high="purple", midpoint=0)
 
     # modify x axis labels to use sentence
     if sentence is not None:
@@ -169,13 +172,17 @@ if __name__ == "__main__":
     parser.add_argument("--file", type=str)
     args = parser.parse_args()
 
-    if args.plot in ["iia", "acc"]:
+    if args.plot in ["iia", "acc", "odds"]:
         with open(args.file, 'r') as f:
-            log = json.load(f)
+            data = json.load(f)
             if args.plot == "iia":
-                plot_per_pos(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+                plot_per_pos(pd.DataFrame(data["data"]), sentence=data["metadata"]["span_names"])
             elif args.plot == "acc":
-                plot_per_pos(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
+                plot_per_pos(pd.DataFrame(data["data"]), metric="accuracy",
+                             sentence=data["metadata"]["span_names"], loc="figs/das/pos_acc.pdf")
+            elif args.plot == "odds":
+                plot_per_pos(pd.DataFrame(data["data"]), metric="odds_ratio",
+                             sentence=data["metadata"]["span_names"], loc="figs/das/pos_odds.pdf")
     elif args.plot == "benchmark":
         plot_benchmark()
     elif args.plot == "compare":

@@ -94,12 +94,15 @@ def experiment(
             
             # test other methods
             for method in method_to_class_mapping.keys():
-                more_data, summary = train_feature_direction(
-                    method, intervenable, activations, evalset,
-                    layer_i, pos_i, intervention_site
-                )
-                tqdm.write(f"{method}: {summary}")
-                data.extend(more_data)
+                try:
+                    more_data, summary = train_feature_direction(
+                        method, intervenable, activations, evalset,
+                        layer_i, pos_i, intervention_site
+                    )
+                    tqdm.write(f"{method}: {summary}")
+                    data.extend(more_data)
+                except:
+                    continue
             
             # store all data
             total_data.extend(augment_data(data, {"layer": layer_i, "pos": pos_i}))
