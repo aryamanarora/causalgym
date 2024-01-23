@@ -18,6 +18,7 @@ with torch.no_grad():
     while True:
         text = input("Text: ")
         text = tokenizer(text, return_tensors="pt").to(device)
+        print([format_token(tokenizer, i) for i in text.input_ids[0]])
         logits = gpt(**text).logits[0, -1]
         probs = logits.softmax(-1)
         top_vals(tokenizer, probs)

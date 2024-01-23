@@ -56,7 +56,7 @@ def experiment(
     # make dataset
     data_source = Dataset.load_from(dataset)
     trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, strategy="last", seed=42, model=gpt)
-    evalset = data_source.sample_batches(tokenizer, batch_size, 20, device, strategy="last", seed=420, model=gpt)
+    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, strategy="last", seed=420, model=gpt)
     
     # entering train loops
     for pos_i in range(data_source.length):
@@ -94,15 +94,12 @@ def experiment(
             
             # test other methods
             for method in method_to_class_mapping.keys():
-                try:
-                    more_data, summary = train_feature_direction(
-                        method, intervenable, activations, evalset,
-                        layer_i, pos_i, intervention_site
-                    )
-                    tqdm.write(f"{method}: {summary}")
-                    data.extend(more_data)
-                except:
-                    continue
+                more_data, summary = train_feature_direction(
+                    method, intervenable, activations, evalset,
+                    layer_i, pos_i, intervention_site
+                )
+                tqdm.write(f"{method}: {summary}")
+                data.extend(more_data)
             
             # store all data
             total_data.extend(augment_data(data, {"layer": layer_i, "pos": pos_i}))
@@ -135,7 +132,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
     parser.add_argument("--dataset", type=str, default="syntaxgym/agr_gender")
-    parser.add_argument("--steps", type=int, default=200)
+    parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--eval-steps", type=int, default=25)
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)

@@ -4,12 +4,13 @@ from transformers import get_linear_schedule_with_warmup
 
 from eval import augment_data, calculate_loss, eval
 from utils import get_last_token
-from interventions import intervention_config, IntervenableModel, LowRankRotatedSpaceIntervention, BoundlessRotatedSpaceIntervention
+from interventions import intervention_config
+import pyvene as pv
 from diff_methods import method_to_class_mapping
 from data import Batch
 
 def train_das(
-        intervenable: IntervenableModel, trainset: list[Batch], evalset: list[Batch],
+        intervenable: pv.IntervenableModel, trainset: list[Batch], evalset: list[Batch],
         layer_i: int, pos_i: int, eval_steps: int, grad_steps: int):
     """Train DAS or Boundless DAS on a model."""
 
@@ -21,12 +22,12 @@ def train_das(
     # optimizer
     optimizer_params = []
     for k, v in intervenable.interventions.items():
-        if isinstance(v[0], LowRankRotatedSpaceIntervention):
+        if isinstance(v[0], pv.LowRankRotatedSpaceIntervention):
             optimizer_params.append({"params": v[0].rotate_layer.parameters()})
-        elif isinstance(v[0], BoundlessRotatedSpaceIntervention):
+        elif isinstance(v[0], pv.BoundlessRotatedSpaceIntervention):
             optimizer_params.append({"params": v[0].rotate_layer.parameters()})
             optimizer_params.append({"params": v[0].intervention_boundaries, "lr": 1e-2})
-    optimizer = torch.optim.Adam(optimizer_params, lr=1e-3)
+    optimizer = torch.optim.Adam(optimizer_params, lr=1e-2)
     # print("model trainable parameters: ", count_parameters(intervenable.model))
     # print("intervention trainable parameters: ", intervenable.count_parameters())
 
@@ -81,7 +82,7 @@ def train_das(
             stats["lr"] = scheduler.optimizer.param_groups[0]['lr']
             stats["loss"] = f"{total_loss.item():.3f}"
             for k, v in intervenable.interventions.items():
-                if isinstance(v[0], BoundlessRotatedSpaceIntervention):
+                if isinstance(v[0], pv.BoundlessRotatedSpaceIntervention):
                     stats["bound"] = f"{v[0].intervention_boundaries.sum() * v[0].embed_dim:.3f}"
             iterator.set_postfix(stats)
 
@@ -108,7 +109,7 @@ def train_das(
 
 
 def train_feature_direction(
-        method: str, intervenable: IntervenableModel, activations: list[tuple[torch.tensor, str]],
+        method: str, intervenable: pv.IntervenableModel, activations: list[tuple[torch.tensor, str]],
         evalset: list[Batch], layer_i: int, pos_i: int, intervention_site: str):
     """Train/compute and evaluate an intervention direction on some activations."""
 
@@ -116,18 +117,16 @@ def train_feature_direction(
     labels = [label for _, label in activations]
     activations = [activation.type(torch.float32) for activation, _ in activations]
     diff_vector, accuracy = method_to_class_mapping[method](activations, labels)
-    diff_vector = diff_vector.to(intervenable.get_device())
-
-    # set up 1D intervention w that vector
-    intervenable._cleanup_states()
-    intervention = LowRankRotatedSpaceIntervention(activations[0].shape[-1], proj_dim=1)
-    intervention.to(intervenable.get_device())
-    intervention.rotate_layer.weight = diff_vector.unsqueeze(1)
+    diff_vector = diff_vector.to(intervenable.get_device()).unsqueeze(1)
 
     # new config
-    eval_config = intervention_config(type(intervenable.model), intervention_site, layer_i, 1, intervention)
-    intervenable2 = IntervenableModel(eval_config, intervenable.model)
+    eval_config = intervention_config(type(intervenable.model), intervention_site, layer_i, 1)
+    intervenable2 = pv.IntervenableModel(eval_config, intervenable.model)
     intervenable2.set_device(intervenable.get_device())
+    intervenable2.disable_model_gradients()
+    for k, v in intervenable2.interventions.items():
+        if isinstance(v[0], pv.LowRankRotatedSpaceIntervention):
+            v[0].rotate_layer.weight = diff_vector
 
     # eval
     data, summary = eval(intervenable2, evalset, layer_i, pos_i)

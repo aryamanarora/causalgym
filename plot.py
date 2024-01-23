@@ -1,11 +1,14 @@
+from h11 import Data
 from matplotlib import axis
-from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text, facet_grid, geom_histogram
+from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text, geom_smooth, facet_grid
 from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous
 import json
 import pandas as pd
 import glob
 import argparse
+from data import Dataset
 from eval import augment_data
+from itertools import combinations
 
 
 def plot_benchmark():
@@ -40,7 +43,7 @@ def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sen
     plot = (
         ggplot(df, aes(x="pos", y="layer"))
         + geom_tile(aes(fill=metric)) + scale_fill_cmap("Purples", limits=[0,1])
-        + geom_text(aes(label=f"{metric}_formatted"), color="black", size=10) + ggtitle(title)
+        + geom_text(aes(label=f"{metric}_formatted"), color="black", size=7) + ggtitle(title)
         + facet_wrap("~method")
     )
 
@@ -51,11 +54,22 @@ def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sen
     plot.save(loc, width=10, height=10)
 
 
-def summarise(directory: str):
+def plot_all(directory: str):
+    for f in glob.glob(f"{directory}/*.json"):
+        with open(f, 'r') as f:
+            log = json.load(f)
+            dataset = Dataset.load_from(log["metadata"]["dataset"])
+            pair = dataset.sample_pair()
+            sentence = [pair.base[i] if pair.base[i] == pair.src[i] else pair.base[i] + " / " + pair.src[i] for i in range(len(pair.base))]
+            plot_per_pos(pd.DataFrame(log["data"]),
+                         sentence=sentence,
+                         loc=f"figs/das/{log['metadata']['model'].split('/')[-1]}__{log['metadata']['dataset'].split('/')[1]}.pdf")
 
+
+def load_directory(directory: str):
     # collect all data
     all_data = []
-    for f in glob.glob(f"{args.file}/*.json"):
+    for f in glob.glob(f"{directory}/*.json"):
         with open(f, 'r') as f:
             j = json.load(f)
             data = j['data']
@@ -67,6 +81,12 @@ def summarise(directory: str):
     last_step = df["step"].max()
     df = df[(df["step"] == last_step) | (df["step"] == -1)]
     df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
+    return df
+
+
+def summarise(directory: str):
+    # collect all data
+    df = load_directory(directory)
 
     # get average iia over layers, max'd 
     df = df[["dataset", "model", "method", "layer", "pos", "iia"]]
@@ -116,6 +136,33 @@ def summarise(directory: str):
         print(split.to_latex(index=False))
 
 
+def compare(directory: str):
+    # collect all data
+    df = load_directory(directory)
+    # df = df[df["method"].isin([method1, method2])].reset_index(drop=True)
+    df = df[["dataset", "model", "layer", "pos", "method", "iia"]]
+    df = df.groupby(["dataset", "model", "layer", "pos", "method"]).mean().reset_index()
+    # df = df.pivot(index=["dataset", "model", "layer", "pos"], columns="method", values="iia").reset_index()
+
+    # make columns of method1 and method2 for all possible pairs of methods
+    # Create a new DataFrame for paired comparisons
+    paired_df = []
+
+    # Iterate over each unique combination of dataset, model, layer, pos
+    for _, group in df.groupby(["dataset", "model", "layer", "pos"]):
+        # Get all combinations of methods within the group
+        model = group["model"].values.tolist()[0]
+        for (method1, iia1), (method2, iia2) in combinations(group[["method", "iia"]].values, 2):
+            paired_df.append({"model": model, "method1": method1, "method2": method2, "iia1": iia1, "iia2": iia2})
+    df = pd.DataFrame(paired_df)
+
+    plot = (
+        ggplot(df, aes(x="iia2", y="iia1", fill="model")) + geom_point(alpha=0.2, stroke=0)
+        + facet_grid("method1~method2")
+    )
+    plot.save("figs/das/compare.pdf", width=10, height=10)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--plot", type=str, default="iia")
@@ -131,5 +178,8 @@ if __name__ == "__main__":
                 plot_per_pos(pd.DataFrame(log["data"]), sentence=log["metadata"]["span_names"])
     elif args.plot == "benchmark":
         plot_benchmark()
+    elif args.plot == "compare":
+        compare(args.file)
     elif args.plot == "all":
+        plot_all(args.file)
         summarise(args.file)
