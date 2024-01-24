@@ -16,14 +16,14 @@ def calculate_loss(logits: torch.tensor, label: torch.tensor):
 
 
 @torch.no_grad()
-def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int, pos_i: int):
+def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int, pos_i: int, strategy: str):
     """Evaluate an intervention on an evalset."""
 
     data = []
     for batch in evalset:
 
         # inference
-        pos_interv = batch.pos[:, :, pos_i].tolist()
+        pos_interv = [[x[pos_i] for x in y] for y in batch.compute_pos(strategy)]
         base_outputs, counterfactual_outputs = intervenable(
             batch.base,
             [None, batch.src],

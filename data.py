@@ -83,13 +83,10 @@ class Batch:
     at inference time, using the tokenized pair and alignments.
     """
 
-    def __init__(
-            self, pairs: list[Pair], tokenizer: AutoTokenizer, device: str="cpu",
-            strategy: str="last"):
+    def __init__(self, pairs: list[Pair], tokenizer: AutoTokenizer, device: str="cpu"):
         self.pairs = pairs
 
         # tokenize base and src
-        self.pos_strategy = strategy
         tokenized = [pair.tokenize(tokenizer, device) for pair in pairs]
         max_len = max([max(x.base.input_ids.shape[-1], x.src.input_ids.shape[-1]) for x in tokenized])
         self.base = self._stack_and_pad([x.base for x in tokenized], max_len=max_len)
@@ -102,34 +99,47 @@ class Batch:
         self.src_labels = torch.LongTensor([tokenizer.encode(pair.src_label)[0] for pair in pairs]).to(device)
         self.base_types = [pair.base_type for pair in pairs]
         self.src_types = [pair.src_type for pair in pairs]
+        self.cached_pos = {}
+    
+    
+    def _pos_bounds(self, span1: list[int], span2: list[int]) -> list[int]:
+        """Compute the bounds of a span."""
+        if self.pos_strategy == "first":
+            return span1[:1], span2[:1]
+        elif self.pos_strategy == "last":
+            return span1[-1:], span2[-1:]
+        elif self.pos_strategy == "all":
+            max_len = max(len(span1), len(span2))
+            return span1 + [span1[-1]] * (max_len - len(span1)), span2 + [span2[-1]] * (max_len - len(span2))
     
 
-    @property
-    def pos(self):
-        return self._compute_pos().to(self.base_labels.device)
-    
-
-    def _compute_pos(self) -> torch.LongTensor:
+    def compute_pos(self, strategy: str) -> torch.LongTensor:
         """Compute pos alignments as tensors."""
         # shape of alignment: [batch_size, 2, num_spans, tokens_in_span]
         # not a proper tensor though! tokens_in_span is variable, rest is constant
-        ret = []
-        position = 0 if self.pos_strategy == "first" else -1
+        if strategy in self.cached_pos:
+            return self.cached_pos[strategy]
+        self.pos_strategy = strategy
+        assert self.pos_strategy in ["first", "last", "all"]
+        rets_base, rets_src = [], []
         for batch_i in range(len(self.pairs)):
             ret_base, ret_src = [], []
             for span_i in range(len(self.alignment_src[batch_i])):
                 # skip null alignments
                 if len(self.alignment_base[batch_i][span_i]) == 0 or len(self.alignment_src[batch_i][span_i]) == 0:
-                    ret_base.append(-1)
-                    ret_src.append(-1)
-                    continue
-                ret_base.append(self.alignment_base[batch_i][span_i][position])
-                ret_src.append(self.alignment_src[batch_i][span_i][position])
-            ret.append([ret_src, ret_base])
+                    ret_base.append([-1])
+                    ret_src.append([-1])
+                else:
+                    bounds = self._pos_bounds(self.alignment_base[batch_i][span_i], self.alignment_src[batch_i][span_i])
+                    ret_base.append(bounds[0])
+                    ret_src.append(bounds[1])
+            rets_base.append(ret_base)
+            rets_src.append(ret_src)
         
         # shape: [2, batch_size, length, 1]
         # dim 0 -> src, base (the intervention code wants src first)
-        ret = torch.LongTensor(ret).permute(1, 0, 2).unsqueeze(-1)
+        ret = [rets_src, rets_base]
+        self.cached_pos[strategy] = ret
         return ret
 
 
@@ -273,7 +283,7 @@ class Dataset:
 
     def sample_batch(
             self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu",
-            strategy="last", model: Union[AutoModel, None]=None) -> Batch:
+            model: Union[AutoModel, None]=None) -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
         pairs = [
             self.sample_pair()
@@ -283,16 +293,15 @@ class Dataset:
         ]
         for i in range(batch_size // 2):
             pairs.append(pairs[i].swap())
-        return Batch(pairs, tokenizer, device, strategy)
+        return Batch(pairs, tokenizer, device)
 
 
     def sample_batches(
             self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int,
-            device: str="cpu", strategy="last", seed: int=42,
-            model: Union[AutoModel, None]=None) -> list[Batch]:
+            device: str="cpu", seed: int=42, model: Union[AutoModel, None]=None) -> list[Batch]:
         """Sample a list of batches of minimal pairs from the dataset."""
         random.seed(seed)
-        return [self.sample_batch(tokenizer, batch_size, device, strategy, model) for _ in tqdm(range(num_batches))]
+        return [self.sample_batch(tokenizer, batch_size, device, model) for _ in tqdm(range(num_batches))]
 
 
 def load_from_syntaxgym():

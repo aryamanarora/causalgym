@@ -37,6 +37,7 @@ def experiment(
     grad_steps: int,
     batch_size: int,
     intervention_site: str,
+    strategy: str,
 ):
     """Run a feature-finding experiment."""
 
@@ -55,12 +56,12 @@ def experiment(
 
     # make dataset
     data_source = Dataset.load_from(dataset)
-    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, strategy="last", seed=42, model=gpt)
-    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, strategy="last", seed=420, model=gpt)
+    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, seed=42, model=gpt)
+    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, model=gpt)
     
     # entering train loops
-    for pos_i in range(data_source.length):
-        if trainset[0].pos[0, 0, pos_i, 0] == -1:
+    for pos_i in range(1, data_source.length):
+        if trainset[0].compute_pos(strategy)[0][0][pos_i][0] == -1:
             continue
 
         # per-layer training loop
@@ -70,26 +71,31 @@ def experiment(
             data = []
 
             # vanilla intervention
-            intervenable_config = intervention_config(
-                type(gpt), intervention_site, layer_i, 0
-            )
-            intervenable = IntervenableModel(intervenable_config, gpt)
-            intervenable.set_device(device)
-            intervenable.disable_model_gradients()
+            if strategy != "all":
+                intervenable_config = intervention_config(
+                    intervention_site, pv.VanillaIntervention, layer_i, 0
+                )
+                intervenable = IntervenableModel(intervenable_config, gpt)
+                intervenable.set_device(device)
+                intervenable.disable_model_gradients()
 
-            more_data, summary = eval(intervenable, evalset, layer_i, pos_i)
-            data.extend(augment_data(more_data, {"method": "vanilla", "step": -1}))
-            tqdm.write(f"vanilla: {summary}")
+                more_data, summary = eval(intervenable, evalset, layer_i, pos_i, strategy)
+                data.extend(augment_data(more_data, {"method": "vanilla", "step": -1}))
+                tqdm.write(f"vanilla: {summary}")
 
             # DAS intervention
             intervenable_config = intervention_config(
-                type(gpt), intervention_site, layer_i, 1
+                intervention_site,
+                pv.LowRankRotatedSpaceIntervention if strategy != "all" else PooledLowRankRotatedSpaceIntervention,
+                layer_i, 1
             )
             intervenable = IntervenableModel(intervenable_config, gpt)
             intervenable.set_device(device)
             intervenable.disable_model_gradients()
 
-            _, more_data, activations = train_das(intervenable, trainset, evalset, layer_i, pos_i, eval_steps, grad_steps)
+            _, more_data, activations = train_das(
+                intervenable, trainset, evalset, layer_i, pos_i, strategy,
+                eval_steps, grad_steps)
             data.extend(more_data)
             
             # test other methods
@@ -97,7 +103,7 @@ def experiment(
                 try:
                     more_data, summary = train_feature_direction(
                         method, intervenable, activations, evalset,
-                        layer_i, pos_i, intervention_site
+                        layer_i, pos_i, strategy, intervention_site
                     )
                     tqdm.write(f"{method}: {summary}")
                     data.extend(more_data)
@@ -140,6 +146,7 @@ def main():
     parser.add_argument("--grad-steps", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--intervention-site", type=str, default="block_output")
+    parser.add_argument("--strategy", type=str, default="last")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
