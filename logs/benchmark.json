@@ -1,1 +1,1 @@
-[{"model": "EleutherAI/pythia-1b", "dataset": "syntaxgym/filler_gap_embed_3", "count": 400, "correct": 142, "iia": 0.355, "parameters": 1011781632}, {"model": "EleutherAI/pythia-1b", "dataset": "syntaxgym/filler_gap_hierarchy", "count": 400, "correct": 272, "iia": 0.68, "parameters": 1011781632}]
+[{"model": "EleutherAI/pythia-70m", "dataset": "syntaxgym/filler_gap_obj", "count": 400, "correct": 336, "iia": 0.84, "parameters": 70426624}]

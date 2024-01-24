@@ -7,7 +7,7 @@ from data import Batch
 loss_fct = CrossEntropyLoss()
 
 
-def calculate_loss(logits: torch.tensor, label: torch.tensor):
+def calculate_loss(logits: torch.tensor, label: torch.tensor) -> torch.tensor:
     """Calculate cross entropy between logits and a single target label (can be batched)"""
     shift_logits = logits.contiguous()
     shift_labels = label.to(shift_logits.device)
@@ -16,10 +16,11 @@ def calculate_loss(logits: torch.tensor, label: torch.tensor):
 
 
 @torch.no_grad()
-def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int, pos_i: int, strategy: str):
+def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
+         layer_i: int, pos_i: int, strategy: str) -> tuple[list[dict], dict, list[tuple]]:
     """Evaluate an intervention on an evalset."""
 
-    data = []
+    data, activations = [], []
     for batch in evalset:
 
         # inference
@@ -29,6 +30,12 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int,
             [None, batch.src],
             {"sources->base": ([None, pos_interv[1]], pos_interv)},
         )
+
+        # store activations/labels for training non-causal methods
+        for batch_i in range(len(batch.pairs)):
+            for unit_i in range(base_outputs[-1][batch_i].shape[0]):
+                activation = base_outputs[-1][batch_i][unit_i].detach().cpu()
+                activations.append((activation, batch.base_types[batch_i]))
 
         # get last token probs
         logits = get_last_token(counterfactual_outputs.logits, batch.base['attention_mask'])
@@ -63,10 +70,10 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch], layer_i: int,
     }
     
     # update iterator
-    return data, summary
+    return data, summary, activations
 
 
-def augment_data(data, information):
+def augment_data(data: list[dict], information: dict) -> list[dict]:
     """Add information to a list of dicts."""
     for d in data:
         d.update(information)

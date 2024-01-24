@@ -253,13 +253,15 @@ class Dataset:
     
 
     @torch.no_grad()
-    def _sample_doable_pair(self, model: AutoModel, tokenizer: AutoTokenizer, device: str="cpu") -> Pair:
+    def _sample_doable_pair(self, model: AutoModel, tokenizer: AutoTokenizer, device: str="cpu", discard: set[str]=set()) -> Pair:
         """Sample a minimal pair from the dataset that is correctly labelled by a model."""
 
         # keep resampling until we get a pair that is correctly labelled
         correct, ct = False, 0
         while not correct:
             pair = self.sample_pair()
+            if ''.join(pair.base) in discard:
+                continue
             base = tokenizer(''.join(pair.base), return_tensors="pt").to(device)
             src = tokenizer(''.join(pair.src), return_tensors="pt").to(device)
             base_logits = model(**base).logits[0, -1]
@@ -270,12 +272,8 @@ class Dataset:
                 correct = True
             ct += 1
             if ct == 20 and not correct:
-                print(pair.base, f"'{pair.base_label}'")
-                top_vals(tokenizer, base_logits.softmax(-1), n=5, highlight=[base_label, src_label])
-                print(pair.src, f"'{pair.src_label}'")
-                top_vals(tokenizer, src_logits.softmax(-1), n=5, highlight=[base_label, src_label])
-                input()
                 print("WARNING: could not find a doable pair after 20 iterations")
+                print("Using a random pair instead")
                 break
             
         return pair
@@ -283,12 +281,12 @@ class Dataset:
 
     def sample_batch(
             self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu",
-            model: Union[AutoModel, None]=None) -> Batch:
+            model: Union[AutoModel, None]=None, discard: set[str]=set()) -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
         pairs = [
             self.sample_pair()
             if model is None else
-            self._sample_doable_pair(model, tokenizer, device)
+            self._sample_doable_pair(model, tokenizer, device, discard)
             for _ in range(batch_size // 2)
         ]
         for i in range(batch_size // 2):
@@ -298,10 +296,11 @@ class Dataset:
 
     def sample_batches(
             self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int,
-            device: str="cpu", seed: int=42, model: Union[AutoModel, None]=None) -> list[Batch]:
+            device: str="cpu", seed: int=42, model: Union[AutoModel, None]=None,
+            discard: set[str]=set()) -> list[Batch]:
         """Sample a list of batches of minimal pairs from the dataset."""
         random.seed(seed)
-        return [self.sample_batch(tokenizer, batch_size, device, model) for _ in tqdm(range(num_batches))]
+        return [self.sample_batch(tokenizer, batch_size, device, model, discard) for _ in tqdm(range(num_batches))]
 
 
 def load_from_syntaxgym():

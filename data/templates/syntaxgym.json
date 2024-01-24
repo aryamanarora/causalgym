@@ -493,7 +493,7 @@
     "filler_gap_embed_3": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=279",
         "templates": [
-            "{prefix} {gap} {subj} {embedding} {verb}"
+            "{prefix} {gap} the {np1} {v1} the {np2} {v2} the {np3} {v3} {subj} {verb}"
         ],
         "label": "gap",
         "result_prepend_space": false,
@@ -507,7 +507,41 @@
                 "that": ["that"],
                 "wh": ["what"]
             },
-            "embedding": ["our mother said her friend remarked that the park attendant reported", "the security guard believed his friend knew the assistant reported", "the man knew his friend recalled the woman said", "the delivery boy remarked that the worker said that the gardener knew", "her mother heard the newspaper reported the mayor said", "the judge thought the cop said the man testified", "the report stated the television host thought the man reported", "the accountant said his colleague recalled the partners knew", "the secretary said the journalist remarked that the workers decided", "the investigator thought the businessman believed the banker said", "my friend believes the professor said his colleague noticed", "the painter believed his rival suspected the colonel said", "our friend thought the reporter knows her contact said", "my neighbor said her associate knew a mutual friend stated", "their friend said the secretary believed the worker thinks", "her friend knew the delivery man believed the cop believes", "my friend said her mother knew the minister stated", "the woman believed the secretary said her friend recalled", "her mother stated a friend said her husband knew", "the politician stated his press secretary said the chief of staff thought", "the old man thinks the woman knows the young boy said"],
+            "np1": ["mother", "security guard", "man", "delivery boy", "judge", "reporter", "accountant", "secretary", "investigator", "businessman", "friend", "painter", "neighbor", "woman", "politician", "old man"],
+            "v1": ["said", "believed", "knew", "remarked", "heard", "thought", "stated", "said", "said", "thought", "believes", "believed", "said", "said", "said", "thinks", "said", "stated", "believed", "stated"],
+            "np2": ["friend", "assistant", "woman", "worker", "newspaper", "cop", "television host", "colleague", "journalist", "banker", "colleague", "rival", "reporter", "associate", "worker", "cop", "mother", "secretary", "friend", "press secretary", "woman"],
+            "v2": ["remarked", "reported", "recalled", "knew", "said", "testified", "reported", "recalled", "decided", "said", "noticed", "suspected", "said", "stated", "thinks", "believes", "stated", "recalled", "knew", "thought", "said"],
+            "np3": ["park attendant", "assistant", "woman", "gardener", "mayor", "man", "man", "partner", "worker", "banker", "colleague", "colonel", "contact", "mutual friend", "worker", "cop", "minister", "secretary", "friend", "chief of staff", "young boy"],
+            "v3": ["reported", "said", "said", "knew", "said", "testified", "reported", "knew", "decided", "said", "noticed", "said", "said", "stated", "thinks", "believes", "stated", "recalled", "knew", "thought", "said"],
+            "subj": ["your friend", "the secretary", "the pilot", "the funny actor", "the young woman", "the successful architect", "the police detective", "the investor", "the business man", "the boss", "the visitor", "the suffering artist", "the young politician", "the young professional", "the elderly lady", "the single mother", "the human resources officer", "the five star general", "the journalist", "the reporter", "the teacher"],
+            "verb": ["sent", "told", "handed", "lent", "repaid", "promised", "sold", "told", "said", "described", "gave"]
+        }
+    },
+    "filler_gap_embed_4": {
+        "source": "https://syntaxgym.org/test_suite/items?test_suite=267",
+        "templates": [
+            "{prefix} {gap} the {np1} {v1} the {np2} {v2} the {np3} {v3} the {np4} {v4} {subj} {verb}"
+        ],
+        "label": "gap",
+        "result_prepend_space": false,
+        "labels": {
+            "that": [" that"],
+            "wh": ["."]
+        },
+        "variables": {
+            "prefix": ["I know", "The accountant knew", "The assistant told me", "We discovered", "The neighbors found out", "My friend knows", "The commissioner discovered", "We all know", "I know", "The newspaper reported", "Her friend found out", "I realized", "The novel revealed", "We all know", "I know", "My friends all know", "The visitor said", "I know", "The colleagues realized", "She said", "We all know"],
+            "gap": {
+                "that": ["that"],
+                "wh": ["what"]
+            },
+            "np1": ["mother", "security guard", "man", "delivery boy", "judge", "reporter", "accountant", "secretary", "investigator", "businessman", "friend", "painter", "neighbor", "woman", "politician", "old man"],
+            "v1": ["said", "believed", "knew", "remarked", "heard", "thought", "stated", "said", "said", "thought", "believes", "believed", "said", "said", "said", "thinks", "said", "stated", "believed", "stated"],
+            "np2": ["friend", "assistant", "woman", "worker", "newspaper", "cop", "television host", "colleague", "journalist", "banker", "colleague", "rival", "reporter", "associate", "worker", "cop", "mother", "secretary", "friend", "press secretary", "woman"],
+            "v2": ["remarked", "reported", "recalled", "knew", "said", "testified", "reported", "recalled", "decided", "said", "noticed", "suspected", "said", "stated", "thinks", "believes", "stated", "recalled", "knew", "thought", "said"],
+            "np3": ["park attendant", "assistant", "woman", "gardener", "mayor", "man", "man", "partner", "worker", "banker", "colleague", "colonel", "contact", "mutual friend", "worker", "cop", "minister", "secretary", "friend", "chief of staff", "young boy"],
+            "v3": ["reported", "said", "said", "knew", "said", "testified", "reported", "knew", "decided", "said", "noticed", "said", "said", "stated", "thinks", "believes", "stated", "recalled", "knew", "thought", "said"],
+            "np4": ["cop", "colleague", "maid", "assistant", "friend", "lawyer", "accountant", "representative", "student", "sister", "boss", "partner", "brother"],
+            "v4": ["thinks", "suspected", "saw", "remembers", "reported", "said", "suspects", "thinks", "believes", "recalled", "recalls"],
             "subj": ["your friend", "the secretary", "the pilot", "the funny actor", "the young woman", "the successful architect", "the police detective", "the investor", "the business man", "the boss", "the visitor", "the suffering artist", "the young politician", "the young professional", "the elderly lady", "the single mother", "the human resources officer", "the five star general", "the journalist", "the reporter", "the teacher"],
             "verb": ["sent", "told", "handed", "lent", "repaid", "promised", "sold", "told", "said", "described", "gave"]
         }
@@ -531,6 +565,26 @@
             },
             "subj_embed": ["friend", "criminal", "convict", "old couple", "president", "client", "assistant", "mayor", "police", "man", "witness", "congressman", "author", "senator", "colleague", "officer", "brother", "friend", "suspect", "old woman", "cop", "patient"],
             "verb_embed": ["trusted", "shot", "kicked", "saw", "fired", "trusts", "represented", "cut", "talked with", "observed", "identified", "bribed", "liked", "will nominate", "does not like", "recommended", "talked with", "would wed", "does not like", "followed", "hit", "saved", "likes"]
+        }
+    },
+    "filler_gap_obj": {
+        "templates": [
+            "{prefix} {gap} the {np1} {verb}"
+        ],
+        "label": "gap",
+        "result_prepend_space": false,
+        "labels": {
+            "that": [" that"],
+            "wh": ["."]
+        },
+        "variables": {
+            "prefix": ["I know", "My neighbor told me", "I know", "You remember", "She told me", "She knows", "We all remember", "My friend reported", "I do not know", "She can guess", "The newspaper reported", "We recall", "I remember", "Our friend knew", "The mayor told me", "My friend remembers", "The newspaper said", "Our neighbor said", "My friend told me", "She can not believe", "Our neighbor reminded us", "The shop owner told me", "My sister told me", "We remember"],
+            "gap": {
+                "that": ["that"],
+                "wh": ["what"]
+            },
+            "np1": ["uncle", "dog", "committee", "businessman", "star student", "collector", "convict", "company", "her rival", "movie star", "suspect", "man", "nurse", "gossip column", "authorities", "government", "neighbors", "student", "university", "my good friend", "truck", "restaurant", "newspaper", "new friend"],
+            "verb": ["grabbed", "caught", "delivered", "showed", "stole", "forged", "brought", "will sell", "derailed", "will get", "killed", "placed", "should administer", "revealed", "repaired", "collected", "sold", "sent", "hired", "stole", "dragged", "prepared", "published", "brought"]
         }
     }
 }

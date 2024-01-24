@@ -40,7 +40,7 @@ def benchmark(model=None, task=None, debug=False, rank=False):
         # make data
         for dataset in datasets:
             data_source = Dataset.load_from(dataset)
-            trainset = data_source.sample_batches(tokenizer, 4, 100, device, strategy="last", seed=42)
+            trainset = data_source.sample_batches(tokenizer, 4, 100, device, seed=42)
             count, correct = 0, 0
             probs = {}
 

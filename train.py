@@ -11,11 +11,11 @@ from data import Batch
 
 def train_das(
         intervenable: pv.IntervenableModel, trainset: list[Batch], evalset: list[Batch],
-        layer_i: int, pos_i: int, strategy: str, eval_steps: int, grad_steps: int):
+        layer_i: int, pos_i: int, strategy: str, eval_steps: int, grad_steps: int, lr: float):
     """Train DAS or Boundless DAS on a model."""
 
     # setup
-    data, activations, stats = [], [], {}
+    data, activations, eval_activations, stats = [], [], [], {}
     total_steps = len(trainset)
     warm_up_steps = 0.1 * total_steps
 
@@ -27,7 +27,7 @@ def train_das(
         elif isinstance(v[0], pv.BoundlessRotatedSpaceIntervention):
             optimizer_params.append({"params": v[0].rotate_layer.parameters()})
             optimizer_params.append({"params": v[0].intervention_boundaries, "lr": 1e-2})
-    optimizer = torch.optim.Adam(optimizer_params, lr=1e-2)
+    optimizer = torch.optim.Adam(optimizer_params, lr=lr)
     # print("model trainable parameters: ", count_parameters(intervenable.model))
     # print("intervention trainable parameters: ", intervenable.count_parameters())
 
@@ -98,7 +98,9 @@ def train_das(
 
         # eval
         if (step % eval_steps == 0 or step == total_steps - 1):
-            more_data, summary = eval(intervenable, evalset, layer_i, pos_i, strategy)
+            more_data, summary, eval_activation = eval(intervenable, evalset, layer_i, pos_i, strategy)
+            if eval_activations == []:
+                eval_activations = eval_activation
             stats.update(summary)
             iterator.set_postfix(stats)
             data.extend(augment_data(more_data, {"method": "das", "step": step}))
@@ -106,18 +108,22 @@ def train_das(
         total_step += 1
     
     # return data
-    return intervenable, data, activations
+    return intervenable, data, activations, eval_activations
 
 
 def train_feature_direction(
         method: str, intervenable: pv.IntervenableModel, activations: list[tuple[torch.tensor, str]],
-        evalset: list[Batch], layer_i: int, pos_i: int, strategy: str, intervention_site: str):
+        eval_activations: list[tuple[torch.tensor, str]], evalset: list[Batch], layer_i: int,
+        pos_i: int, strategy: str, intervention_site: str) -> tuple[list[dict], dict]:
     """Train/compute and evaluate an intervention direction on some activations."""
 
     # get diff vector based on method
     labels = [label for _, label in activations]
     activations = [activation.type(torch.float32) for activation, _ in activations]
-    diff_vector, accuracy = method_to_class_mapping[method](activations, labels)
+    eval_labels = [label for _, label in eval_activations]
+    eval_activations = [activation.type(torch.float32) for activation, _ in eval_activations]
+    
+    diff_vector, accuracy = method_to_class_mapping[method](activations, labels, eval_activations, eval_labels)
     diff_vector = diff_vector.to(intervenable.get_device()).unsqueeze(1)
 
     # new config
@@ -134,7 +140,7 @@ def train_feature_direction(
             v[0].rotate_layer.weight = diff_vector
 
     # eval
-    data, summary = eval(intervenable2, evalset, layer_i, pos_i, strategy)
+    data, summary, _ = eval(intervenable2, evalset, layer_i, pos_i, strategy)
     if accuracy is not None:
         summary["accuracy"] = f"{accuracy:.3%}"
 

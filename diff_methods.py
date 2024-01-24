@@ -10,7 +10,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 
 # mean diff
-def mean_diff(activations, labels):
+def mean_diff(activations, labels, eval_activations, eval_labels):
     means, counts = {}, defaultdict(int)
 
     # accumulate
@@ -31,7 +31,7 @@ def mean_diff(activations, labels):
 
 
 @ignore_warnings(category=ConvergenceWarning)
-def kmeans_diff(activations, labels):
+def kmeans_diff(activations, labels, eval_activations, eval_labels):
     # fit kmeans
     kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit(activations)
     
@@ -41,7 +41,7 @@ def kmeans_diff(activations, labels):
     return vec / torch.norm(vec), None
 
 
-def pca_diff(activations, labels):
+def pca_diff(activations, labels, eval_activations, eval_labels):
     # fit pca
     pca = PCA(n_components=1).fit(activations)
 
@@ -50,7 +50,7 @@ def pca_diff(activations, labels):
     return vec / torch.norm(vec), None
 
 
-def probing_diff(activations, labels):
+def probing_diff(activations, labels, eval_activations, eval_labels):
     assert len(set(labels)) == 2
     label_0 = list(set(labels))[0]
 
@@ -80,27 +80,27 @@ def probing_diff(activations, labels):
     return weight_vector, acc / len(activations)
 
 
-def probing_diff_sklearn(activations, labels):
+def probing_diff_sklearn(activations, labels, eval_activations, eval_labels):
     # fit lr
     lr = LogisticRegression(random_state=0, max_iter=1000, fit_intercept=False).fit(activations, labels)
-    accuracy = lr.score(activations, labels)
+    accuracy = lr.score(eval_activations, eval_labels)
 
     # extract weight
     vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
     return vec / torch.norm(vec), accuracy
 
 
-def lda_diff(activations, labels):
+def lda_diff(activations, labels, eval_activations, eval_labels):
     # fit lda
     lda = LinearDiscriminantAnalysis(n_components=1).fit(activations, labels)
-    accuracy = lda.score(activations, labels)
+    accuracy = lda.score(eval_activations, eval_labels)
 
     # extract weight
     vec = torch.tensor(lda.coef_[0], dtype=torch.float32)
     return vec / torch.norm(vec), accuracy
 
 
-def random_diff(activations, labels):
+def random_diff(activations, labels, eval_activations, eval_labels):
     vec = torch.randn_like(activations[0])
     return vec / torch.norm(vec), None
 

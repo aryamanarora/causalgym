@@ -38,6 +38,8 @@ def experiment(
     batch_size: int,
     intervention_site: str,
     strategy: str,
+    lr: float,
+    only_das: bool=False,
 ):
     """Run a feature-finding experiment."""
 
@@ -54,10 +56,14 @@ def experiment(
     ).to(device)
     print(model, gpt.config.num_hidden_layers)
 
-    # make dataset
+    # make dataset, ensuring examples in trainset are not in evalset
     data_source = Dataset.load_from(dataset)
     trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, seed=42, model=gpt)
-    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, model=gpt)
+    discard = set()
+    for batch in trainset:
+        for pair in batch.pairs:
+            discard.add(''.join(pair.base))
+    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, model=gpt, discard=discard)
     
     # entering train loops
     for pos_i in range(1, data_source.length):
@@ -79,7 +85,7 @@ def experiment(
                 intervenable.set_device(device)
                 intervenable.disable_model_gradients()
 
-                more_data, summary = eval(intervenable, evalset, layer_i, pos_i, strategy)
+                more_data, summary, _ = eval(intervenable, evalset, layer_i, pos_i, strategy)
                 data.extend(augment_data(more_data, {"method": "vanilla", "step": -1}))
                 tqdm.write(f"vanilla: {summary}")
 
@@ -93,22 +99,23 @@ def experiment(
             intervenable.set_device(device)
             intervenable.disable_model_gradients()
 
-            _, more_data, activations = train_das(
+            _, more_data, activations, eval_activations = train_das(
                 intervenable, trainset, evalset, layer_i, pos_i, strategy,
-                eval_steps, grad_steps)
+                eval_steps, grad_steps, lr=lr)
             data.extend(more_data)
             
             # test other methods
-            for method in method_to_class_mapping.keys():
-                try:
-                    more_data, summary = train_feature_direction(
-                        method, intervenable, activations, evalset,
-                        layer_i, pos_i, strategy, intervention_site
-                    )
-                    tqdm.write(f"{method}: {summary}")
-                    data.extend(more_data)
-                except:
-                    continue
+            if not only_das:
+                for method in method_to_class_mapping.keys():
+                    try:
+                        more_data, summary = train_feature_direction(
+                            method, intervenable, activations, eval_activations,
+                            evalset, layer_i, pos_i, strategy, intervention_site
+                        )
+                        tqdm.write(f"{method}: {summary}")
+                        data.extend(more_data)
+                    except:
+                        continue
             
             # store all data
             total_data.extend(augment_data(data, {"layer": layer_i, "pos": pos_i}))
@@ -125,6 +132,8 @@ def experiment(
             "grad_steps": grad_steps,
             "batch_size": batch_size,
             "intervention_site": intervention_site,
+            "strategy": strategy,
+            "lr": lr,
             "span_names": data_source.span_names,
         },
         "data": total_data
@@ -147,6 +156,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--intervention-site", type=str, default="block_output")
     parser.add_argument("--strategy", type=str, default="last")
+    parser.add_argument("--lr", type=float, default=5e-3)
+    parser.add_argument("--only-das", action="store_true")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
