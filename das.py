@@ -67,7 +67,7 @@ def experiment(
     evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, model=gpt, discard=discard)
     
     # entering train loops
-    for pos_i in range(1, data_source.length):
+    for pos_i in range(data_source.length):
         if trainset[0].compute_pos(strategy)[0][0][pos_i][0] == -1:
             continue
 

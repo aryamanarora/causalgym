@@ -8,11 +8,14 @@ def run_command(model: str, dataset: str):
     experiment(
         model=model,
         dataset=dataset,
-        steps=200,
+        steps=100,
         eval_steps=25,
         grad_steps=1,
         batch_size=4,
         intervention_site="block_output",
+        strategy="last",
+        lr=5e-3,
+        only_das=False,
     )
 
 def main(model: str):
