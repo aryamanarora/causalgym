@@ -45,6 +45,7 @@ def experiment(
 
     # load model
     total_data = []
+    diff_vectors = []
     NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
@@ -99,20 +100,22 @@ def experiment(
             intervenable.set_device(device)
             intervenable.disable_model_gradients()
 
-            _, more_data, activations, eval_activations = train_das(
+            _, more_data, activations, eval_activations, diff_vector = train_das(
                 intervenable, trainset, evalset, layer_i, pos_i, strategy,
                 eval_steps, grad_steps, lr=lr)
+            diff_vectors.append({"method": "das", "layer": layer_i, "pos": pos_i, "vec": diff_vector})
             data.extend(more_data)
             
             # test other methods
             if not only_das:
                 for method in method_to_class_mapping.keys():
                     try:
-                        more_data, summary = train_feature_direction(
+                        more_data, summary, diff_vector = train_feature_direction(
                             method, intervenable, activations, eval_activations,
                             evalset, layer_i, pos_i, strategy, intervention_site
                         )
                         tqdm.write(f"{method}: {summary}")
+                        diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
                         data.extend(more_data)
                     except:
                         continue
@@ -136,7 +139,8 @@ def experiment(
             "lr": lr,
             "span_names": data_source.span_names,
         },
-        "data": total_data
+        "data": total_data,
+        "vec": diff_vectors,
     }
 
     # log

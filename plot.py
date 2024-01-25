@@ -7,7 +7,7 @@ import argparse
 from data import Dataset
 from eval import augment_data
 from itertools import combinations
-from math import log
+import torch
 
 
 def plot_benchmark():
@@ -55,6 +55,58 @@ def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sen
         plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
         plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
     plot.save(loc, width=10, height=10)
+
+
+def plot_cos_sim_per_method(vecs: list[dict], loc="figs/das/cos_sim_method.pdf"):
+    paired_cos_sims = []
+    for v1 in vecs:
+        for v2 in vecs:
+            if v1["pos"] != v2["pos"] or v1["method"] != v2["method"]:
+                continue
+            paired_cos_sims.append({
+                "method": v1["method"],
+                "layer1": v1["layer"],
+                "layer2": v2["layer"],
+                "pos": v1["pos"],
+                "cos_sim": abs(torch.nn.functional.cosine_similarity(
+                    torch.tensor(v1["vec"]).reshape(-1),
+                    torch.tensor(v2["vec"]).reshape(-1),
+                    dim=0
+                ).item())
+            })
+    
+    df = pd.DataFrame(paired_cos_sims)
+    plot = (
+        ggplot(df, aes(x="layer1", y="layer2", fill="cos_sim")) + geom_tile()
+        + facet_grid("method~pos") + scale_fill_cmap("Purples", limits=[0,1])
+    )
+    plot.save(loc, width=5, height=10)
+
+
+def plot_cos_sim_per_pos(vecs: list[dict], loc="figs/das/cos_sim_pos.pdf"):
+    paired_cos_sims = []
+    for v1 in vecs:
+        for v2 in vecs:
+            if v1["pos"] != v2["pos"] or v1["layer"] != v2["layer"]:
+                continue
+            paired_cos_sims.append({
+                "method1": v1["method"],
+                "method2": v2["method"],
+                "layer": v1["layer"],
+                "pos": v1["pos"],
+                "cos_sim": abs(torch.nn.functional.cosine_similarity(
+                    torch.tensor(v1["vec"]).reshape(-1),
+                    torch.tensor(v2["vec"]).reshape(-1),
+                    dim=0
+                ).item())
+            })
+    
+    df = pd.DataFrame(paired_cos_sims)
+    plot = (
+        ggplot(df, aes(x="method1", y="method2", fill="cos_sim")) + geom_tile()
+        + facet_grid("layer~pos") + scale_fill_cmap("Purples", limits=[0,1])
+    )
+    plot.save(loc, width=5, height=10)
 
 
 def plot_all(directory: str):
@@ -172,7 +224,7 @@ if __name__ == "__main__":
     parser.add_argument("--file", type=str)
     args = parser.parse_args()
 
-    if args.plot in ["iia", "acc", "odds"]:
+    if args.plot in ["iia", "acc", "odds", "cos_sim_method", "cos_sim_pos"]:
         with open(args.file, 'r') as f:
             data = json.load(f)
             if args.plot == "iia":
@@ -183,6 +235,10 @@ if __name__ == "__main__":
             elif args.plot == "odds":
                 plot_per_pos(pd.DataFrame(data["data"]), metric="odds_ratio",
                              sentence=data["metadata"]["span_names"], loc="figs/das/pos_odds.pdf")
+            elif args.plot == "cos_sim_method":
+                plot_cos_sim_per_method(data["vec"], loc="figs/das/cos_sim_method.pdf")
+            elif args.plot == "cos_sim_pos":
+                plot_cos_sim_per_pos(data["vec"], loc="figs/das/cos_sim_pos.pdf")
     elif args.plot == "benchmark":
         plot_benchmark()
     elif args.plot == "compare":

@@ -108,7 +108,12 @@ def train_das(
         total_step += 1
     
     # return data
-    return intervenable, data, activations, eval_activations
+    diff_vector = None
+    for k, v in intervenable.interventions.items():
+        if isinstance(v[0], pv.LowRankRotatedSpaceIntervention) or isinstance(v[0], PooledLowRankRotatedSpaceIntervention):
+            diff_vector = v[0].rotate_layer.weight.detach().detach().cpu().tolist()
+            break
+    return intervenable, data, activations, eval_activations, diff_vector
 
 
 def train_feature_direction(
@@ -146,4 +151,4 @@ def train_feature_direction(
 
     # done
     intervenable2._cleanup_states()
-    return augment_data(data, {"method": method, "step": -1, "accuracy": accuracy}), summary
+    return augment_data(data, {"method": method, "step": -1, "accuracy": accuracy}), summary, diff_vector.detach().cpu().tolist()
