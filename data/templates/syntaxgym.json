@@ -586,5 +586,27 @@
             "np1": ["uncle", "dog", "committee", "businessman", "star student", "collector", "convict", "company", "her rival", "movie star", "suspect", "man", "nurse", "gossip column", "authorities", "government", "neighbors", "student", "university", "my good friend", "truck", "restaurant", "newspaper", "new friend"],
             "verb": ["grabbed", "caught", "delivered", "showed", "stole", "forged", "brought", "will sell", "derailed", "will get", "killed", "placed", "should administer", "revealed", "repaired", "collected", "sold", "sent", "hired", "stole", "dragged", "prepared", "published", "brought"]
         }
+    },
+    "filler_gap_pp": {
+        "templates": [
+            "{prefix} {gap} the {np1} {clause.verb} the {clause.obj} {clause.pp}"
+        ],
+        "label": "gap",
+        "result_prepend_space": false,
+        "labels": {
+            "that": [" that"],
+            "wh": ["."]
+        },
+        "variables": {
+            "prefix": ["I know", "My neighbor told me", "I know", "You remember", "She told me", "She knows", "We all remember", "My friend reported", "I do not know", "She can guess", "The newspaper reported", "We recall", "I remember", "Our friend knew", "The mayor told me", "My friend remembers", "The newspaper said", "Our neighbor said", "My friend told me", "She can not believe", "Our neighbor reminded us", "The shop owner told me", "My sister told me", "We remember"],
+            "gap": {
+                "that": ["that"],
+                "wh": ["what"]
+            },
+            "np1": ["uncle", "dog", "committee", "businessman", "star student", "collector", "convict", "company", "her rival", "movie star", "suspect", "man", "nurse", "gossip column", "authorities", "government", "neighbors", "student", "university", "my good friend", "truck", "restaurant", "newspaper", "new friend"],
+            "clause.verb": ["grabbed", "caught", "delivered", "showed", "stole", "forged", "brought", "will sell", "derailed", "will be awarded", "killed", "placed", "should administer", "revealed", "repaired", "collected", "sold", "sent", "hired", "stole", "dragged", "prepared", "published", "brought"],
+            "clause.obj": ["food", "mouse", "report", "presentation", "answers to test", "painting", "gun", "multiple assets", "performance", "prize", "witness", "delicate plate", "new medicine", "family secrets", "golf course", "sensitive data", "convertible", "package", "new administrator", "candy bar", "car", "meal", "long story", "large present"],
+            "clause.pp": ["in front of", "in full view of", "to", "to", "from", "with the help of", "into", "for", "with", "for", "with", "next to", "to", "to", "for", "about", "to", "to", "to help with", "from", "out of", "for", "about", "to"]
+        }
     }
 }
