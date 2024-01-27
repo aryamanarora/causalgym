@@ -1,4 +1,8 @@
-from plotnine import ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, geom_text, facet_wrap, theme, element_text, geom_smooth, facet_grid
+from plotnine import (
+    ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, theme, element_blank,
+    geom_text, facet_wrap, theme, element_text, geom_smooth, facet_grid, theme_bw,
+    xlab, ylab, theme_set, theme_gray
+)
 from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous, scale_fill_gradient2
 import json
 import pandas as pd
@@ -8,6 +12,10 @@ from data import Dataset
 from eval import augment_data
 from itertools import combinations
 import torch
+from math import log10
+
+
+theme_set(theme_gray(base_family="DejaVu Serif"))
 
 
 def plot_benchmark():
@@ -15,13 +23,21 @@ def plot_benchmark():
     df = pd.DataFrame(data)
     df["series"] = (df["model"].str.contains("gpt2"))
     df["series"] = df["series"].apply(lambda x: "gpt2" if x else "pythia")
+    df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
+    df["type"] = df["dataset"].apply(lambda x: x.split("_")[0] if not x.startswith("filler") else "_".join(x.split("_")[:2]))
+    df["Task"] = df["dataset"].apply(lambda x: x.split("_")[1] if not x.startswith("filler") else x.split("_")[2])
+    df = df[df["series"] == "pythia"]
     plot = (
-        ggplot(df, aes(x="factor(parameters)", y="iia", group="dataset"))
-        + geom_line()
-        + geom_point(fill="black", color="white", size=3)
-        + scale_x_log10() + facet_wrap("dataset")
+        ggplot(df, aes(x="factor(parameters)", y="iia", group="dataset", color="type"))
+        + geom_line() + theme(
+            axis_text_x=element_text(rotation=90, hjust=0.5),
+            panel_grid_minor=element_blank(), strip_text=element_text(size=6))
+        + xlab("Parameters") + ylab("Accuracy")
+        + geom_point(aes(fill="type"), color="white", size=2)
+        + scale_x_log10()
+        + facet_wrap("dataset", nrow=5)
     )
-    plot.save("logs/benchmark.pdf", width=10, height=10)
+    plot.save("logs/benchmark.pdf", width=10, height=6)
 
 
 def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sentence=None):
@@ -144,18 +160,18 @@ def summarise(directory: str):
     df = load_directory(directory)
 
     # get average iia over layers, max'd 
-    df = df[["dataset", "model", "method", "layer", "pos", "iia"]]
+    df = df[["dataset", "model", "method", "layer", "pos", "odds_ratio"]]
     df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
     df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
     df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
 
     # make latex table
     for model in df["model"].unique():
-        split = df[df["model"] == model][["dataset", "method", "iia"]]
+        split = df[df["model"] == model][["dataset", "method", "odds_ratio"]]
         split["dataset"] = split["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
 
         # make table with rows = method, cols = dataset
-        split = split.pivot(index="dataset", columns="method", values="iia")
+        split = split.pivot(index="dataset", columns="method", values="odds_ratio")
         split = split.reset_index()
         
         # take average over rows and append to bottom
@@ -167,6 +183,14 @@ def summarise(directory: str):
         avg = avg.to_dict()
         split = pd.concat([split, pd.DataFrame([avg])], ignore_index=True)
         
+        # reorder columns by avg, high to low
+        order = split.drop(columns=["dataset"]).iloc[-1].sort_values(ascending=False).index
+        order = list(order)
+        # remove vanilla, place at end
+        order.remove("vanilla")
+        order.append("vanilla")
+        split = split[["dataset"] + list(order)]
+        
         # bold the largest per row
         for i, row in split.iterrows():
             # ignore dataset col
@@ -174,20 +198,11 @@ def summarise(directory: str):
             for col in split.columns:
                 # format as percentage
                 if col != "dataset":
-                    split.loc[i, col] = f"{row[col] * 100:.2f}"
+                    split.loc[i, col] = f"{float(row[col]):.2f}"
                 if row[col] == max_val:
                     split.loc[i, col] = "\\textbf{" + split.loc[i, col] + "}"
-        
-        # reorder columns by avg, high to low
-        order = split.iloc[-1].sort_values(ascending=False).index
 
-        # remove vanilla, place at end
-        order = list(order)
-        order.remove("vanilla")
-        order.remove("dataset")
-        order.append("vanilla")
-        split = split[["dataset"] + list(order)]
-
+        print(model)
         print(split.to_latex(index=False))
 
 
@@ -245,4 +260,5 @@ if __name__ == "__main__":
         compare(args.file)
     elif args.plot == "all":
         plot_all(args.file)
+    elif args.plot == "summary":
         summarise(args.file)
