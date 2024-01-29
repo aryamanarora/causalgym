@@ -498,7 +498,7 @@
         "result_prepend_space": false,
         "labels": {
             "pseudo-cleft": [" make"],
-            "normal": [" a"]
+            "normal": [" for"]
         },
         "variables": {
             "subj": ["young man", "worker", "fan", "young woman", "fans", "gardener", "old man", "old man", "workers", "mother", "old woman", "guards", "senator", "representatives", "old woman", "army", "soldier", "novelist", "worker", "workers", "actor", "tourists", "men", "police", "people", "teacher", "woman", "maid", "judge"],
@@ -516,7 +516,7 @@
         "result_prepend_space": false,
         "labels": {
             "pseudo-cleft": [" make"],
-            "normal": [" a"]
+            "normal": [" for"]
         },
         "variables": {
             "subj": ["young man", "worker", "fan", "young woman", "fans", "gardener", "old man", "old man", "workers", "mother", "old woman", "guards", "senator", "representatives", "old woman", "army", "soldier", "novelist", "worker", "workers", "actor", "tourists", "men", "police", "people", "teacher", "woman", "maid", "judge"],
