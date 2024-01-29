@@ -92,12 +92,12 @@ def benchmark(model=None, task=None, debug=False, rank=False):
                 for k, v in probs.items():
                     probs[k] = (v / count)
                     print(k.upper())
-                    top_vals(tokenizer, probs[k], n=10)
+                    top_vals(tokenizer, probs[k], n=25)
                     print('---')
                 print("DIFF")
-                top_vals(tokenizer, list(probs.values())[1] - list(probs.values())[0], n=10)
+                top_vals(tokenizer, list(probs.values())[1] - list(probs.values())[0], n=25)
                 print('---')
-                top_vals(tokenizer, list(probs.values())[0] - list(probs.values())[1], n=10)
+                top_vals(tokenizer, list(probs.values())[0] - list(probs.values())[1], n=25)
                 print('---')
     
     # save data

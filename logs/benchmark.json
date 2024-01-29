@@ -1,1 +1,1 @@
-[{"model": "EleutherAI/pythia-160m", "dataset": "syntaxgym/filler_gap_subject", "count": 400, "correct": 240, "iia": 0.6, "parameters": 162322944}]
+[{"model": "EleutherAI/pythia-160m", "dataset": "syntaxgym/cleft", "count": 400, "correct": 306, "iia": 0.765, "parameters": 162322944}, {"model": "EleutherAI/pythia-160m", "dataset": "syntaxgym/cleft_mod", "count": 400, "correct": 0, "iia": 0.0, "parameters": 162322944}]
