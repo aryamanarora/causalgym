@@ -490,6 +490,43 @@
             "clause.pp": ["about several recent advances in cancer therapy", "on the run for its life", "on the evolution of the human skeleton", "in the middle of the busy camp", "from a city far away", "on very expensive recycled paper", "about the failed local politicians", "from the expensive jewelry store down the street", "in the basement of the office building", "on the town 's main square", "from the local housing authority", "on the true meaning of life", "with a difficult time signature", "about life during the civil war", "on home repair and backyard maintenance", "about potential corruption and bribery", "on international peace and cooperation", "for increased salaries and bonuses", "for the broken water system", "on local customs and religious practices", "on tax reform and student debt", "about the alleged art theft", "on the modern art world"]
         }
     },
+    "cleft": {
+        "templates": [
+            "What the {subj} {verb} was"
+        ],
+        "label": "verb",
+        "result_prepend_space": false,
+        "labels": {
+            "pseudo-cleft": [" make"],
+            "normal": [" a"]
+        },
+        "variables": {
+            "subj": ["young man", "worker", "fan", "young woman", "fans", "gardener", "old man", "old man", "workers", "mother", "old woman", "guards", "senator", "representatives", "old woman", "army", "soldier", "novelist", "worker", "workers", "actor", "tourists", "men", "police", "people", "teacher", "woman", "maid", "judge"],
+            "verb": {
+                "pseudo-cleft": ["did"],
+                "normal": ["ate", "planted", "repaired", "sold", "wiped", "watched", "trimmed", "bought", "cooked", "walked down", "fed", "bought", "concocted", "sponsored", "wrote", "fed", "loved", "battled", "wrote", "installed", "painted", "wrote", "traveled towards", "repaired", "sent", "wrote", "spread", "rebuked", "caught", "collected", "taught", "bought", "called", "bought", "won", "contracted", "created", "wrote", "broke", "accused"]
+            }
+        }
+    },
+    "cleft_mod": {
+        "templates": [
+            "What the {subj} {verb} {mod} was"
+        ],
+        "label": "verb",
+        "result_prepend_space": false,
+        "labels": {
+            "pseudo-cleft": [" make"],
+            "normal": [" a"]
+        },
+        "variables": {
+            "subj": ["young man", "worker", "fan", "young woman", "fans", "gardener", "old man", "old man", "workers", "mother", "old woman", "guards", "senator", "representatives", "old woman", "army", "soldier", "novelist", "worker", "workers", "actor", "tourists", "men", "police", "people", "teacher", "woman", "maid", "judge"],
+            "verb": {
+                "pseudo-cleft": ["did"],
+                "normal": ["ate", "planted", "repaired", "sold", "wiped", "watched", "trimmed", "bought", "cooked", "walked down", "fed", "bought", "concocted", "sponsored", "wrote", "fed", "loved", "battled", "wrote", "installed", "painted", "wrote", "traveled towards", "repaired", "sent", "wrote", "spread", "rebuked", "caught", "collected", "taught", "bought", "called", "bought", "won", "contracted", "created", "wrote", "broke", "accused"]
+            },
+            "mod": ["after the ingredients had been bought from the store", "when the weather turned warm in the spring", "after the gate agent made the final announcement about the flight", "when his favorite team made it to the championship", "when she was finished cleaning the sink", "when their team played against the rival team", "before the other vegetables had been planted", "every morning before leaving for work", "after he had walked across the field and the forest", "after they signed a contract with the city government", "after she got home from a long journey", "after she received the letter at the end of the month", "after they discovered the evidence hidden behind the wall", "after she talked with her colleague from the opposition party", "before talking to the journalists", "after she got home from having dinner with a friend", "after going through basic training and listening to propaganda", "when he discovered that he was the only fighter left alive", "before she received the big prize", "after entering the job site", "two weeks ago when the job had only just begun", "when he found himself out of money", "after finally landing in the foreign country", "after they received shipments of supplies from their allies", "before driving to the next town", "after talking to her lawyers about the situation", "when he found out that many people were asking similar questions", "when they felt that no other options were available to them", "between the trial and the sentencing", "every Thursday morning before work", "after school during the summer", "in the middle of the night", "after he found out the horrible news", "when she received the contract that had been signed by all the parties", "after we graduated from law school", "when you heard that the building was going to be destroyed", "in his spare time", "after hearing the troubling news", "after he cleared the table", "after he heard all the arguments from both legal teams"]
+        }
+    },
     "filler_gap_embed_3": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=279",
         "templates": [
@@ -602,6 +639,28 @@
             "gap": {
                 "that": ["that"],
                 "wh": ["what"]
+            },
+            "np1": ["uncle", "dog", "committee", "businessman", "star student", "collector", "convict", "company", "her rival", "movie star", "suspect", "man", "nurse", "gossip column", "authorities", "government", "neighbors", "student", "university", "my good friend", "truck", "restaurant", "newspaper", "new friend"],
+            "clause.verb": ["grabbed", "caught", "delivered", "showed", "stole", "forged", "brought", "will sell", "derailed", "will be awarded", "killed", "placed", "should administer", "revealed", "repaired", "collected", "sold", "sent", "hired", "stole", "dragged", "prepared", "published", "brought"],
+            "clause.obj": ["food", "mouse", "report", "presentation", "answers to test", "painting", "gun", "multiple assets", "performance", "prize", "witness", "delicate plate", "new medicine", "family secrets", "golf course", "sensitive data", "convertible", "package", "new administrator", "candy bar", "car", "meal", "long story", "large present"],
+            "clause.pp": ["in front of", "in full view of", "to", "to", "from", "with the help of", "into", "for", "with", "for", "with", "next to", "to", "to", "for", "about", "to", "to", "to help with", "from", "out of", "for", "about", "to"]
+        }
+    },
+    "filler_gap_subject": {
+        "templates": [
+            "{prefix} {gap} the {np1} {clause.verb} the {clause.obj} {clause.pp}"
+        ],
+        "label": "gap",
+        "result_prepend_space": false,
+        "labels": {
+            "that": [" him"],
+            "wh": ["."]
+        },
+        "variables": {
+            "prefix": ["I know", "My neighbor told me", "I know", "You remember", "She told me", "She knows", "We all remember", "My friend reported", "I do not know", "She can guess", "The newspaper reported", "We recall", "I remember", "Our friend knew", "The mayor told me", "My friend remembers", "The newspaper said", "Our neighbor said", "My friend told me", "She can not believe", "Our neighbor reminded us", "The shop owner told me", "My sister told me", "We remember"],
+            "gap": {
+                "that": ["that"],
+                "wh": ["who"]
             },
             "np1": ["uncle", "dog", "committee", "businessman", "star student", "collector", "convict", "company", "her rival", "movie star", "suspect", "man", "nurse", "gossip column", "authorities", "government", "neighbors", "student", "university", "my good friend", "truck", "restaurant", "newspaper", "new friend"],
             "clause.verb": ["grabbed", "caught", "delivered", "showed", "stole", "forged", "brought", "will sell", "derailed", "will be awarded", "killed", "placed", "should administer", "revealed", "repaired", "collected", "sold", "sent", "hired", "stole", "dragged", "prepared", "published", "brought"],

@@ -1,1 +1,1 @@
-[{"model": "EleutherAI/pythia-70m", "dataset": "syntaxgym/garden_mvrr", "count": 400, "correct": 226, "iia": 0.565, "parameters": 70426624}, {"model": "EleutherAI/pythia-70m", "dataset": "syntaxgym/garden_mvrr_mod", "count": 400, "correct": 106, "iia": 0.265, "parameters": 70426624}]
+[{"model": "EleutherAI/pythia-160m", "dataset": "syntaxgym/filler_gap_subject", "count": 400, "correct": 240, "iia": 0.6, "parameters": 162322944}]
