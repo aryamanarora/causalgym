@@ -164,7 +164,7 @@
     "npi_any_subj-relc": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=256",
         "templates": [
-            "{det1} {np} that {rc_verb} {det2} {rc_obj} {matrix_v}"
+            "{det1} {np} that {rc_verb} {det2} {rc_obj} has {matrix_v}"
         ],
         "label": "det1",
         "result_prepend_space": true,
@@ -181,13 +181,13 @@
             "det2": ["the", "no"],
             "rc_obj": ["chef", "teachers", "senator", "senators", "managers", "athlete", "officer", "assistant", "consultants", "architects", "farmers", "clerks", "customers", "guard", "farmer", "secretaries", "executives", "authors", "customer", "doctors", "taxi driver", "journalists", "architect", "officers", "pilot", "pilots", "surgeon", "ministers", "dancer", "taxi drivers", "consultant", "executive", "guards", "minister", "teacher", "manager"],
             "rc_verb": ["knew", "loved", "impressed", "helped", "praised", "hated", "respected", "contacted", "discussed", "admired", "liked"],
-            "matrix_v": ["has completed", "has landed", "has crashed", "has caught", "has crashed", "has had", "has failed", "has passed up", "has advocated", "has purchased", "has broken", "has seen", "has spent", "has missed", "has burned", "has fired", "has failed", "has refused", "has passed", "has burned", "has missed", "has read", "has broken", "has shown", "has planted", "has passed", "has had", "has arrested", "has known"]
+            "matrix_v": ["completed", "landed", "crashed", "caught", "crashed", "had", "failed", "passed up", "advocated", "purcd", "broken", "seen", "spent", "missed", "burned", "fired", "failed", "refused", "passed", "burned", "missed", "read", "broken", "shown", "planted", "passed", "had", "arrested", "known"]
         }
     },
     "npi_any_obj-relc": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=255",
         "templates": [
-            "{det1} {np} that {det2} {rc_subj} {rc_verb} {matrix_v}"
+            "{det1} {np} that {det2} {rc_subj} {rc_verb} has {matrix_v}"
         ],
         "label": "det1",
         "result_prepend_space": true,
@@ -204,7 +204,7 @@
             "det2": ["the", "no"],
             "rc_subj": ["consultant", "taxi driver", "architects", "farmer", "pilots", "architect", "journalists", "authors", "athlete", "secretaries", "clerks", "minister", "pilot", "senators", "clerk", "ministers", "dancer", "officers", "secretary", "senator", "farmers", "guard", "doctors", "manager", "taxi drivers", "teacher", "customers", "executives", "managers", "teachers", "officer", "surgeon", "consultants", "executive", "guards", "customer"],
             "rc_verb": ["helped", "liked", "admired", "contacted", "respected", "discussed", "impressed", "praised", "knew", "hated", "loved"],
-            "matrix_v": ["has shown", "has fired", "has broken", "has planted", "has passed up", "has had", "has spent", "has missed", "has seen", "has had", "has landed", "has crashed", "has refused", "has passed", "has missed", "has known", "has failed", "has burned", "has advocated", "has completed", "has caught", "has failed", "has passed", "has purchased", "has broken", "has read", "has crashed", "has burned", "has arrested"]
+            "matrix_v": ["shown", "fired", "broken", "planted", "passed up", "had", "spent", "missed", "seen", "had", "landed", "crashed", "refused", "passed", "missed", "known", "failed", "burned", "advocated", "completed", "caught", "failed", "passed", "purchased", "broken", "read", "crashed", "burned", "arrested"]
         }
     },
     "npi_ever_subj-relc": {
@@ -254,7 +254,7 @@
     "garden_mvrr": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=265",
         "templates": [
-            "The {noun}{insert} {ambig_verb} {rc}"
+            "The {noun}{insert} {vp.verb} {vp.cont}"
         ],
         "label": "insert",
         "result_prepend_space": false,
@@ -263,19 +263,19 @@
             "mv": ["."]
         },
         "variables": {
-            "noun": ["infant", "lawyer", "child", "couple", "student", "prisoner", "fan", "girl", "convict", "player", "refugee", "boy", "man", "artist", "woman"],
+            "noun": ["woman", "convict", "prisoners", "business", "mice", "lawyer", "child", "horses", "artist", "car", "campaign", "student", "television show", "boys", "player", "men", "child", "students", "infant", "refugee", "dog", "ship", "fans", "boat", "couple", "girl", "airplane", "child"],
             "insert": {
                 "rr": [" who was"],
                 "mv": [""]
             },
-            "ambig_verb": ["jumped", "hit", "steered", "sheltered", "carried", "tossed", "kicked", "raced", "walked"],
-            "rc": ["to the sea", "into the dark cell", "past the swings", "off course", "in the neighborhood", "down the hall", "at the concert", "on the beach", "past the barn", "in the basement", "three weeks ago", "during the night", "into the parking lot", "for hours and hours", "in the chaos", "in the mountains", "into an empire"]
+            "vp.verb": ["brought", "walked", "hit", "expanded", "consumed", "pledged", "kicked", "raced", "painted", "steered", "intended", "composed", "started", "performed", "tossed", "discussed", "jumped", "prepared", "fed", "sheltered", "walked", "steered", "cheered", "steered", "bought", "made", "landed", "carried"],
+            "vp.cont": ["the sandwich from the kitchen", "into the dark cell", "for hours and hours", "into an empire", "rapidly and entirely", "to keep silent", "in the chaos", "past the barn", "a impressionist portrait", "into the parking lot", "to be very popular", "a carefully worded excuse", "three weeks ago", "an unsolicited favor", "the baseball", "in the neighborhood", "past the swings", "a fancy dinner", "during the night", "in the basement", "on the beach", "off course", "at the concert", "to the sea", "the apartment", "a new blanket", "in the mountains", "down the hall"]
         }
     },
     "garden_mvrr_mod": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=273",
         "templates": [
-            "The {noun}{insert} {ambig_verb} {intervener} {rc}"
+            "The {noun}{insert} {vp.verb} {vp.intervener} {vp.cont}"
         ],
         "label": "insert",
         "result_prepend_space": false,
@@ -284,14 +284,14 @@
             "mv": ["."]
         },
         "variables": {
-            "noun": ["infant", "lawyer", "child", "couple", "student", "prisoner", "fan", "girl", "convict", "player", "refugee", "boy", "man", "artist", "woman"],
+            "noun": ["woman", "convict", "prisoners", "business", "mice", "lawyer", "child", "horses", "artist", "car", "campaign", "student", "television show", "boys", "player", "men", "child", "students", "infant", "refugee", "dog", "ship", "fans", "boat", "couple", "girl", "airplane", "child"],
             "insert": {
                 "rr": [" who was"],
                 "mv": [""]
             },
-            "ambig_verb": ["jumped", "hit", "steered", "sheltered", "carried", "tossed", "kicked", "raced", "walked"],
-            "intervener": ["due to security issues", "of the school", "on a cable channel", "in the countryside", "filled with people", "due to great hunger", "of the woman", "by the sea", "in the winter", "by most of the residents", "during the game", "by the performers", "with a new microwave", "with new wood floors", "spanning multiple countries", "in the Pacific Ocean", "in the morning", "in the middle of winter", "for no good reason", "for the holidays", "in the park", "in the castle", "among the masses"],
-            "rc": ["to the sea", "into the dark cell", "past the swings", "off course", "in the neighborhood", "down the hall", "at the concert", "on the beach", "past the barn", "in the basement", "three weeks ago", "during the night", "into the parking lot", "in the chaos", "in the mountains", "into an empire"]
+            "vp.verb": ["brought", "walked", "hit", "expanded", "consumed", "pledged", "kicked", "raced", "painted", "steered", "intended", "composed", "started", "performed", "tossed", "discussed", "jumped", "prepared", "fed", "sheltered", "walked", "steered", "cheered", "steered", "bought", "made", "landed", "carried"],
+            "vp.intervener": ["the sandwich from the kitchen", "into the dark cell", "for hours and hours", "into an empire", "rapidly and entirely", "to keep silent", "in the chaos", "past the barn", "a impressionist portrait", "into the parking lot", "to be very popular", "a carefully worded excuse", "three weeks ago", "an unsolicited favor", "the baseball", "in the neighborhood", "past the swings", "a fancy dinner", "during the night", "in the basement", "on the beach", "off course", "at the concert", "to the sea", "the apartment", "a new blanket", "in the mountains", "down the hall"],
+            "vp.cont": ["with a new microwave", "in the castle", "in the morning", "spanning multiple countries", "due to great hunger", "due to security issues", "of the fight", "in the countryside", "of the woman", "filled with people", "among the masses", "filled with lies", "on a cable channel", "for no good reason", "during the game", "by most of the residents", "in the park", "for the holidays", "in the middle of winter", "filled with mold", "by the sea", "in the Pacific Ocean", "by the performers", "filled with fish", "with new wood floors", "out of expensive material", "in the winter", "of the school"]
         }
     },
     "garden_npz_obj": {
@@ -363,7 +363,7 @@
     "garden_npz_v-trans_mod": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=270",
         "templates": [
-            "{subordinator} the {noun} {verb} {npz} the {mod}"
+            "{subordinator} the {noun} {verb} the {npz} {mod}"
         ],
         "label": "verb",
         "result_prepend_space": false,
@@ -498,7 +498,7 @@
         "label": "gap",
         "result_prepend_space": false,
         "labels": {
-            "that": [" that"],
+            "that": [" him"],
             "wh": ["."]
         },
         "variables": {
@@ -525,7 +525,7 @@
         "label": "gap",
         "result_prepend_space": false,
         "labels": {
-            "that": [" that"],
+            "that": [" him"],
             "wh": ["."]
         },
         "variables": {
@@ -574,7 +574,7 @@
         "label": "gap",
         "result_prepend_space": false,
         "labels": {
-            "that": [" that"],
+            "that": [" him"],
             "wh": ["."]
         },
         "variables": {
@@ -594,7 +594,7 @@
         "label": "gap",
         "result_prepend_space": false,
         "labels": {
-            "that": [" that"],
+            "that": [" him"],
             "wh": ["."]
         },
         "variables": {
