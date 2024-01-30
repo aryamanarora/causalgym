@@ -1,5 +1,4 @@
 import torch
-from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup
 
 from eval import augment_data, calculate_loss, eval
@@ -50,7 +49,7 @@ def train_das(
     intervenable.set_temperature(temperature_schedule[total_step])
 
     # train
-    iterator = tqdm(trainset)
+    iterator = trainset
     total_loss = torch.tensor(0.0).to(intervenable.get_device())
 
     for step, batch in enumerate(iterator):
@@ -81,11 +80,10 @@ def train_das(
 
             # print stats
             stats["lr"] = scheduler.optimizer.param_groups[0]['lr']
-            stats["loss"] = f"{total_loss.item():.3f}"
+            stats["loss"] = total_loss.item()
             for k, v in intervenable.interventions.items():
                 if isinstance(v[0], pv.BoundlessRotatedSpaceIntervention):
-                    stats["bound"] = f"{v[0].intervention_boundaries.sum() * v[0].embed_dim:.3f}"
-            iterator.set_postfix(stats)
+                    stats["bound"] = v[0].intervention_boundaries.sum() * v[0].embed_dim
 
             # backward
             if not (grad_steps > 1 and total_step == 0):
@@ -102,7 +100,7 @@ def train_das(
             if eval_activations == []:
                 eval_activations = eval_activation
             stats.update(summary)
-            iterator.set_postfix(stats)
+            print(step, stats)
             data.extend(augment_data(more_data, {"method": "das", "step": step}))
 
         total_step += 1
@@ -113,6 +111,7 @@ def train_das(
         if isinstance(v[0], pv.LowRankRotatedSpaceIntervention) or isinstance(v[0], PooledLowRankRotatedSpaceIntervention):
             diff_vector = v[0].rotate_layer.weight.detach().detach().cpu().tolist()
             break
+    intervenable._cleanup_states()
     return intervenable, data, activations, eval_activations, diff_vector
 
 
@@ -147,7 +146,7 @@ def train_feature_direction(
     # eval
     data, summary, _ = eval(intervenable2, evalset, layer_i, pos_i, strategy)
     if accuracy is not None:
-        summary["accuracy"] = f"{accuracy:.3%}"
+        summary["accuracy"] = accuracy
 
     # done
     intervenable2._cleanup_states()

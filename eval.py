@@ -64,9 +64,9 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
     
     # summary metrics
     summary = {
-        "iia": f"{sum([d['iia'] for d in data]) / len(data):.3f}",
-        "odds_ratio": f"{sum([d['odds_ratio'] for d in data]) / len(data):.3f}",
-        "eval_loss": f"{sum([d['loss'] for d in data]) / len(data):.3f}",
+        "iia": sum([d['iia'] for d in data]) / len(data),
+        "odds_ratio": sum([d['odds_ratio'] for d in data]) / len(data),
+        "eval_loss": sum([d['loss'] for d in data]) / len(data),
     }
     
     # update iterator

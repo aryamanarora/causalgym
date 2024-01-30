@@ -9,3 +9,4 @@ logs/kldivs
 figs/
 deprecated/figs/
 logs/das
+*.profile

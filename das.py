@@ -1,9 +1,6 @@
-from turtle import pos
 import torch
 import os
 import argparse
-import pandas as pd
-from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from utils import WEIGHTS
 from data import Dataset
@@ -11,6 +8,7 @@ from eval import eval, augment_data
 from train import train_das, train_feature_direction, method_to_class_mapping
 import datetime
 import json
+from typing import Union
 
 from pyvene.models.intervenable_base import IntervenableModel
 from interventions import *
@@ -40,6 +38,8 @@ def experiment(
     strategy: str,
     lr: float,
     only_das: bool=False,
+    tokenizer: Union[AutoTokenizer, None]=None,
+    gpt: Union[AutoModelForCausalLM, None]=None,
 ):
     """Run a feature-finding experiment."""
 
@@ -48,33 +48,36 @@ def experiment(
     diff_vectors = []
     NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    tokenizer = AutoTokenizer.from_pretrained(model)
-    tokenizer.pad_token = tokenizer.eos_token
-    gpt = AutoModelForCausalLM.from_pretrained(
-        model,
-        revision="main",
-        torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32,
-    ).to(device)
+    if tokenizer is None:
+        tokenizer = AutoTokenizer.from_pretrained(model)
+        tokenizer.pad_token = tokenizer.eos_token
+    if gpt is None:
+        gpt = AutoModelForCausalLM.from_pretrained(
+            model,
+            revision="main",
+            torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32,
+        ).to(device)
     print(model, gpt.config.num_hidden_layers)
+    gpt.eval()
 
     # make dataset, ensuring examples in trainset are not in evalset
     data_source = Dataset.load_from(dataset)
-    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, seed=42, model=gpt)
+    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, seed=42)
     discard = set()
     for batch in trainset:
         for pair in batch.pairs:
             discard.add(''.join(pair.base))
-    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, model=gpt, discard=discard)
+    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, discard=discard)
     
     # entering train loops
-    for pos_i in range(data_source.length):
+    for pos_i in range(data_source.first_var_pos, data_source.length):
         if trainset[0].compute_pos(strategy)[0][0][pos_i][0] == -1:
             continue
 
         # per-layer training loop
-        iterator = tqdm(range(gpt.config.num_hidden_layers))
+        iterator = range(gpt.config.num_hidden_layers)
         for layer_i in iterator:
-            tqdm.write(f"position {pos_i} ({data_source.span_names[pos_i]}), layer {layer_i}")
+            print(f"position {pos_i} ({data_source.span_names[pos_i]}), layer {layer_i}")
             data = []
 
             # vanilla intervention
@@ -87,8 +90,9 @@ def experiment(
                 intervenable.disable_model_gradients()
 
                 more_data, summary, _ = eval(intervenable, evalset, layer_i, pos_i, strategy)
+                intervenable._cleanup_states()
                 data.extend(augment_data(more_data, {"method": "vanilla", "step": -1}))
-                tqdm.write(f"vanilla: {summary}")
+                print(f"vanilla: {summary}")
 
             # DAS intervention
             intervenable_config = intervention_config(
@@ -114,7 +118,7 @@ def experiment(
                             method, intervenable, activations, eval_activations,
                             evalset, layer_i, pos_i, strategy, intervention_site
                         )
-                        tqdm.write(f"{method}: {summary}")
+                        print(f"{method}: {summary}")
                         diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
                         data.extend(more_data)
                     except:

@@ -7,8 +7,6 @@ import json
 import glob
 from typing import Union
 import re
-from tqdm import tqdm
-from utils import top_vals
 
 random.seed(42)
 Tokenized = namedtuple("Tokenized", ["base", "src", "alignment_base", "alignment_src"])
@@ -171,8 +169,11 @@ class Dataset:
         self.templates = data["templates"]
         self.template = [x for x in re.split(r"(?<=\})|(?= \{)|(?<! )(?=\{)", '<|endoftext|>' + random.choice(self.templates)) if x != '']
         self.vars_per_span, self.span_names = [], []
+        self.first_var_pos = None
         for token_i in range(len(self.template)):
             var = re.findall(r"\{(.+?)\}", self.template[token_i])
+            if len(var) > 0 and self.first_var_pos is None:
+                self.first_var_pos = token_i
             self.vars_per_span.append(var)
             self.span_names.append("{" + var[0] + "}" if len(var) == 1 else self.template[token_i].replace(' ', '_'))
 
@@ -300,7 +301,7 @@ class Dataset:
             discard: set[str]=set()) -> list[Batch]:
         """Sample a list of batches of minimal pairs from the dataset."""
         random.seed(seed)
-        return [self.sample_batch(tokenizer, batch_size, device, model, discard) for _ in tqdm(range(num_batches))]
+        return [self.sample_batch(tokenizer, batch_size, device, model, discard) for _ in range(num_batches)]
 
 
 def load_from_syntaxgym():
