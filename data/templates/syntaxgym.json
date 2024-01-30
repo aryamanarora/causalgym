@@ -646,7 +646,7 @@
             "clause.pp": ["in front of", "in full view of", "to", "to", "from", "with the help of", "into", "for", "with", "for", "with", "next to", "to", "to", "for", "about", "to", "to", "to help with", "from", "out of", "for", "about", "to"]
         }
     },
-    "filler_gap_subject": {
+    "filler_gap_subj": {
         "templates": [
             "{prefix} {gap} the {np1} {clause.verb} the {clause.obj} {clause.pp}"
         ],
