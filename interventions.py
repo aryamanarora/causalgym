@@ -1,6 +1,5 @@
 import pyvene as pv
 from pyvene.models.layers import LowRankRotateLayer
-from pyvene.models.intervention_utils import _do_intervention_by_swap
 from pyvene.models.modeling_utils import b_sd_to_bsd, bsd_to_b_sd
 import torch
 
@@ -8,13 +7,13 @@ class PooledLowRankRotatedSpaceIntervention(pv.TrainableIntervention, pv.Distrib
 
     """Intervention in the rotated space."""
 
-    def __init__(self, embed_dim, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        rotate_layer = LowRankRotateLayer(embed_dim, kwargs["low_rank_dimension"])
+        rotate_layer = LowRankRotateLayer(self.embed_dim, kwargs["low_rank_dimension"])
         self.rotate_layer = torch.nn.utils.parametrizations.orthogonal(rotate_layer)
         # TODO: put them into a parent class
-        self.register_buffer('embed_dim', torch.tensor(embed_dim))
-        self.register_buffer('interchange_dim', torch.tensor(embed_dim))
+        self.register_buffer('embed_dim', torch.tensor(self.embed_dim))
+        self.register_buffer('interchange_dim', torch.tensor(self.embed_dim))
 
     def forward(self, base, source, subspaces=None):
         num_unit = (base.shape[1] // int(self.embed_dim))
@@ -36,8 +35,8 @@ class CollectIntervention(pv.CollectIntervention):
 
     """Collect activations."""
 
-    def __init__(self, embed_dim, **kwargs):
-        super().__init__(embed_dim, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         
     def forward(self, base, source=None, subspaces=None):
         return base
