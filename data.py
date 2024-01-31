@@ -165,23 +165,26 @@ class Dataset:
 
 
     def __init__(self, data: dict):
-        # load template and split it up into spans
+        # load basics
         self.templates = data["templates"]
         self.template = [x for x in re.split(r"(?<=\})|(?= \{)|(?<! )(?=\{)", '<|endoftext|>' + random.choice(self.templates)) if x != '']
+        self.label_vars = data["label"] if isinstance(data["label"], list) else [data["label"]]
+        self.labels = data["labels"]
+        self.types = list(self.labels.keys())
+        self.variables = data["variables"]
+
+        # split template into spans and find variables
         self.vars_per_span, self.span_names = [], []
         self.first_var_pos = None
         for token_i in range(len(self.template)):
             var = re.findall(r"\{(.+?)\}", self.template[token_i])
             if len(var) > 0 and self.first_var_pos is None:
-                self.first_var_pos = token_i
+                if var[0] in self.label_vars:
+                    self.first_var_pos = token_i
             self.vars_per_span.append(var)
             self.span_names.append("{" + var[0] + "}" if len(var) == 1 else self.template[token_i].replace(' ', '_'))
 
         # other stuff
-        self.label_vars = data["label"] if isinstance(data["label"], list) else [data["label"]]
-        self.labels = data["labels"]
-        self.types = list(self.labels.keys())
-        self.variables = data["variables"]
         length = {}
         for var in self.variables:
             if '.' in var:
