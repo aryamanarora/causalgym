@@ -437,7 +437,7 @@
     "gss_subord_obj-relc": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=250",
         "templates": [
-            "{subordinator}{the} {np1} who the {subj_mod_np} {subj_mod_v} {clause.verb} the {clause.np2} that the {clause.obj_relc}"
+            "{subordinator}{the} {np1} {who} {the2} {subj_mod_np} {subj_mod_v} {clause.verb} the {clause.np2} {that} {the3} {clause.relc-np} {clause.obj_relc}"
         ],
         "label": ["subordinator", "the"],
         "result_prepend_space": false,
@@ -455,11 +455,16 @@
                 "null": ["The"]
             },
             "np1": ["lawyers", "clerk", "police", "architect", "tourists", "nurse", "students", "actor", "officials", "general", "editor", "delivery man", "man", "maid", "pianist", "diplomat", "politicians", "scientist", "minister", "assistant", "doctor"],
+            "who": ["who"],
+            "the2": ["the"],
             "subj_mod_np": ["spy", "teacher", "author", "principle", "citizens", "director", "client", "officer", "boss", "committee", "dog", "critic", "coaches", "doctor", "officer", "contractor", "friend", "mayor", "locals", "chef", "lobbyists", "administrator", "mayor"],
             "subj_mod_v": ["had contacted repeatedly", "had in her class", "knew well", "had disciplined", "liked greatly", "praised openly", "had hired", "had given a uniform", "moved down the hall", "had praised", "feared", "did not like", "had bribed handsomely", "had met only once", "had given pistols", "had recommended", "had helped", "had invited", "found strange", "had yelled at", "trusted", "had recently hired", "respected very much"],
             "clause.verb": ["studied", "shot", "did not like", "entered", "delivered", "printed", "liked", "lost", "broke", "praised", "read", "delivered", "practiced", "enjoyed", "read", "wrote", "presented", "reviewed", "lost", "read", "passed", "found", "handed in"],
             "clause.np2": ["book", "bird", "material", "camp", "newspaper", "documents", "draft", "documents", "computer", "building", "plans", "speech", "music", "novel", "magazine", "letter", "file", "contract", "plans", "guide", "law", "evidence", "papers"],
-            "clause.obj_relc": ["that colleagues had written on cancer therapy", "that he had been tracking secretly", "that the teacher used to cover evolution", "that the colonel constructed two years ago", "that the resident had ordered", "that the client never requested", "that the celebrity had written", "that she had bought from an expensive store", "that the administrator moved to the basement", "that the businessman had built downtown", "that the housing authority drafted", "that the author had written yesterday", "that the composer had written", "that the school administrator had written", "that the shift manager left behind", "that the lawyer threw away", "that the assistant had written", "that the lawyers had written", "that the city planners had drafted", "that the maid had given them", "that all the shop owners strongly opposed", "that the suspect had hidden", "that the teacher assigned them"]
+            "that": ["that"],
+            "the3": ["the"],
+            "clause.relc-np": ["colleagues", "man", "teacher", "colonel", "resident", "client", "celebrity", "woman", "administrator", "businessman", "housing authority", "author", "composer", "school administrator", "shift manager", "lawyer", "assistant", "lawyers", "city planners", "maid", "shop owners", "suspect", "teacher"],
+            "clause.obj_relc": ["had written on cancer therapy", "had been tracking secretly", "used to cover evolution", "constructed two years ago", "had ordered", "never requested", "had written", "had bought from an expensive store", "moved to the basement", "had built downtown", "drafted", "had written yesterday", "had written", "had written", "left behind", "threw away", "had written", "had written", "had drafted", "had given them", "strongly opposed", "had hidden", "assigned them"]
         }
     },
     "gss_subord_pp": {
