@@ -10,12 +10,13 @@ from data import Batch
 
 def train_das(
         intervenable: pv.IntervenableModel, trainset: list[Batch], evalset: list[Batch],
-        layer_i: int, pos_i: int, strategy: str, eval_steps: int, grad_steps: int, lr: float):
+        layer_i: int, pos_i: int, strategy: str, eval_steps: int, grad_steps: int, lr: float,
+        epochs: int=1):
     """Train DAS or Boundless DAS on a model."""
 
     # setup
     data, activations, eval_activations, stats = [], [], [], {}
-    total_steps = len(trainset)
+    total_steps = len(trainset) * epochs
     warm_up_steps = 0.1 * total_steps
 
     # optimizer
@@ -49,7 +50,7 @@ def train_das(
     intervenable.set_temperature(temperature_schedule[total_step])
 
     # train
-    iterator = trainset
+    iterator = trainset * epochs
     total_loss = torch.tensor(0.0).to(intervenable.get_device())
 
     for step, batch in enumerate(iterator):

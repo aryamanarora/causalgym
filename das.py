@@ -114,7 +114,7 @@ def experiment(
             
             # test other methods
             if not only_das:
-                for method in method_to_class_mapping.keys():
+                for method in list(method_to_class_mapping.keys())[::-1]:
                     try:
                         more_data, summary, diff_vector = train_feature_direction(
                             method, intervenable, activations, eval_activations,
