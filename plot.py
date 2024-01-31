@@ -155,23 +155,27 @@ def load_directory(directory: str):
     return df
 
 
-def summarise(directory: str):
+def summarise(directory: str, metric: str="odds_ratio"):
     # collect all data
     df = load_directory(directory)
 
+    # iia
+    if metric == "iia":
+        df["iia"] = df["iia"].apply(lambda x: 100 * x)
+
     # get average iia over layers, max'd 
-    df = df[["dataset", "model", "method", "layer", "pos", "odds_ratio"]]
+    df = df[["dataset", "model", "method", "layer", "pos", metric]]
     df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
     df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
     df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
 
     # make latex table
     for model in df["model"].unique():
-        split = df[df["model"] == model][["dataset", "method", "odds_ratio"]]
+        split = df[df["model"] == model][["dataset", "method", metric]]
         split["dataset"] = split["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
 
         # make table with rows = method, cols = dataset
-        split = split.pivot(index="dataset", columns="method", values="odds_ratio")
+        split = split.pivot(index="dataset", columns="method", values=metric)
         split = split.reset_index()
         
         # take average over rows and append to bottom
@@ -262,3 +266,4 @@ if __name__ == "__main__":
         plot_all(args.file)
     elif args.plot == "summary":
         summarise(args.file)
+        summarise(args.file, "iia")
