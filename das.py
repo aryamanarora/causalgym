@@ -1,7 +1,7 @@
 import torch
 import os
 import argparse
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, GPTNeoXForCausalLM
 from utils import WEIGHTS
 from data import Dataset
 from eval import eval, augment_data
@@ -52,10 +52,12 @@ def experiment(
         tokenizer = AutoTokenizer.from_pretrained(model)
         tokenizer.pad_token = tokenizer.eos_token
     if gpt is None:
-        gpt = AutoModelForCausalLM.from_pretrained(
+        weight_type = WEIGHTS.get(model, torch.float16) if device == "cuda:0" else torch.float32
+        gpt = GPTNeoXForCausalLM.from_pretrained(
             model,
             revision="main",
-            torch_dtype=WEIGHTS.get(model, torch.bfloat16) if device == "cuda:0" else torch.float32,
+            torch_dtype=weight_type,
+            use_flash_attention_2=(weight_type in [torch.bfloat16, torch.float16] and device == "cuda:0"),
         ).to(device)
     print(model, gpt.config.num_hidden_layers)
     gpt.eval()

@@ -48,16 +48,18 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
         for batch_i in range(len(batch.pairs)):
             src_label = batch.src_labels[batch_i]
             base_label = batch.base_labels[batch_i]
-            riia = 1 if logits[batch_i][src_label].item() > logits[batch_i][base_label].item() else 0
-            odds_ratio = (base_probs[batch_i][base_label] - base_probs[batch_i][src_label]) + (probs[batch_i][src_label] - probs[batch_i][base_label])
+            # riia = 1 if logits[batch_i][src_label].item() > logits[batch_i][base_label].item() else 0
+            # odds_ratio = (base_probs[batch_i][base_label] - base_probs[batch_i][src_label]) + (probs[batch_i][src_label] - probs[batch_i][base_label])
 
             # store stats
             data.append({
                 "src_label": src_label.item(),
                 "base_label": base_label.item(),
                 "loss": loss.item(),
-                "iia": riia,
-                "odds_ratio": odds_ratio.item(),
+                "p_base": probs[batch_i][base_label],
+                "p_src": probs[batch_i][src_label],
+                "base_p_base": base_probs[batch_i][base_label],
+                "base_p_src": base_probs[batch_i][src_label],
                 "layer": layer_i,
                 "pos": pos_i
             })
