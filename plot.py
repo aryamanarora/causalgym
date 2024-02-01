@@ -12,10 +12,25 @@ from data import Dataset
 from eval import augment_data
 from itertools import combinations
 import torch
-from math import log10
+from utils import parameters
 
 
-theme_set(theme_gray(base_family="DejaVu Serif"))
+def load_directory(directory: str):
+    # collect all data
+    all_data = []
+    for f in glob.glob(f"{directory}/*.json"):
+        with open(f, 'r') as f:
+            j = json.load(f)
+            data = j['data']
+            data = augment_data(data, {"dataset": j["metadata"]["dataset"], "model": j["metadata"]["model"]})
+            all_data.extend(data)
+    
+    # df
+    df = pd.DataFrame(all_data)
+    last_step = df["step"].max()
+    df = df[(df["step"] == last_step) | (df["step"] == -1)]
+    df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
+    return df
 
 
 def plot_benchmark():
@@ -38,6 +53,27 @@ def plot_benchmark():
         + facet_wrap("dataset", nrow=5)
     )
     plot.save("logs/benchmark.pdf", width=10, height=6)
+
+
+def plot_acc(directory: str, loc="figs/das/acc.pdf"):
+    """Plot raw accuracy for each model at each task."""
+
+    # compute acc
+    df = load_directory(directory)
+    df = df[df["method"] == "vanilla"]
+    df = df[["dataset", "model", "base_p_base", "base_p_src"]]
+    df["acc"] = df["base_p_src"] < df["base_p_base"]
+    df = df[["dataset", "model", "acc"]]
+    df = df.groupby(["dataset", "model"]).mean().reset_index()
+    df["params"] = df["model"].apply(lambda x: parameters[x])
+    
+    # plot
+    plot = (
+        ggplot(df, aes(x="params", y="acc"))
+        + geom_point()
+        + facet_wrap("~dataset")
+    )
+    plot.save("figs/das/acc.pdf", width=10, height=10)
 
 
 def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sentence=None):
@@ -135,24 +171,6 @@ def plot_all(directory: str):
             plot_per_pos(pd.DataFrame(log["data"]),
                          sentence=sentence,
                          loc=f"figs/das/{log['metadata']['model'].split('/')[-1]}__{log['metadata']['dataset'].split('/')[1]}.pdf")
-
-
-def load_directory(directory: str):
-    # collect all data
-    all_data = []
-    for f in glob.glob(f"{directory}/*.json"):
-        with open(f, 'r') as f:
-            j = json.load(f)
-            data = j['data']
-            data = augment_data(data, {"dataset": j["metadata"]["dataset"], "model": j["metadata"]["model"]})
-            all_data.extend(data)
-    
-    # df
-    df = pd.DataFrame(all_data)
-    last_step = df["step"].max()
-    df = df[(df["step"] == last_step) | (df["step"] == -1)]
-    df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
-    return df
 
 
 def summarise(directory: str, metric: str="odds_ratio"):
@@ -259,7 +277,7 @@ if __name__ == "__main__":
             elif args.plot == "cos_sim_pos":
                 plot_cos_sim_per_pos(data["vec"], loc="figs/das/cos_sim_pos.pdf")
     elif args.plot == "benchmark":
-        plot_benchmark()
+        plot_acc(args.file)
     elif args.plot == "compare":
         compare(args.file)
     elif args.plot == "all":

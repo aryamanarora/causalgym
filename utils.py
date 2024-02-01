@@ -4,6 +4,7 @@ import random
 from transformers import AutoTokenizer
 import csv
 
+
 # models and weight format
 MODELS = [
     # "gpt2",
@@ -22,6 +23,7 @@ MODELS = [
     "EleutherAI/pythia-12b",
 ]
 
+
 WEIGHTS = {
     # "gpt2": float32,
     # "gpt2-medium": float32,
@@ -38,6 +40,21 @@ WEIGHTS = {
     "EleutherAI/pythia-6.9b": float16,
     "EleutherAI/pythia-12b": float16,
 }
+
+
+parameters = {
+    "EleutherAI/pythia-12b": 11846072320,
+    "EleutherAI/pythia-6.9b": 6857302016,
+    "EleutherAI/pythia-2.8b": 2775208960,
+    "EleutherAI/pythia-1.4b": 1414647808,
+    "EleutherAI/pythia-1b": 1011781632,
+    "EleutherAI/pythia-410m": 405334016,
+    "EleutherAI/pythia-160m": 162322944,
+    "EleutherAI/pythia-70m": 70426624,
+    "EleutherAI/pythia-31m": 31000000,
+    "EleutherAI/pythia-14m": 14000000,
+}
+
 
 def format_token(tokenizer, tok):
     """Format the token for some path patching experiment to show decoding diff"""
