@@ -13,12 +13,13 @@ from eval import augment_data
 from itertools import combinations
 import torch
 from utils import parameters
+from tqdm import tqdm
 
 
 def load_directory(directory: str):
     # collect all data
     all_data = []
-    for f in glob.glob(f"{directory}/*.json"):
+    for f in tqdm(glob.glob(f"{directory}/*.json")):
         with open(f, 'r') as f:
             j = json.load(f)
             data = j['data']
