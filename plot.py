@@ -1,7 +1,7 @@
 from plotnine import (
     ggplot, aes, geom_line, geom_point, ggtitle, geom_tile, theme, element_blank,
     geom_text, facet_wrap, theme, element_text, geom_smooth, facet_grid, theme_bw,
-    xlab, ylab, theme_set, theme_gray
+    xlab, ylab, theme_set, theme_gray, stat_summary, geom_hline
 )
 from plotnine.scales import scale_x_log10, scale_fill_cmap, scale_x_continuous, scale_fill_gradient2
 import json
@@ -9,105 +9,158 @@ import pandas as pd
 import glob
 import argparse
 from data import Dataset
-from eval import augment_data
 from itertools import combinations
 import torch
 from utils import parameters
 from tqdm import tqdm
+import multiprocessing
+import math
 
 
-def load_directory(directory: str):
-    # collect all data
-    all_data = []
-    for f in tqdm(glob.glob(f"{directory}/*.json")):
-        with open(f, 'r') as f:
-            j = json.load(f)
-            data = j['data']
-            data = augment_data(data, {"dataset": j["metadata"]["dataset"], "model": j["metadata"]["model"]})
-            all_data.extend(data)
-    
-    # df
-    df = pd.DataFrame(all_data)
-    last_step = df["step"].max()
-    df = df[(df["step"] == last_step) | (df["step"] == -1)]
-    df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
-    return df
+theme_set(theme_gray(base_family="serif"))
 
 
-def plot_benchmark():
-    data = json.load(open("logs/benchmark.json", "r"))
-    df = pd.DataFrame(data)
-    df["series"] = (df["model"].str.contains("gpt2"))
-    df["series"] = df["series"].apply(lambda x: "gpt2" if x else "pythia")
-    df["dataset"] = df["dataset"].apply(lambda x: x.split("/")[1])
-    df["type"] = df["dataset"].apply(lambda x: x.split("_")[0] if not x.startswith("filler") else "_".join(x.split("_")[:2]))
-    df["Task"] = df["dataset"].apply(lambda x: x.split("_")[1] if not x.startswith("filler") else x.split("_")[2])
-    df = df[df["series"] == "pythia"]
-    plot = (
-        ggplot(df, aes(x="factor(parameters)", y="iia", group="dataset", color="type"))
-        + geom_line() + theme(
-            axis_text_x=element_text(rotation=90, hjust=0.5),
-            panel_grid_minor=element_blank(), strip_text=element_text(size=6))
-        + xlab("Parameters") + ylab("Accuracy")
-        + geom_point(aes(fill="type"), color="white", size=2)
-        + scale_x_log10()
-        + facet_wrap("dataset", nrow=5)
-    )
-    plot.save("logs/benchmark.pdf", width=10, height=6)
+classification = {
+    'agr_gender': 'Agreement',
+    'agr_sv_num_subj-relc': 'Agreement',
+    'agr_sv_num_obj-relc': 'Agreement',
+    'agr_sv_num_pp': 'Agreement',
+    'agr_refl_num_subj-relc': 'Licensing',
+    'agr_refl_num_obj-relc': 'Licensing',
+    'agr_refl_num_pp': 'Licensing',
+    'npi_any_subj-relc': 'Licensing',
+    'npi_any_obj-relc': 'Licensing',
+    'npi_ever_subj-relc': 'Licensing',
+    'npi_ever_obj-relc': 'Licensing',
+    'garden_mvrr': 'Garden path effects',
+    'garden_mvrr_mod': 'Garden path effects',
+    'garden_npz_obj': 'Garden path effects',
+    'garden_npz_obj_mod': 'Garden path effects',
+    'garden_npz_v-trans': 'Garden path effects',
+    'garden_npz_v-trans_mod': 'Garden path effects',
+    'gss_subord': 'Gross syntactic state',
+    'gss_subord_subj-relc': 'Gross syntactic state',
+    'gss_subord_obj-relc': 'Gross syntactic state',
+    'gss_subord_pp': 'Gross syntactic state',
+    'cleft': 'Long-distance',
+    'cleft_mod': 'Long-distance',
+    'filler_gap_embed_3': 'Long-distance',
+    'filler_gap_embed_4': 'Long-distance',
+    'filler_gap_hierarchy': 'Long-distance',
+    'filler_gap_obj': 'Long-distance',
+    'filler_gap_pp': 'Long-distance',
+    'filler_gap_subj': 'Long-distance',
+}
+classification_order = ['Agreement', 'Licensing', 'Garden path effects', 'Gross syntactic state', 'Long-distance']
 
 
-def plot_acc(directory: str, loc="figs/das/acc.pdf"):
+def load_file(file_path):
+    with open(file_path, 'r') as f:
+        j = json.load(f)
+        data = j['data']
+        df = pd.DataFrame(data)
+        df["dataset"] = j["metadata"]["dataset"].split("/")[1]
+        df["model"] = j["metadata"]["model"]
+        return df
+
+
+def load_directory(directory: str, reload: bool=False):
+    if reload or not glob.glob(f"{directory}/combined.csv"):
+        print(f"reloading {directory}")
+        # load all files (in parallel for speedup)
+        file_paths = glob.glob(f"{directory}/*.json")
+        dfs = []
+        with multiprocessing.Pool() as pool:
+            for df in tqdm(pool.imap_unordered(load_file, file_paths), total=len(file_paths)):
+                dfs.append(df)
+        
+        # discard intermediate steps for DAS
+        df = pd.concat(dfs, ignore_index=True)
+        last_step = df["step"].max()
+        df = df[(df["step"] == last_step) | (df["step"] == -1)]
+
+        # store combined df
+        df["acc"] = df["base_p_src"] < df["base_p_base"]
+        df["iia"] = df["p_src"] > df["p_base"]
+        df["odds"] = df['base_p_base'] - df['base_p_src'] + df['p_src'] - df['p_base']
+        df["odds"] = df["odds"].apply(lambda x: math.exp(x))
+        df.to_csv(f"{directory}/combined.csv", index=False)
+
+        return df
+    else:
+        print(f"using existing {directory}")
+        return pd.read_csv(f"{directory}/combined.csv")
+
+
+def plot_acc(directory: str, reload: bool=False):
     """Plot raw accuracy for each model at each task."""
 
     # compute acc
-    df = load_directory(directory)
+    df = load_directory(directory, reload)
     df = df[df["method"] == "vanilla"]
     df = df[["dataset", "model", "base_p_base", "base_p_src"]]
     df["acc"] = df["base_p_src"] < df["base_p_base"]
     df = df[["dataset", "model", "acc"]]
     df = df.groupby(["dataset", "model"]).mean().reset_index()
     df["params"] = df["model"].apply(lambda x: parameters[x])
+    df["type"] = df["dataset"].apply(lambda x: classification[x])
+    df["type"] = pd.Categorical(df["type"], categories=classification_order, ordered=True)
     
     # plot
     plot = (
         ggplot(df, aes(x="params", y="acc"))
-        + geom_point()
-        + facet_wrap("~dataset")
+        + geom_line(aes(group="dataset"), alpha=0.2) + theme(
+            axis_text_x=element_text(rotation=90, hjust=0.5),
+            panel_grid_minor=element_blank())
+        + xlab("Parameters") + ylab("Accuracy")
+        # + geom_point(color="black", fill="white", size=2)
+        + stat_summary()
+        + stat_summary(geom="line")
+        + scale_x_log10()
+        + facet_wrap("type", nrow=1)
+        + geom_hline(yintercept=0.5, linetype="dashed")
     )
-    plot.save("figs/das/acc.pdf", width=10, height=10)
+    plot.save(f"{directory}/figs_acc.pdf", width=8, height=2.5)
 
 
-def plot_per_pos(df: pd.DataFrame, metric="iia", loc="figs/das/pos_iia.pdf", sentence=None):
+def plot_per_pos(directory: str, reload: bool=False, metric: str="iia"):
     """Plot position iia for DAS."""
 
-    # get last step
-    title = f"position {metric}"
-    last_step = df["step"].max()
-    df = df[(df["step"] == last_step) | (df["step"] == -1)]
-    print(df["method"].unique())
-    
-    # group df by pos and layer
-    df = df[["pos", "layer", metric, "method"]]
-    df = df.groupby(["pos", "layer", "method"]).mean().reset_index()
-    df[f"{metric}_formatted"] = df[metric].apply(lambda x: f"{x:.2f}")
+    # load
+    df = load_directory(directory, reload)
+    if metric == "iia":
+        df["iia"] = df["iia"].apply(lambda x: 100 * x)
+    elif metric == "odds":
+        df["odds"] = df["odds"].apply(lambda x: math.log(x))
+    df = df[df["method"] == "das"]
+    df = df[["dataset", "model", "method", "layer", "pos", metric]]
+    df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
+
+    # order
+    df["model"] = df["model"].apply(lambda x: x.split("/")[-1])
+    model_order = [x.split("/")[-1] for x in list(parameters.keys())[::-1]]
+    df["model"] = pd.Categorical(df["model"], categories=model_order, ordered=True)
+    print(len(df))
 
     # plot
-    plot = (
-        ggplot(df, aes(x="pos", y="layer"))
-        + geom_tile(aes(fill=metric))
-        + geom_text(aes(label=f"{metric}_formatted"), color="black", size=7) + ggtitle(title)
-        + facet_wrap("~method")
-    )
-    if metric != "odds_ratio":
-        plot += scale_fill_cmap("Purples", limits=[0,1])
-    else:
-        plot += scale_fill_gradient2(low="orange", mid="white", high="purple", midpoint=0)
+    for dataset in df["dataset"].unique():
+        plot = (
+            ggplot(df[df["dataset"] == dataset], aes(x="pos", y="layer"))
+            + geom_tile(aes(fill=metric))
+            # + geom_text(aes(label=f"{metric}_formatted"), color="black", size=7) + ggtitle(metric)
+            + facet_wrap("~model", scales="free_y", nrow=1)
+        )
+        if metric != "odds":
+            plot += scale_fill_cmap("Purples", limits=[0,100])
+        else:
+            plot += scale_fill_gradient2(low="orange", mid="white", high="purple", midpoint=0)
 
-    # modify x axis labels to use sentence
-    if sentence is not None:
-        plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
-        plot += theme(axis_text_x=element_text(rotation=45, hjust=1))
-    plot.save(loc, width=10, height=10)
+        # modify x axis labels to use sentence
+        sentence = Dataset.load_from(f"syntaxgym/{dataset}").span_names
+        if sentence is not None:
+            plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
+            plot += theme(axis_text_x=element_text(rotation=90, hjust=0.5))
+        plot.save(f"{directory}/figs_{dataset.replace('/', '_')}_{metric}.pdf", width=20, height=5)
 
 
 def plot_cos_sim_per_method(vecs: list[dict], loc="figs/das/cos_sim_method.pdf"):
@@ -174,13 +227,13 @@ def plot_all(directory: str):
                          loc=f"figs/das/{log['metadata']['model'].split('/')[-1]}__{log['metadata']['dataset'].split('/')[1]}.pdf")
 
 
-def summarise(directory: str, metric: str="odds_ratio"):
+def summarise(directory: str, reload: bool=False, metric: str="odds"):
     # collect all data
-    df = load_directory(directory)
-
-    # iia
+    df = load_directory(directory, reload)
     if metric == "iia":
         df["iia"] = df["iia"].apply(lambda x: 100 * x)
+    elif metric == "odds":
+        df["odds"] = df["odds"].apply(lambda x: math.log(x))
 
     # get average iia over layers, max'd 
     df = df[["dataset", "model", "method", "layer", "pos", metric]]
@@ -207,11 +260,7 @@ def summarise(directory: str, metric: str="odds_ratio"):
         split = pd.concat([split, pd.DataFrame([avg])], ignore_index=True)
         
         # reorder columns by avg, high to low
-        order = split.drop(columns=["dataset"]).iloc[-1].sort_values(ascending=False).index
-        order = list(order)
-        # remove vanilla, place at end
-        order.remove("vanilla")
-        order.append("vanilla")
+        order = ["das", "mean", "probe", "pca", "kmeans", "lda", "random", "vanilla"]
         split = split[["dataset"] + list(order)]
         
         # bold the largest per row
@@ -225,8 +274,9 @@ def summarise(directory: str, metric: str="odds_ratio"):
                 if row[col] == max_val:
                     split.loc[i, col] = "\\textbf{" + split.loc[i, col] + "}"
 
-        print(model)
-        print(split.to_latex(index=False))
+        with open(f"{directory}/{model.replace('/', '_')}__{metric}.txt", "w") as f:
+            f.write(split.to_latex(index=False))
+            print("wrote", model, metric)
 
 
 def compare(directory: str):
@@ -260,29 +310,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--plot", type=str, default="iia")
     parser.add_argument("--file", type=str)
+    parser.add_argument("--reload", action="store_true")
     args = parser.parse_args()
 
-    if args.plot in ["iia", "acc", "odds", "cos_sim_method", "cos_sim_pos"]:
-        with open(args.file, 'r') as f:
-            data = json.load(f)
-            if args.plot == "iia":
-                plot_per_pos(pd.DataFrame(data["data"]), sentence=data["metadata"]["span_names"])
-            elif args.plot == "acc":
-                plot_per_pos(pd.DataFrame(data["data"]), metric="accuracy",
-                             sentence=data["metadata"]["span_names"], loc="figs/das/pos_acc.pdf")
-            elif args.plot == "odds":
-                plot_per_pos(pd.DataFrame(data["data"]), metric="odds_ratio",
-                             sentence=data["metadata"]["span_names"], loc="figs/das/pos_odds.pdf")
-            elif args.plot == "cos_sim_method":
-                plot_cos_sim_per_method(data["vec"], loc="figs/das/cos_sim_method.pdf")
-            elif args.plot == "cos_sim_pos":
-                plot_cos_sim_per_pos(data["vec"], loc="figs/das/cos_sim_pos.pdf")
-    elif args.plot == "benchmark":
-        plot_acc(args.file)
-    elif args.plot == "compare":
-        compare(args.file)
-    elif args.plot == "all":
-        plot_all(args.file)
-    elif args.plot == "summary":
-        summarise(args.file)
-        summarise(args.file, "iia")
+    # base accuracy of each model on each task
+    if args.plot == "acc":
+        plot_acc(args.file, reload=args.reload)
+    elif args.plot == "odds_summary":
+        summarise(args.file, args.reload, "odds")
+    elif args.plot == "iia_summary":
+        summarise(args.file, args.reload, "iia")
+    elif args.plot == "odds_pos":
+        plot_per_pos(args.file, args.reload, "odds")
+    elif args.plot == "iia_pos":
+        plot_per_pos(args.file, args.reload, "iia")

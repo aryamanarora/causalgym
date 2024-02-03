@@ -56,18 +56,19 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
                 "src_label": src_label.item(),
                 "base_label": base_label.item(),
                 "loss": loss.item(),
-                "p_base": probs[batch_i][base_label],
-                "p_src": probs[batch_i][src_label],
-                "base_p_base": base_probs[batch_i][base_label],
-                "base_p_src": base_probs[batch_i][src_label],
+                "p_base": probs[batch_i][base_label].item(),
+                "p_src": probs[batch_i][src_label].item(),
+                "base_p_base": base_probs[batch_i][base_label].item(),
+                "base_p_src": base_probs[batch_i][src_label].item(),
                 "layer": layer_i,
                 "pos": pos_i
             })
     
     # summary metrics
     summary = {
-        "iia": sum([d['iia'] for d in data]) / len(data),
-        "odds_ratio": sum([d['odds_ratio'] for d in data]) / len(data),
+        "iia": sum([d['p_src'] > d['p_base'] for d in data]) / len(data),
+        "iia-flip": sum([d['p_src'] > d['p_base'] for d in data if d['base_p_base'] > d['base_p_src']]) / len(data),
+        "odds_ratio": sum([d['base_p_base'] - d['base_p_src'] + d['p_src'] - d['p_base'] for d in data]) / len(data),
         "eval_loss": sum([d['loss'] for d in data]) / len(data),
     }
     
