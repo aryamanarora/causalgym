@@ -5,7 +5,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from utils import WEIGHTS
 import torch
 
-def run_command(tokenizer: AutoTokenizer, gpt: AutoModelForCausalLM, model_name: str, dataset: str):
+def run_command(tokenizer: AutoTokenizer, gpt: AutoModelForCausalLM, model_name: str, dataset: str, hparam_non_das: bool = False):
     # command = f"python das.py --model EleutherAI/pythia-70m --intervention {method} --dataset {dataset} --position each --num-tokens 1 --num-dims 1 --steps {steps}"
     print(dataset)
     experiment(
@@ -19,12 +19,14 @@ def run_command(tokenizer: AutoTokenizer, gpt: AutoModelForCausalLM, model_name:
         strategy="last",
         lr=5e-3,
         only_das=False,
+        hparam_non_das=hparam_non_das,
         tokenizer=tokenizer,
         gpt=gpt,
     )
 
-def main(model: str, device: str="cpu"):
+def main(model: str, hparam_non_das: bool = False):
     # load model + tokenizer
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
     tokenizer.pad_token = tokenizer.eos_token
     gpt = AutoModelForCausalLM.from_pretrained(
@@ -36,11 +38,11 @@ def main(model: str, device: str="cpu"):
     # run commands
     datasets = [d for d in list_datasets() if d.startswith("syntaxgym/")]
     for dataset in datasets:
-        run_command(tokenizer, gpt, model, dataset)
+        run_command(tokenizer, gpt, model, dataset, hparam_non_das)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
+    parser.add_argument("--hparam_non_das", action="store_true")
     args = parser.parse_args()
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    main(args.model, device)
+    main(**vars(args))
