@@ -5,7 +5,16 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from utils import WEIGHTS
 import torch
 
-def run_command(tokenizer: AutoTokenizer, gpt: AutoModelForCausalLM, model_name: str, dataset: str, hparam_non_das: bool = False):
+def run_command(
+    tokenizer: AutoTokenizer,
+    gpt: AutoModelForCausalLM,
+    model_name: str,
+    dataset: str,
+    lr: float,
+    only_das: bool,
+    hparam_non_das: bool,
+    das_label: str
+):
     # command = f"python das.py --model EleutherAI/pythia-70m --intervention {method} --dataset {dataset} --position each --num-tokens 1 --num-dims 1 --steps {steps}"
     print(dataset)
     experiment(
@@ -17,14 +26,15 @@ def run_command(tokenizer: AutoTokenizer, gpt: AutoModelForCausalLM, model_name:
         batch_size=4,
         intervention_site="block_output",
         strategy="last",
-        lr=5e-3,
-        only_das=False,
+        lr=lr,
+        only_das=only_das,
         hparam_non_das=hparam_non_das,
+        das_label=das_label,
         tokenizer=tokenizer,
         gpt=gpt,
     )
 
-def main(model: str, hparam_non_das: bool = False):
+def main(model: str, lr: float=5e-3, hparam_non_das: bool=False, only_das: bool=False, das_label: str=None):
     # load model + tokenizer
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
@@ -38,11 +48,14 @@ def main(model: str, hparam_non_das: bool = False):
     # run commands
     datasets = [d for d in list_datasets() if d.startswith("syntaxgym/")]
     for dataset in datasets:
-        run_command(tokenizer, gpt, model, dataset, hparam_non_das)
+        run_command(tokenizer, gpt, model, dataset, lr, only_das, hparam_non_das, das_label)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="EleutherAI/pythia-70m")
+    parser.add_argument("--lr", type=float, default=5e-3)
+    parser.add_argument("--only-das", action="store_true")
     parser.add_argument("--hparam_non_das", action="store_true")
+    parser.add_argument("--das-label", type=str, default=None)
     args = parser.parse_args()
     main(**vars(args))

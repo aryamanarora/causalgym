@@ -40,6 +40,7 @@ def experiment(
     lr: float,
     only_das: bool=False,
     hparam_non_das: bool=False,
+    das_label: str=None,
     tokenizer: Union[AutoTokenizer, None]=None,
     gpt: Union[AutoModelForCausalLM, None]=None,
 ):
@@ -117,7 +118,8 @@ def experiment(
             _, more_data, activations, eval_activations, diff_vector = train_das(
                 intervenable, trainset, evalset, layer_i, pos_i, strategy,
                 eval_steps, grad_steps, lr=lr)
-            diff_vectors.append({"method": "das", "layer": layer_i, "pos": pos_i, "vec": diff_vector})
+            diff_vectors.append({"method": "das" if das_label is None else das_label,
+                                 "layer": layer_i, "pos": pos_i, "vec": diff_vector})
             data.extend(more_data)
             
             # test other methods
@@ -177,6 +179,7 @@ def main():
     parser.add_argument("--lr", type=float, default=5e-3)
     parser.add_argument("--only-das", action="store_true")
     parser.add_argument("--hparam-non-das", action="store_true")
+    parser.add_argument("--das-label", type=str, default=None)
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
