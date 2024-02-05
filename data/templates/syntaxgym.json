@@ -46,7 +46,7 @@
     "agr_sv_num_obj-relc": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=275",
         "templates": [
-            "The {subject} that the {object} {verbed}"
+            "The {subject} {that} {the} {object} {verbed}"
         ],
         "label": "subject",
         "result_prepend_space": true,
@@ -59,6 +59,8 @@
                 "singular": ["guard", "doctor", "farmer", "author", "officer", "secretary", "taxi driver", "athlete", "manager", "senator", "consultant", "teacher", "customer", "pilot", "executive", "minister", "actor", "architect", "clerk"],
                 "plural": ["customers", "authors", "actors", "senators", "athletes", "officers", "teachers", "ministers", "managers", "farmers", "guards", "pilots", "secretaries", "architects", "doctors", "consultants", "taxi drivers", "executives", "clerks"]
             },
+            "that": ["that"],
+            "the": ["the"],
             "verbed": ["hated", "injured", "disguised", "ignored", "embarrassed", "admired", "liked", "hurt"],
             "object": [
                 "manager", "senator", "actor", "teacher", "doctor", "customer", "executive", "pilot", "farmer", "guard", "author", "officer", "architect", "secretary", "minister", "clerk", "athlete",
@@ -116,7 +118,7 @@
     "agr_refl_num_obj-relc": {
         "source": "https://syntaxgym.org/test_suite/items?test_suite=276",
         "templates": [
-            "The {subject} that the {embed_np} {embed_vp} {matrix_v}"
+            "The {subject} {that} {the} {embed_np} {embed_vp} {matrix_v}"
         ],
         "label": "subject",
         "result_prepend_space": true,
@@ -129,6 +131,8 @@
                 "singular": ["farmer", "author", "taxi driver", "consultant", "executive", "actor", "teacher", "architect", "senator", "secretary", "clerk", "officer", "pilot", "manager", "doctor", "minister", "guard", "athlete", "customer"],
                 "plural": ["managers", "farmers", "architects", "pilots", "doctors", "authors", "consultants", "taxi drivers", "customers", "secretaries", "officers", "actors", "guards", "teachers", "executives", "senators", "ministers", "clerks", "athletes"]
             },
+            "that": ["that"],
+            "the": ["the"],
             "embed_np": [
                 "actors", "managers", "authors", "guards", "customers", "farmers", "architects", "pilots", "ministers", "clerks", "secretaries", "teachers", "doctors", "executives", "officers", "athletes", "senators",
                 "doctor", "farmer", "minister", "officer", "guard", "author", "customer", "pilot", "architect", "senator", "athlete", "executive", "actor", "secretary", "clerk", "teacher", "manager"
