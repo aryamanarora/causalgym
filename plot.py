@@ -132,7 +132,7 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia"):
         df["iia"] = df["iia"].apply(lambda x: 100 * x)
     elif metric == "odds":
         df["odds"] = df["odds"].apply(lambda x: math.log(x))
-    df = df[df["method"] == "das"]
+    # df = df[df["method"] == "das"]
     df = df[["dataset", "model", "method", "layer", "pos", metric]]
     df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
 
@@ -148,7 +148,7 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia"):
             ggplot(df[df["dataset"] == dataset], aes(x="pos", y="layer"))
             + geom_tile(aes(fill=metric))
             # + geom_text(aes(label=f"{metric}_formatted"), color="black", size=7) + ggtitle(metric)
-            + facet_wrap("~model", scales="free_y", nrow=1)
+            + facet_wrap("~method", scales="free_y")
         )
         if metric != "odds":
             plot += scale_fill_cmap("Purples", limits=[0,100])
@@ -160,7 +160,7 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia"):
         if sentence is not None:
             plot += scale_x_continuous(breaks=list(range(len(sentence))), labels=sentence)
             plot += theme(axis_text_x=element_text(rotation=90, hjust=0.5))
-        plot.save(f"{directory}/figs_{dataset.replace('/', '_')}_{metric}.pdf", width=20, height=5)
+        plot.save(f"{directory}/figs_{dataset.replace('/', '_')}_{metric}.pdf", width=20, height=10)
 
 
 def plot_cos_sim_per_method(vecs: list[dict], loc="figs/das/cos_sim_method.pdf"):
@@ -279,6 +279,33 @@ def summarise(directory: str, reload: bool=False, metric: str="odds"):
             print("wrote", model, metric)
 
 
+def average_per_method(directory: str, reload: bool=False, metric: str="odds"):
+    # collect all data
+    df = load_directory(directory, reload)
+    if metric == "iia":
+        df["iia"] = df["iia"].apply(lambda x: 100 * x)
+    elif metric == "odds":
+        df["odds"] = df["odds"].apply(lambda x: math.log(x))
+
+    # get average iia over layers, max'd 
+    df = df[["dataset", "model", "method", "layer", "pos", metric]]
+    df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
+    df.drop(columns=["pos"], inplace=True)
+    df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
+    df.drop(columns=["layer"], inplace=True)
+    df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
+    df.drop(columns=["dataset"], inplace=True)
+    df = df.groupby(["model", "method"]).mean().reset_index()
+
+    for model in df["model"].unique():
+        split = df[df["model"] == model]
+        split.drop(columns=["model"], inplace=True)
+        split = split.sort_values(by=metric, ascending=False)
+        with open(f"{directory}/{model.replace('/', '_')}__{metric}__avg.txt", "w") as f:
+            f.write(split.to_latex(index=False))
+            print("wrote", model, metric)
+
+
 def compare(directory: str):
     # collect all data
     df = load_directory(directory)
@@ -320,6 +347,10 @@ if __name__ == "__main__":
         summarise(args.file, args.reload, "odds")
     elif args.plot == "iia_summary":
         summarise(args.file, args.reload, "iia")
+    elif args.plot == "odds_avg":
+        average_per_method(args.file, args.reload, "odds")
+    elif args.plot == "iia_avg":
+        average_per_method(args.file, args.reload, "iia")
     elif args.plot == "odds_pos":
         plot_per_pos(args.file, args.reload, "odds")
     elif args.plot == "iia_pos":
