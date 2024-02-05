@@ -123,13 +123,16 @@ def experiment(
             # test other methods
             if not only_das:
                 for method in methods:
-                    more_data, summary, diff_vector = train_feature_direction(
-                        method, intervenable, activations, eval_activations,
-                        evalset, layer_i, pos_i, strategy, intervention_site
-                    )
-                    print(f"{method}: {summary}")
-                    diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
-                    data.extend(more_data)
+                    try:
+                        more_data, summary, diff_vector = train_feature_direction(
+                            method, intervenable, activations, eval_activations,
+                            evalset, layer_i, pos_i, strategy, intervention_site
+                        )
+                        print(f"{method}: {summary}")
+                        diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
+                        data.extend(more_data)
+                    except:
+                        continue
             
             # store all data
             total_data.extend(augment_data(data, {"layer": layer_i, "pos": pos_i}))
