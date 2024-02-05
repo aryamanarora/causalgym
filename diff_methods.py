@@ -1,3 +1,4 @@
+from numpy import add
 import torch
 from collections import defaultdict
 
@@ -6,7 +7,6 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 
 
 # mean diff
@@ -30,7 +30,7 @@ def mean_diff(activations, labels, eval_activations, eval_labels):
     return vec / torch.norm(vec), None
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@ignore_warnings(category=Warning)
 def kmeans_diff(activations, labels, eval_activations, eval_labels):
     # fit kmeans
     kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit(activations)
@@ -41,53 +41,31 @@ def kmeans_diff(activations, labels, eval_activations, eval_labels):
     return vec / torch.norm(vec), None
 
 
-def pca_diff(activations, labels, eval_activations, eval_labels):
-    # fit pca
-    pca = PCA(n_components=1).fit(activations)
+def pca_diff(n_components=1):
+    def diff_func(activations, labels, eval_activations, eval_labels):
+        # fit pca
+        pca = PCA(n_components=n_components).fit(activations)
+        explained_variance = sum(pca.explained_variance_ratio_)
 
-    # get first component
-    vec = torch.tensor(pca.components_[0], dtype=torch.float32)
-    return vec / torch.norm(vec), None
-
-
-def probing_diff(activations, labels, eval_activations, eval_labels):
-    assert len(set(labels)) == 2
-    label_0 = list(set(labels))[0]
-
-    # fit linear model
-    weight = torch.nn.Parameter(torch.zeros_like(activations[0]))
-    weight.requires_grad = True
-
-    # train
-    optimizer = torch.optim.Adam([weight], lr=1e-3)
-    for epoch in range(1):
-        for i, (activation, label) in enumerate(zip(activations, labels)):
-            logit = torch.matmul(weight, activation)
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(logit, torch.tensor(1.0 if label == label_0 else 0.0))
-            loss.backward()
-            optimizer.step()
-    
-        # print acc
-        acc = 0
-        for activation, label in zip(activations, labels):
-            logit = torch.matmul(weight, activation)
-            prob = torch.sigmoid(logit).item()
-            if (prob > 0.5 and label == label_0) or (prob < 0.5 and label != label_0):
-                acc += 1
-
-    weight_vector = weight.detach() / torch.norm(weight.detach())
-    weight_vector.requires_grad = False
-    return weight_vector, acc / len(activations)
+        # average all components
+        vec = torch.tensor(pca.components_.mean(axis=0), dtype=torch.float32)
+        return vec / torch.norm(vec), explained_variance
+    return diff_func
 
 
-def probing_diff_sklearn(activations, labels, eval_activations, eval_labels):
-    # fit lr
-    lr = LogisticRegression(random_state=0, max_iter=1000, fit_intercept=False).fit(activations, labels)
-    accuracy = lr.score(eval_activations, eval_labels)
+def probe_diff(fit_intercept=False, penalty='l2', solver="lbfgs", C=1.0) -> callable:
+    @ignore_warnings(category=Warning)
+    def diff_func(activations, labels, eval_activations, eval_labels):
+        # fit lr
+        lr = LogisticRegression(random_state=0, max_iter=1000, l1_ratio=0.5,
+                                fit_intercept=fit_intercept, C=C,
+                                penalty=penalty, solver=solver).fit(activations, labels)
+        accuracy = lr.score(eval_activations, eval_labels)
 
-    # extract weight
-    vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
-    return vec / torch.norm(vec), accuracy
+        # extract weight
+        vec = torch.tensor(lr.coef_[0], dtype=torch.float32)
+        return vec / torch.norm(vec), accuracy
+    return diff_func
 
 
 def lda_diff(activations, labels, eval_activations, eval_labels):
@@ -105,11 +83,44 @@ def random_diff(activations, labels, eval_activations, eval_labels):
     return vec / torch.norm(vec), None
 
 
-method_to_class_mapping = {
+method_mapping = {
     "mean": mean_diff,
     "kmeans": kmeans_diff,
-    "probe": probing_diff_sklearn,
-    "pca": pca_diff,
+    "probe": probe_diff(fit_intercept=False, penalty='l2', solver="lbfgs", C=1.0),
+    "pca": pca_diff(n_components=1),
     "lda": lda_diff,
     "random": random_diff,
+}
+
+additional_method_mapping = {
+    # various pca methods (up to 5)
+    "pca_2": pca_diff(n_components=2),
+    "pca_3": pca_diff(n_components=3),
+    "pca_4": pca_diff(n_components=4),
+    "pca_5": pca_diff(n_components=5),
+
+    # various linear probe types
+    "probe_noreg_noint": probe_diff(fit_intercept=False, penalty=None, solver="saga", C=1.0),
+    "probe_noreg_int": probe_diff(fit_intercept=True, penalty=None, solver="saga", C=1.0),
+
+    "probe_l1_noint_1": probe_diff(fit_intercept=False, penalty='l1', solver="saga", C=1.0),
+    "probe_l2_noint_1": probe_diff(fit_intercept=False, penalty='l2', solver="saga", C=1.0),
+    "probe_elastic_noint_1": probe_diff(fit_intercept=False, penalty="elasticnet", solver="saga", C=1.0),
+    "probe_l1_int_1": probe_diff(fit_intercept=True, penalty='l1', solver="saga", C=1.0),
+    "probe_l2_int_1": probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1.0),
+    "probe_elastic_int_1": probe_diff(fit_intercept=True, penalty="elasticnet", solver="saga", C=1.0),
+
+    "probe_l1_noint_0.1": probe_diff(fit_intercept=False, penalty='l1', solver="saga", C=0.1),
+    "probe_l2_noint_0.1": probe_diff(fit_intercept=False, penalty='l2', solver="saga", C=0.1),
+    "probe_elastic_noint_0.1": probe_diff(fit_intercept=False, penalty="elasticnet", solver="saga", C=0.1),
+    "probe_l1_int_0.1": probe_diff(fit_intercept=True, penalty='l1', solver="saga", C=0.1),
+    "probe_l2_int_0.1": probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=0.1),
+    "probe_elastic_int_0.1": probe_diff(fit_intercept=True, penalty="elasticnet", solver="saga", C=0.1),
+    
+    "probe_l1_noint_0.001": probe_diff(fit_intercept=False, penalty='l1', solver="saga", C=0.001),
+    "probe_l2_noint_0.001": probe_diff(fit_intercept=False, penalty='l2', solver="saga", C=0.001),
+    "probe_elastic_noint_0.001": probe_diff(fit_intercept=False, penalty="elasticnet", solver="saga", C=0.001),
+    "probe_l1_int_0.001": probe_diff(fit_intercept=True, penalty='l1', solver="saga", C=0.001),
+    "probe_l2_int_0.001": probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=0.001),
+    "probe_elastic_int_0.001": probe_diff(fit_intercept=True, penalty="elasticnet", solver="saga", C=0.001),
 }

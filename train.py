@@ -5,7 +5,7 @@ from eval import augment_data, calculate_loss, eval
 from utils import get_last_token
 from interventions import intervention_config, PooledLowRankRotatedSpaceIntervention
 import pyvene as pv
-from diff_methods import method_to_class_mapping
+from diff_methods import method_mapping, additional_method_mapping
 from data import Batch
 
 def train_das(
@@ -128,7 +128,7 @@ def train_feature_direction(
     eval_labels = [label for _, label in eval_activations]
     eval_activations = [activation.type(torch.float32) for activation, _ in eval_activations]
     
-    diff_vector, accuracy = method_to_class_mapping[method](activations, labels, eval_activations, eval_labels)
+    diff_vector, accuracy = method_mapping.get(method, additional_method_mapping.get(method, None))(activations, labels, eval_activations, eval_labels)
     diff_vector = diff_vector.to(intervenable.get_device()).unsqueeze(1)
 
     # new config

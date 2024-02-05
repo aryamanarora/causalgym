@@ -1,3 +1,4 @@
+from numpy import add
 import torch
 import os
 import argparse
@@ -5,7 +6,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GPTNeoXForCausalLM
 from utils import WEIGHTS
 from data import Dataset
 from eval import eval, augment_data
-from train import train_das, train_feature_direction, method_to_class_mapping
+from train import train_das, train_feature_direction, method_mapping, additional_method_mapping
 import datetime
 import json
 from typing import Union
@@ -38,6 +39,7 @@ def experiment(
     strategy: str,
     lr: float,
     only_das: bool=False,
+    hparam_non_das: bool=False,
     tokenizer: Union[AutoTokenizer, None]=None,
     gpt: Union[AutoModelForCausalLM, None]=None,
 ):
@@ -70,6 +72,12 @@ def experiment(
         for pair in batch.pairs:
             discard.add(''.join(pair.base))
     evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, discard=discard)
+    
+    # methods
+    methods = list(method_mapping.keys())
+    if hparam_non_das:
+        methods.extend(list(additional_method_mapping.keys()))
+    print(methods)
     
     # entering train loops
     for pos_i in range(data_source.first_var_pos, data_source.length):
@@ -114,17 +122,14 @@ def experiment(
             
             # test other methods
             if not only_das:
-                for method in list(method_to_class_mapping.keys())[::-1]:
-                    try:
-                        more_data, summary, diff_vector = train_feature_direction(
-                            method, intervenable, activations, eval_activations,
-                            evalset, layer_i, pos_i, strategy, intervention_site
-                        )
-                        print(f"{method}: {summary}")
-                        diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
-                        data.extend(more_data)
-                    except:
-                        continue
+                for method in methods:
+                    more_data, summary, diff_vector = train_feature_direction(
+                        method, intervenable, activations, eval_activations,
+                        evalset, layer_i, pos_i, strategy, intervention_site
+                    )
+                    print(f"{method}: {summary}")
+                    diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
+                    data.extend(more_data)
             
             # store all data
             total_data.extend(augment_data(data, {"layer": layer_i, "pos": pos_i}))
@@ -168,6 +173,7 @@ def main():
     parser.add_argument("--strategy", type=str, default="last")
     parser.add_argument("--lr", type=float, default=5e-3)
     parser.add_argument("--only-das", action="store_true")
+    parser.add_argument("--hparam-non-das", action="store_true")
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))
