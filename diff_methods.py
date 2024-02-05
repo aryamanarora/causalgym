@@ -93,7 +93,7 @@ method_mapping = {
 }
 
 additional_method_mapping = {
-    # various pca methods (up to 5)
+    # various pca components (up to 5)
     "pca_2": pca_diff(n_components=2),
     "pca_3": pca_diff(n_components=3),
     "pca_4": pca_diff(n_components=4),
@@ -123,4 +123,7 @@ additional_method_mapping = {
     "probe_l1_int_0.001": probe_diff(fit_intercept=True, penalty='l1', solver="saga", C=0.001),
     "probe_l2_int_0.001": probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=0.001),
     "probe_elastic_int_0.001": probe_diff(fit_intercept=True, penalty="elasticnet", solver="saga", C=0.001),
+
+    "probe_l2_int_0.01": probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=0.01),
+    "probe_l2_int_0.0001": probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=0.0001),
 }
