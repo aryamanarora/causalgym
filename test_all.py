@@ -21,7 +21,7 @@ def run_command(
         model=model_name,
         dataset=dataset,
         steps=100,
-        eval_steps=25,
+        eval_steps=100,
         grad_steps=1,
         batch_size=4,
         intervention_site="block_output",

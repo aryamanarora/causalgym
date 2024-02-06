@@ -64,7 +64,7 @@ def load_file(file_path):
         return df
 
 
-def load_directory(directory: str, reload: bool=False):
+def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
     if reload or not glob.glob(f"{directory}/combined.csv"):
         print(f"reloading {directory}")
         # load all files (in parallel for speedup)
@@ -72,24 +72,33 @@ def load_directory(directory: str, reload: bool=False):
         dfs = []
         with multiprocessing.Pool() as pool:
             for df in tqdm(pool.imap_unordered(load_file, file_paths), total=len(file_paths)):
+                # summary stats
+                df["acc"] = df["base_p_src"] < df["base_p_base"]
+                df["iia"] = (df["p_src"] > df["p_base"]) * 100
+                df["odds"] = df['base_p_base'] - df['base_p_src'] + df['p_src'] - df['p_base']
+                df = df[["dataset", "step", "model", "method", "layer", "pos", "odds", "iia", "acc"]]
+
+                # store
                 dfs.append(df)
         
-        # discard intermediate steps for DAS
+        # merge
         df = pd.concat(dfs, ignore_index=True)
-        last_step = df["step"].max()
-        df = df[(df["step"] == last_step) | (df["step"] == -1)]
+        df = df.groupby(["dataset", "step", "model", "method", "layer", "pos"]).mean().reset_index()
 
-        # store combined df
-        df["acc"] = df["base_p_src"] < df["base_p_base"]
-        df["iia"] = df["p_src"] > df["p_base"]
-        df["odds"] = df['base_p_base'] - df['base_p_src'] + df['p_src'] - df['p_base']
-        df["odds"] = df["odds"].apply(lambda x: math.exp(x))
+        # final formatting
+        df["model"] = df["model"].apply(lambda x: x.split("/")[-1])
+        model_order = [x.split("/")[-1] for x in list(parameters.keys())[::-1]]
+        df["model"] = pd.Categorical(df["model"], categories=model_order, ordered=True)
         df.to_csv(f"{directory}/combined.csv", index=False)
-
-        return df
     else:
         print(f"using existing {directory}")
-        return pd.read_csv(f"{directory}/combined.csv")
+        df = pd.read_csv(f"{directory}/combined.csv")
+
+    if filter_step:
+        last_step = df["step"].max()
+        df = df[(df["step"] == last_step) | (df["step"] == -1)]
+        df.drop(columns=["step"], inplace=True)
+    return df
 
 
 def plot_acc(directory: str, reload: bool=False):
@@ -98,8 +107,6 @@ def plot_acc(directory: str, reload: bool=False):
     # compute acc
     df = load_directory(directory, reload)
     df = df[df["method"] == "vanilla"]
-    df = df[["dataset", "model", "base_p_base", "base_p_src"]]
-    df["acc"] = df["base_p_src"] < df["base_p_base"]
     df = df[["dataset", "model", "acc"]]
     df = df.groupby(["dataset", "model"]).mean().reset_index()
     df["params"] = df["model"].apply(lambda x: parameters[x])
@@ -128,18 +135,7 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia"):
 
     # load
     df = load_directory(directory, reload)
-    if metric == "iia":
-        df["iia"] = df["iia"].apply(lambda x: 100 * x)
-    elif metric == "odds":
-        df["odds"] = df["odds"].apply(lambda x: math.log(x))
-    # df = df[df["method"] == "das"]
     df = df[["dataset", "model", "method", "layer", "pos", metric]]
-    df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
-
-    # order
-    df["model"] = df["model"].apply(lambda x: x.split("/")[-1])
-    model_order = [x.split("/")[-1] for x in list(parameters.keys())[::-1]]
-    df["model"] = pd.Categorical(df["model"], categories=model_order, ordered=True)
     print(len(df))
 
     # plot
@@ -163,82 +159,15 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia"):
         plot.save(f"{directory}/figs_{dataset.replace('/', '_')}_{metric}.pdf", width=20, height=10)
 
 
-def plot_cos_sim_per_method(vecs: list[dict], loc="figs/das/cos_sim_method.pdf"):
-    paired_cos_sims = []
-    for v1 in vecs:
-        for v2 in vecs:
-            if v1["pos"] != v2["pos"] or v1["method"] != v2["method"]:
-                continue
-            paired_cos_sims.append({
-                "method": v1["method"],
-                "layer1": v1["layer"],
-                "layer2": v2["layer"],
-                "pos": v1["pos"],
-                "cos_sim": abs(torch.nn.functional.cosine_similarity(
-                    torch.tensor(v1["vec"]).reshape(-1),
-                    torch.tensor(v2["vec"]).reshape(-1),
-                    dim=0
-                ).item())
-            })
-    
-    df = pd.DataFrame(paired_cos_sims)
-    plot = (
-        ggplot(df, aes(x="layer1", y="layer2", fill="cos_sim")) + geom_tile()
-        + facet_grid("method~pos") + scale_fill_cmap("Purples", limits=[0,1])
-    )
-    plot.save(loc, width=5, height=10)
-
-
-def plot_cos_sim_per_pos(vecs: list[dict], loc="figs/das/cos_sim_pos.pdf"):
-    paired_cos_sims = []
-    for v1 in vecs:
-        for v2 in vecs:
-            if v1["pos"] != v2["pos"] or v1["layer"] != v2["layer"]:
-                continue
-            paired_cos_sims.append({
-                "method1": v1["method"],
-                "method2": v2["method"],
-                "layer": v1["layer"],
-                "pos": v1["pos"],
-                "cos_sim": abs(torch.nn.functional.cosine_similarity(
-                    torch.tensor(v1["vec"]).reshape(-1),
-                    torch.tensor(v2["vec"]).reshape(-1),
-                    dim=0
-                ).item())
-            })
-    
-    df = pd.DataFrame(paired_cos_sims)
-    plot = (
-        ggplot(df, aes(x="method1", y="method2", fill="cos_sim")) + geom_tile()
-        + facet_grid("layer~pos") + scale_fill_cmap("Purples", limits=[0,1])
-    )
-    plot.save(loc, width=5, height=10)
-
-
-def plot_all(directory: str):
-    for f in glob.glob(f"{directory}/*.json"):
-        with open(f, 'r') as f:
-            log = json.load(f)
-            dataset = Dataset.load_from(log["metadata"]["dataset"])
-            pair = dataset.sample_pair()
-            sentence = [pair.base[i] if pair.base[i] == pair.src[i] else pair.base[i] + " / " + pair.src[i] for i in range(len(pair.base))]
-            plot_per_pos(pd.DataFrame(log["data"]),
-                         sentence=sentence,
-                         loc=f"figs/das/{log['metadata']['model'].split('/')[-1]}__{log['metadata']['dataset'].split('/')[1]}.pdf")
-
-
 def summarise(directory: str, reload: bool=False, metric: str="odds"):
     # collect all data
     df = load_directory(directory, reload)
-    if metric == "iia":
-        df["iia"] = df["iia"].apply(lambda x: 100 * x)
-    elif metric == "odds":
-        df["odds"] = df["odds"].apply(lambda x: math.log(x))
 
     # get average iia over layers, max'd 
     df = df[["dataset", "model", "method", "layer", "pos", metric]]
-    df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
+    df.drop(columns=["pos"], inplace=True)
     df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
+    df.drop(columns=["layer"], inplace=True)
     df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
 
     # make latex table
@@ -281,21 +210,16 @@ def summarise(directory: str, reload: bool=False, metric: str="odds"):
 
 def average_per_method(directory: str, reload: bool=False, metric: str="odds"):
     # collect all data
-    df = load_directory(directory, reload)
-    if metric == "iia":
-        df["iia"] = df["iia"].apply(lambda x: 100 * x)
-    elif metric == "odds":
-        df["odds"] = df["odds"].apply(lambda x: math.log(x))
+    df = load_directory(directory, reload, filter_step=False)
 
     # get average iia over layers, max'd 
-    df = df[["dataset", "model", "method", "layer", "pos", metric]]
-    df = df.groupby(["dataset", "model", "method", "layer", "pos"]).mean().reset_index()
+    df = df[["dataset", "step", "model", "method", "layer", "pos", metric]]
     df.drop(columns=["pos"], inplace=True)
-    df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
+    df = df.groupby(["dataset", "step", "model", "method", "layer"]).max().reset_index()
     df.drop(columns=["layer"], inplace=True)
-    df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
+    df = df.groupby(["dataset", "step", "model", "method"]).mean().reset_index()
     df.drop(columns=["dataset"], inplace=True)
-    df = df.groupby(["model", "method"]).mean().reset_index()
+    df = df.groupby(["model", "method", "step"]).mean().reset_index()
 
     for model in df["model"].unique():
         split = df[df["model"] == model]
@@ -306,36 +230,38 @@ def average_per_method(directory: str, reload: bool=False, metric: str="odds"):
             print("wrote", model, metric)
 
 
-def compare(directory: str):
+def probe_hyperparam_plot(directory: str, reload: bool=False, metric: str="odds"):
     # collect all data
-    df = load_directory(directory)
-    # df = df[df["method"].isin([method1, method2])].reset_index(drop=True)
-    df = df[["dataset", "model", "layer", "pos", "method", "iia"]]
-    df = df.groupby(["dataset", "model", "layer", "pos", "method"]).mean().reset_index()
-    # df = df.pivot(index=["dataset", "model", "layer", "pos"], columns="method", values="iia").reset_index()
+    df = load_directory(directory, reload)
 
-    # make columns of method1 and method2 for all possible pairs of methods
-    # Create a new DataFrame for paired comparisons
-    paired_df = []
+    # get average iia over layers, max'd 
+    df = df[["dataset", "model", "method", "layer", "pos", metric]]
+    df.drop(columns=["pos"], inplace=True)
+    df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
+    df.drop(columns=["layer"], inplace=True)
+    df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
+    df.drop(columns=["dataset"], inplace=True)
+    df = df.groupby(["model", "method"]).mean().reset_index()
 
-    # Iterate over each unique combination of dataset, model, layer, pos
-    for _, group in df.groupby(["dataset", "model", "layer", "pos"]):
-        # Get all combinations of methods within the group
-        model = group["model"].values.tolist()[0]
-        for (method1, iia1), (method2, iia2) in combinations(group[["method", "iia"]].values, 2):
-            paired_df.append({"model": model, "method1": method1, "method2": method2, "iia1": iia1, "iia2": iia2})
-    df = pd.DataFrame(paired_df)
+    # filter
+    df = df[df["method"].str.contains("probe_l2_int")]
+    df["$\lambda$"] = df["method"].apply(lambda x: 1 / float(x.split("_")[-1]))
+    df["params"] = df["model"].apply(lambda x: parameters[x])
 
+    # plot
     plot = (
-        ggplot(df, aes(x="iia2", y="iia1", fill="model")) + geom_point(alpha=0.2, stroke=0)
-        + facet_grid("method1~method2")
+        ggplot(df, aes(x="$\lambda$", y=metric, group="model"))
+        + geom_line(aes(color="model"))
+        + geom_point(aes(color="model"))
+        + scale_x_log10()
     )
-    plot.save("figs/das/compare.pdf", width=10, height=10)
+    plot.save(f"{directory}/figs_probe_hyperparam.pdf", width=5, height=5)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plot", type=str, default="iia")
+    parser.add_argument("--plot", type=str, default="acc")
+    parser.add_argument("--metric", type=str, default="iia")
     parser.add_argument("--file", type=str)
     parser.add_argument("--reload", action="store_true")
     args = parser.parse_args()
@@ -343,15 +269,11 @@ if __name__ == "__main__":
     # base accuracy of each model on each task
     if args.plot == "acc":
         plot_acc(args.file, reload=args.reload)
-    elif args.plot == "odds_summary":
-        summarise(args.file, args.reload, "odds")
-    elif args.plot == "iia_summary":
-        summarise(args.file, args.reload, "iia")
-    elif args.plot == "odds_avg":
-        average_per_method(args.file, args.reload, "odds")
-    elif args.plot == "iia_avg":
-        average_per_method(args.file, args.reload, "iia")
-    elif args.plot == "odds_pos":
-        plot_per_pos(args.file, args.reload, "odds")
-    elif args.plot == "iia_pos":
-        plot_per_pos(args.file, args.reload, "iia")
+    elif args.plot == "summary":
+        summarise(args.file, args.reload, args.metric)
+    elif args.plot == "avg":
+        average_per_method(args.file, args.reload, args.metric)
+    elif args.plot == "pos":
+        plot_per_pos(args.file, args.reload, args.metric)
+    elif args.plot == "probe_hyperparam":
+        probe_hyperparam_plot(args.file, args.reload, args.metric)

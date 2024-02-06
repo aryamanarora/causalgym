@@ -86,10 +86,43 @@ def random_diff(activations, labels, eval_activations, eval_labels):
 method_mapping = {
     "mean": mean_diff,
     "kmeans": kmeans_diff,
-    "probe": probe_diff(fit_intercept=False, penalty='l2', solver="lbfgs", C=1.0),
     "pca": pca_diff(n_components=1),
     "lda": lda_diff,
     "random": random_diff,
+}
+
+probe_mapping = {
+    "EleutherAI/pythia-14m": [probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-1)],
+    "EleutherAI/pythia-31m": [probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-2)],
+    "EleutherAI/pythia-70m": [probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-3)],
+    "EleutherAI/pythia-160m": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-4),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-5)
+    ],
+    "EleutherAI/pythia-410m": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-4),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-5)
+    ],
+    "EleutherAI/pythia-1b": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-5),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-6)
+    ],
+    "EleutherAI/pythia-1.4b": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-5),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-6)
+    ],
+    "EleutherAI/pythia-2.8b": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-5),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-6)
+    ],
+    "EleutherAI/pythia-6.9b": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-6),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-7)
+    ],
+    "EleutherAI/pythia-12b": [
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-6),
+        probe_diff(fit_intercept=True, penalty='l2', solver="saga", C=1e-7)
+    ],
 }
 
 additional_method_mapping = {

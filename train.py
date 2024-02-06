@@ -5,13 +5,12 @@ from eval import augment_data, calculate_loss, eval
 from utils import get_last_token
 from interventions import intervention_config, PooledLowRankRotatedSpaceIntervention
 import pyvene as pv
-from diff_methods import method_mapping, additional_method_mapping
 from data import Batch
 
 def train_das(
         intervenable: pv.IntervenableModel, trainset: list[Batch], evalset: list[Batch],
         layer_i: int, pos_i: int, strategy: str, eval_steps: int, grad_steps: int, lr: float,
-        epochs: int=1):
+        epochs: int=1, das_label: str="das"):
     """Train DAS or Boundless DAS on a model."""
 
     # setup
@@ -96,13 +95,13 @@ def train_das(
                 intervenable.set_temperature(temperature_schedule[total_step])
 
         # eval
-        if (step % eval_steps == 0 or step == total_steps - 1):
+        if (step % eval_steps == 0 or step == total_steps - 1) and step != 0:
             more_data, summary, eval_activation = eval(intervenable, evalset, layer_i, pos_i, strategy)
             if eval_activations == []:
                 eval_activations = eval_activation
             stats.update(summary)
             print(step, stats)
-            data.extend(augment_data(more_data, {"method": "das", "step": step}))
+            data.extend(augment_data(more_data, {"method": das_label, "step": step}))
 
         total_step += 1
     
@@ -119,7 +118,7 @@ def train_das(
 def train_feature_direction(
         method: str, intervenable: pv.IntervenableModel, activations: list[tuple[torch.tensor, str]],
         eval_activations: list[tuple[torch.tensor, str]], evalset: list[Batch], layer_i: int,
-        pos_i: int, strategy: str, intervention_site: str) -> tuple[list[dict], dict]:
+        pos_i: int, strategy: str, intervention_site: str, method_mapping: dict[str, callable]) -> tuple[list[dict], dict]:
     """Train/compute and evaluate an intervention direction on some activations."""
 
     # get diff vector based on method
@@ -128,7 +127,7 @@ def train_feature_direction(
     eval_labels = [label for _, label in eval_activations]
     eval_activations = [activation.type(torch.float32) for activation, _ in eval_activations]
     
-    diff_vector, accuracy = method_mapping.get(method, additional_method_mapping.get(method, None))(activations, labels, eval_activations, eval_labels)
+    diff_vector, accuracy = method_mapping[method](activations, labels, eval_activations, eval_labels)
     diff_vector = diff_vector.to(intervenable.get_device()).unsqueeze(1)
 
     # new config

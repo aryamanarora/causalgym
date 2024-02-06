@@ -6,7 +6,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GPTNeoXForCausalLM
 from utils import WEIGHTS
 from data import Dataset
 from eval import eval, augment_data
-from train import train_das, train_feature_direction, method_mapping, additional_method_mapping
+from train import train_das, train_feature_direction
+from diff_methods import method_mapping, additional_method_mapping, probe_mapping
 import datetime
 import json
 from typing import Union
@@ -72,13 +73,18 @@ def experiment(
     for batch in trainset:
         for pair in batch.pairs:
             discard.add(''.join(pair.base))
-    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=420, discard=discard)
+    
+    # evalset
+    eval_seed = 420 if hparam_non_das else 1
+    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=eval_seed, discard=discard)
     
     # methods
-    methods = list(method_mapping.keys())
     if hparam_non_das:
-        methods.extend(list(additional_method_mapping.keys()))
-    print(methods)
+        method_mapping.update(additional_method_mapping)
+    if model in probe_mapping:
+        for i, probe_func in enumerate(probe_mapping[model]):
+            method_mapping[f"probe_{i}"] = probe_func
+    print(list(method_mapping.keys()))
     
     # entering train loops
     for pos_i in range(data_source.first_var_pos, data_source.length):
@@ -117,18 +123,19 @@ def experiment(
 
             _, more_data, activations, eval_activations, diff_vector = train_das(
                 intervenable, trainset, evalset, layer_i, pos_i, strategy,
-                eval_steps, grad_steps, lr=lr)
+                eval_steps, grad_steps, lr=lr, das_label="das" if das_label is None else das_label)
             diff_vectors.append({"method": "das" if das_label is None else das_label,
                                  "layer": layer_i, "pos": pos_i, "vec": diff_vector})
             data.extend(more_data)
             
             # test other methods
             if not only_das:
-                for method in methods:
+                for method in list(method_mapping.keys()):
                     try:
                         more_data, summary, diff_vector = train_feature_direction(
                             method, intervenable, activations, eval_activations,
-                            evalset, layer_i, pos_i, strategy, intervention_site
+                            evalset, layer_i, pos_i, strategy, intervention_site,
+                            method_mapping
                         )
                         print(f"{method}: {summary}")
                         diff_vectors.append({"method": method, "layer": layer_i, "pos": pos_i, "vec": diff_vector})
