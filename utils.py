@@ -43,16 +43,16 @@ WEIGHTS = {
 
 
 parameters = {
-    "EleutherAI/pythia-12b": 11846072320,
-    "EleutherAI/pythia-6.9b": 6857302016,
-    "EleutherAI/pythia-2.8b": 2775208960,
-    "EleutherAI/pythia-1.4b": 1414647808,
-    "EleutherAI/pythia-1b": 1011781632,
-    "EleutherAI/pythia-410m": 405334016,
-    "EleutherAI/pythia-160m": 162322944,
-    "EleutherAI/pythia-70m": 70426624,
-    "EleutherAI/pythia-31m": 31000000,
-    "EleutherAI/pythia-14m": 14000000,
+    "pythia-12b": 11846072320,
+    "pythia-6.9b": 6857302016,
+    "pythia-2.8b": 2775208960,
+    "pythia-1.4b": 1414647808,
+    "pythia-1b": 1011781632,
+    "pythia-410m": 405334016,
+    "pythia-160m": 162322944,
+    "pythia-70m": 70426624,
+    "pythia-31m": 31000000,
+    "pythia-14m": 14000000,
 }
 
 

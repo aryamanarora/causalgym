@@ -34,7 +34,10 @@ def run_command(
         gpt=gpt,
     )
 
-def main(model: str, lr: float=5e-3, hparam_non_das: bool=False, only_das: bool=False, das_label: str=None):
+def main(
+    model: str, lr: float=5e-3, hparam_non_das: bool=False, only_das: bool=False,
+    das_label: str=None, start: int=None, end: int=None):
+
     # load model + tokenizer
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model)
@@ -47,7 +50,15 @@ def main(model: str, lr: float=5e-3, hparam_non_das: bool=False, only_das: bool=
 
     # run commands
     datasets = [d for d in list_datasets() if d.startswith("syntaxgym/")]
-    for dataset in datasets:
+    print(len(datasets))
+
+    # start/end
+    if start is None:
+        start = 0
+    if end is None:
+        end = len(datasets)
+
+    for dataset in datasets[start:end]:
         run_command(tokenizer, gpt, model, dataset, lr, only_das, hparam_non_das, das_label)
 
 if __name__ == "__main__":
@@ -57,5 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--only-das", action="store_true")
     parser.add_argument("--hparam_non_das", action="store_true")
     parser.add_argument("--das-label", type=str, default=None)
+    parser.add_argument("--start", type=int, default=None)
+    parser.add_argument("--end", type=int, default=None)
     args = parser.parse_args()
     main(**vars(args))
