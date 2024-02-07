@@ -64,7 +64,7 @@ classification = {
 }
 classification_order = ['Agreement', 'Licensing', 'Garden path effects', 'Gross syntactic state', 'Long-distance']
 model_order = [x for x in list(parameters.keys())[::-1]]
-method_order = ["vanilla", "das", "probe", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random"]
+method_order = ["das", "probe", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
 
 
 def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
@@ -189,7 +189,7 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
     df = pick_better_probe(df, [metric])
     if not plot_all:
         if metric in ["iia", "odds"]:
-            df = df[df["method"].isin(["vanilla", "das", "probe"])]
+            df = df[df["method"].isin(["das"])]
         else:
             df = df[df["method"].isin(["probe", "lda"])]
     print(len(df))
@@ -208,13 +208,14 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
             if len(dataset_df[dataset_df["pos"] == i]) == 0:
                 for model in dataset_df["model"].unique():
                     default_val = 0
+                    acc = dataset_df[dataset_df["model"] == model]["acc"].mean()
                     if metric == "iia":
-                        default_val = (1 - dataset_df[dataset_df["model"] == model]["acc"].mean()) * 100
+                        default_val = (1 - acc) * 100
                     elif metric == "accuracy":
                         default_val = 0.5
                     for layer in dataset_df[dataset_df["model"] == model]["layer"].unique():
                         for method in dataset_df["method"].unique():
-                            row = {"dataset": dataset, "model": model, "layer": layer, "pos": i, "method": method, metric: default_val}
+                            row = {"dataset": dataset, "model": model, "layer": layer, "pos": i, "method": method, "acc": acc, metric: default_val}
                             rows.append(row)
 
         # add rows to df
@@ -222,7 +223,6 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
         dataset_df = dataset_df[dataset_df["method"].isin(["vanilla", "das", "probe", "mean", "pca", "kmeans", "lda", "random"])]
         dataset_df["model"] = pd.Categorical(dataset_df["model"], categories=model_order, ordered=True)
         dataset_df["method"] = pd.Categorical(dataset_df["method"], categories=method_order, ordered=True)
-        # print(dataset_df[dataset_df[metric] == 0])
 
         plot = (
             ggplot(dataset_df, aes(x="layer", y="pos"))
@@ -244,12 +244,13 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
             plot += scale_x_continuous(expand=[0, 0])
             plot += theme(
                 axis_text_x=element_text(rotation=90, hjust=0.5),
-                axis_text_y=element_text(size=9),
+                axis_text_y=element_text(size=8),
                 panel_border=element_rect(fill="None", color="#000", size=1),
                 strip_background=element_rect(color="None", fill="None"),
                 strip_text_x=element_text(size=9),
+                legend_key_height=10,
             )
-        height = 3
+        height = 1.8
         if metric == "accuracy" and not plot_all:
             height = 2.5
         if plot_all:
