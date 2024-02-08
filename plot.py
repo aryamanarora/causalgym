@@ -102,10 +102,14 @@ def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
 def load_file(file_path):
     with open(file_path, 'r') as f:
         j = json.load(f)
+        model_name = j["metadata"]["model"]
+        if file_path.split("_")[-1].startswith("step"):
+            model_name += "_" + file_path.split("_")[-1].split(".json")[0]
+        model_name = model_name.replace("_step", "\nstep")
         data = j['data']
         df = pd.DataFrame(data)
         df["dataset"] = j["metadata"]["dataset"].split("/")[1]
-        df["model"] = j["metadata"]["model"]
+        df["model"] = model_name
         return df
 
 
@@ -121,7 +125,13 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
                 df["acc"] = df["base_p_src"] < df["base_p_base"]
                 df["iia"] = (df["p_src"] > df["p_base"]) * 100
                 df["odds"] = df['base_p_base'] - df['base_p_src'] + df['p_src'] - df['p_base']
-                df = df[["dataset", "step", "model", "method", "layer", "pos", "odds", "iia", "acc", "accuracy"]]
+                df = df[["dataset", "step", "model", "method", "layer",
+                         "base_p_base", "base_p_src", "p_src", "p_base",
+                         "pos", "odds", "iia", "acc", "accuracy"]]
+                df["base_p_base"] = df["base_p_base"].apply(lambda x: math.exp(x))
+                df["base_p_src"] = df["base_p_src"].apply(lambda x: math.exp(x))
+                df["p_base"] = df["p_base"].apply(lambda x: math.exp(x))
+                df["p_src"] = df["p_src"].apply(lambda x: math.exp(x))
 
                 # store
                 dfs.append(df)
@@ -141,6 +151,10 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
         last_step = df["step"].max()
         df = df[(df["step"] == last_step) | (df["step"] == -1)]
         df.drop(columns=["step"], inplace=True)
+    for model in sorted(list(df["model"].unique()), key=lambda x: int(x.split("step")[-1]) if "step" in x else 1000000):
+        print(model)
+        if model not in model_order:
+            model_order.append(model)
     df["model"] = pd.Categorical(df["model"], categories=model_order, ordered=True)
     df["dataset"] = pd.Categorical(df["dataset"], categories=list(classification.keys()), ordered=True)
     df["method"] = pd.Categorical(df["method"], categories=method_order, ordered=True)

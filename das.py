@@ -42,6 +42,8 @@ def experiment(
     only_das: bool=False,
     hparam_non_das: bool=False,
     das_label: str=None,
+    revision: str="main",
+    log_folder: str="das",
     tokenizer: Union[AutoTokenizer, None]=None,
     gpt: Union[AutoModelForCausalLM, None]=None,
 ):
@@ -59,7 +61,7 @@ def experiment(
         weight_type = WEIGHTS.get(model, torch.float16) if device == "cuda:0" else torch.float32
         gpt = GPTNeoXForCausalLM.from_pretrained(
             model,
-            revision="main",
+            revision=revision,
             torch_dtype=weight_type,
             use_flash_attention_2=(weight_type in [torch.bfloat16, torch.float16] and device == "cuda:0"),
         ).to(device)
@@ -148,10 +150,10 @@ def experiment(
 
     # make data dump
     short_dataset_name = dataset.split('/')[-1]
-    short_model_name = model.split('/')[-1]
+    short_model_name = model.split('/')[-1] + (f"_{revision}" if revision != "main" else "")
     filedump = {
         "metadata": {
-            "model": model,
+            "model": model + (f"_{revision}" if revision != "main" else ""),
             "dataset": dataset,
             "steps": steps,
             "eval_steps": eval_steps,
@@ -167,7 +169,7 @@ def experiment(
     }
 
     # log
-    log_file = f"logs/das/{NOW}__{short_model_name}__{short_dataset_name}.json"
+    log_file = f"logs/{log_folder}/{NOW}__{short_model_name}__{short_dataset_name}.json"
     print(f"logging to {log_file}")
     with open(log_file, "w") as f:
         json.dump(filedump, f)
