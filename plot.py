@@ -78,13 +78,10 @@ def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
 
     # remove nans
     df = df.dropna()
-    print(df)
 
     # pick overall better from probe_0 and probe_1
     per_method_avg = df.groupby(["model", "method"]).mean().reset_index()
-    print(per_method_avg)
     for model in per_method_avg["model"].unique():
-        print(model)
         if model in ["pythia-14m", "pythia-31m", "pythia-70m"]:
             orig_df.loc[orig_df["model"] == model, "method"] = orig_df[orig_df["model"] == model]["method"].apply(lambda x: "probe" if x == "probe_0" else x)
             continue
@@ -151,13 +148,14 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
         last_step = df["step"].max()
         df = df[(df["step"] == last_step) | (df["step"] == -1)]
         df.drop(columns=["step"], inplace=True)
-    for model in sorted(list(df["model"].unique()), key=lambda x: int(x.split("step")[-1]) if "step" in x else 1000000):
+    for model in sorted(list(df["model"].unique()), key=lambda x: int(x.split("step")[-1]) if "step" in x else 143000):
         print(model)
         if model not in model_order:
             model_order.append(model)
     df["model"] = pd.Categorical(df["model"], categories=model_order, ordered=True)
     df["dataset"] = pd.Categorical(df["dataset"], categories=list(classification.keys()), ordered=True)
     df["method"] = pd.Categorical(df["method"], categories=method_order, ordered=True)
+    df["trainstep"] = df["model"].apply(lambda x: int(x.split("step")[-1]) if "step" in x else 143000)
     return df
 
 
@@ -451,6 +449,42 @@ def plot_accuracy_vs_metric(directory: str, reload: bool=False, metric: str="odd
     plot.save(f"{directory}/figs_accuracy_vs_{metric}.png", width=8, height=2.5, dpi=300)
 
 
+def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"):
+    # load
+    df = load_directory(directory, reload)
+
+    # pick overall better from probe_0 and probe_1
+    df = pick_better_probe(df, [metric, "accuracy"])
+    df = df[df["method"].isin(["probe"])]
+
+    # drop layer
+    df = df[["dataset", "model", "trainstep", "method", "layer", "pos", metric]]
+    df = df.groupby(["dataset", "model", "trainstep", "method", "layer", "pos"]).mean().reset_index()
+    df.dropna(inplace=True, ignore_index=True)
+
+    # pos names
+    for dataset in df["dataset"].unique():
+        dataset_src = Dataset.load_from(f"syntaxgym/{dataset}")
+        print(df[df["dataset"] == dataset])
+        df.loc[df["dataset"] == dataset, "pos_name"] = df.loc[df["dataset"] == dataset, "pos"].apply(lambda x: dataset_src.span_names[x])
+
+        # select pos
+        if dataset == "npi_any_subj-relc":
+            df = df[((df["dataset"] == dataset) & (df["pos"].isin([1, 2, 3, 7, 8]))) | (df["dataset"] != dataset)]
+    
+    # change trainstep 0 to 0.5
+    df["trainstep"] = df["trainstep"].apply(lambda x: 0.5 if x == 0 else x)
+
+    # plot over trainsteps
+    plot = (
+        ggplot(df, aes(x="layer", y=metric, group="pos_name", color="pos_name"))
+        + geom_line()
+        + facet_wrap("~trainstep", scales="fixed", nrow=2)
+        # + scale_x_log10()
+    )
+    plot.save(f"{directory}/figs_{metric}_vs_trainstep.pdf", width=8, height=3)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--plot", type=str, default="acc")
@@ -476,3 +510,5 @@ if __name__ == "__main__":
         plot_per_layer(args.file, args.reload, args.metric)
     elif args.plot == "accuracy_vs_metric":
         plot_accuracy_vs_metric(args.file, args.reload, args.metric)
+    elif args.plot == "pos_vs_trainstep":
+        plot_pos_vs_trainstep(args.file, args.reload, args.metric)
