@@ -457,7 +457,7 @@ def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"
 
     # pick overall better from probe_0 and probe_1
     df = pick_better_probe(df, [metric, "accuracy"])
-    df = df[df["method"].isin(["probe"])]
+    df = df[df["method"].isin(["das"])]
 
     # drop layer
     df = df[["dataset", "model", "trainstep", "method", "layer", "pos", metric]]
@@ -481,10 +481,10 @@ def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"
     plot = (
         ggplot(df, aes(x="layer", y=metric, group="pos_name", color="pos_name"))
         + geom_line()
-        + facet_wrap("~trainstep", scales="fixed", nrow=2)
+        + facet_grid("dataset~trainstep")
         # + scale_x_log10()
     )
-    plot.save(f"{directory}/figs_{metric}_vs_trainstep.pdf", width=8, height=3)
+    plot.save(f"{directory}/figs_{metric}_vs_trainstep.pdf", width=10, height=3)
 
 
 if __name__ == "__main__":
