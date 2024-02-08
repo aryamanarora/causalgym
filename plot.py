@@ -101,13 +101,21 @@ def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
 def load_file(file_path):
     with open(file_path, 'r') as f:
         j = json.load(f)
+
+        # model name
         model_name = j["metadata"]["model"]
         if file_path.split("_")[-1].startswith("step"):
             model_name += "_" + file_path.split("_")[-1].split(".json")[0]
         model_name = model_name.replace("_step", "\nstep")
+
+        # dataset name
+        dataset_name = j["metadata"]["dataset"].split("/")[1]
+        if j["metadata"].get("invert_labels", False):
+            dataset_name += "_inverted"
+
         data = j['data']
         df = pd.DataFrame(data)
-        df["dataset"] = j["metadata"]["dataset"].split("/")[1]
+        df["dataset"] = dataset_name
         df["model"] = model_name
         return df
 
