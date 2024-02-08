@@ -200,6 +200,8 @@ class Dataset:
     def load_from(self, template: str) -> "Dataset":
         """Load a Dataset from a json template."""
         template_file, template_name = template.split('/')
+        if template_name.endswith("_inverted"):
+            template_name = template_name[:-len("_inverted")]
         data = json.load(open(f"data/templates/{template_file}.json", "r"))
         return Dataset(data[template_name])
     

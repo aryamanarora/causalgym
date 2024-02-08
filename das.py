@@ -171,6 +171,7 @@ def experiment(
             "strategy": strategy,
             "lr": lr,
             "span_names": data_source.span_names,
+            "invert_labels": invert_labels,
         },
         "data": total_data,
         "vec": diff_vectors,

@@ -62,6 +62,8 @@ classification = {
     'filler_gap_pp': 'Long-distance',
     'filler_gap_subj': 'Long-distance',
 }
+for key in list(classification.keys()):
+    classification[key + "_inverted"] = classification[key]
 classification_order = ['Agreement', 'Licensing', 'Garden path effects', 'Gross syntactic state', 'Long-distance']
 model_order = [x for x in list(parameters.keys())[::-1]]
 method_order = ["das", "probe", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
