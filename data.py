@@ -263,7 +263,7 @@ class Dataset:
         # keep resampling until we get a pair that is correctly labelled
         correct, ct = False, 0
         while not correct:
-            pair = self.sample_pair()
+            pair = self.sample_pair(discard)
             if ''.join(pair.base) in discard:
                 continue
             base = tokenizer(''.join(pair.base), return_tensors="pt").to(device)
@@ -287,12 +287,24 @@ class Dataset:
             self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu",
             model: Union[AutoModel, None]=None, discard: set[str]=set()) -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
-        pairs = [
-            self.sample_pair()
-            if model is None else
-            self._sample_doable_pair(model, tokenizer, device, discard)
-            for _ in range(batch_size // 2)
-        ]
+        pairs = []
+        if model is None:
+            while len(pairs) < batch_size // 2:
+                pair = self.sample_pair()
+                ct = 0
+                while ''.join(pair.base) in discard:
+                    pair = self.sample_pair()
+                    ct += 1
+                    if ct == 20:
+                        print("WARNING: could not find a pair not in the discard set after 20 iterations")
+                        print("Using a random pair instead")
+                        break
+                pairs.append(pair)
+        else:
+            pairs = [
+                self._sample_doable_pair(model, tokenizer, device, discard)
+                for _ in range(batch_size // 2)
+            ]
         for i in range(batch_size // 2):
             pairs.append(pairs[i].swap())
         return Batch(pairs, tokenizer, device)
