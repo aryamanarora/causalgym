@@ -65,7 +65,7 @@ for key in list(classification.keys()):
     classification[key + "_inverted"] = classification[key]
 classification_order = ['Agreement', 'Licensing', 'Garden path effects', 'Gross syntactic state', 'Long-distance']
 model_order = [x for x in list(parameters.keys())[::-1]]
-method_order = ["das", "probe", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
+method_order = ["das", "das_inverted", "probe", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
 
 
 def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
@@ -286,7 +286,7 @@ def summarise(directory: str, reload: bool=False, metric: str="odds"):
     df = load_directory(directory, reload)
 
     # get model/task acc
-    task_acc = df[["dataset", "model", "acc"]]
+    task_acc = df[~df["dataset"].str.contains("_inverted")][["dataset", "model", "acc"]]
     task_acc = task_acc.groupby(["dataset", "model"]).mean().reset_index()
 
     # get average iia over layers, max'd 
@@ -295,6 +295,20 @@ def summarise(directory: str, reload: bool=False, metric: str="odds"):
     df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
     df.drop(columns=["layer"], inplace=True)
     df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
+    df.dropna(inplace=True)
+
+    # collect inverted
+    mask = (df["dataset"].str.contains("_inverted")) & (df["method"] == "das")
+    inverted = df[mask]
+    remaining = df[~mask]
+    inverted["dataset"] = inverted["dataset"].apply(lambda x: x.replace("_inverted", ""))
+    inverted["method"] = inverted["method"].apply(lambda x: x + "_inverted")
+    df = pd.concat([remaining, inverted])
+    df["dataset"] = pd.Categorical(df["dataset"], categories=list(classification.keys()), ordered=True)
+    inverted_len = len(inverted)
+    
+    # drop inverted rows in df
+    df = df[~df["dataset"].str.contains("_inverted")]
 
     # make latex table
     for model in df["model"].unique():
@@ -316,6 +330,8 @@ def summarise(directory: str, reload: bool=False, metric: str="odds"):
         
         # reorder columns by avg, high to low
         order = ["das", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
+        if inverted_len != 0:
+            order.insert(1, "das_inverted")
         if model in ["pythia-14m", "pythia-31m", "pythia-70m"]:
             order.remove("probe_1")
         split = split[["dataset"] + list(order)]

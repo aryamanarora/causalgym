@@ -108,7 +108,7 @@ def experiment(
             data = []
 
             # vanilla intervention
-            if strategy != "all":
+            if strategy != "all" and not only_das:
                 intervenable_config = intervention_config(
                     intervention_site, pv.VanillaIntervention, layer_i, 0
                 )
