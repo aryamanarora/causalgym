@@ -44,7 +44,7 @@ def experiment(
     das_label: str=None,
     revision: str="main",
     log_folder: str="das",
-    invert_labels: bool=False,
+    manipulate: Union[str, None]=None,
     tokenizer: Union[AutoTokenizer, None]=None,
     gpt: Union[AutoModelForCausalLM, None]=None,
 ):
@@ -71,7 +71,8 @@ def experiment(
 
     # make dataset, ensuring examples in trainset are not in evalset
     data_source = Dataset.load_from(dataset)
-    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, seed=42)
+    trainset = data_source.sample_batches(tokenizer, batch_size, steps, device, seed=42, manipulate=manipulate)
+    print(trainset[0])
     discard = set()
     for batch in trainset:
         for pair in batch.pairs:
@@ -79,14 +80,7 @@ def experiment(
     
     # evalset
     eval_seed = 420 if hparam_non_das else 1
-    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=eval_seed, discard=discard)
-
-    # invert labels
-    if invert_labels:
-        for i in range(len(trainset)):
-            trainset[i].base_labels, trainset[i].src_labels = trainset[i].src_labels, trainset[i].base_labels
-        for i in range(len(evalset)):
-            evalset[i].base_labels, evalset[i].src_labels = evalset[i].src_labels, evalset[i].base_labels
+    evalset = data_source.sample_batches(tokenizer, batch_size, 25, device, seed=eval_seed, discard=discard, manipulate=manipulate)
     
     # methods
     if hparam_non_das:
@@ -200,7 +194,7 @@ def main():
     parser.add_argument("--das-label", type=str, default=None)
     parser.add_argument("--revision", type=str, default="main")
     parser.add_argument("--log-folder", type=str, default="das")
-    parser.add_argument("--invert-labels", action="store_true")
+    parser.add_argument("--manipulate", type=str, default=None)
     args = parser.parse_args()
     print(vars(args))
     experiment(**vars(args))

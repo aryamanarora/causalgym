@@ -148,6 +148,10 @@ class Batch:
         return {"input_ids": input_ids, "attention_mask": attention_mask}
 
 
+    def __repr__(self):
+        return f"Batch({len(self.pairs)} pairs)\n" + "\n".join([f"  {pair}" for pair in self.pairs])
+
+
 class Dataset:
     """
     A Dataset is a template for generating minimal pairs that is loaded
@@ -287,9 +291,12 @@ class Dataset:
 
     def sample_batch(
             self, tokenizer: AutoTokenizer, batch_size: int, device: str="cpu",
-            model: Union[AutoModel, None]=None, discard: set[str]=set()) -> Batch:
+            model: Union[AutoModel, None]=None, discard: set[str]=set(),
+            manipulate: Union[str, None]=None) -> Batch:
         """Sample a batch of minimal pairs from the dataset."""
         pairs = []
+
+        # get the pairs
         if model is None:
             while len(pairs) < batch_size // 2:
                 pair = self.sample_pair()
@@ -307,18 +314,31 @@ class Dataset:
                 self._sample_doable_pair(model, tokenizer, device, discard)
                 for _ in range(batch_size // 2)
             ]
+        
+        # add flipped pairs
         for i in range(batch_size // 2):
             pairs.append(pairs[i].swap())
+
+        # manipulate labels
+        if manipulate == "invert":
+            for i in range(len(pairs)):
+                pairs[i].base_label, pairs[i].src_label = pairs[i].src_label, pairs[i].base_label
+        elif manipulate == "dog-cat":
+            for i in range(len(pairs)):
+                pairs[i].base_label = " dog" if pairs[i].base_type == self.types[0] else " cat"
+                pairs[i].src_label = " dog" if pairs[i].src_type == self.types[0] else " cat"
+        
+        # make batch
         return Batch(pairs, tokenizer, device)
 
 
     def sample_batches(
             self, tokenizer: AutoTokenizer, batch_size: int, num_batches: int,
             device: str="cpu", seed: int=42, model: Union[AutoModel, None]=None,
-            discard: set[str]=set()) -> list[Batch]:
+            discard: set[str]=set(), manipulate: Union[str, None]=None) -> list[Batch]:
         """Sample a list of batches of minimal pairs from the dataset."""
         random.seed(seed)
-        return [self.sample_batch(tokenizer, batch_size, device, model, discard) for _ in range(num_batches)]
+        return [self.sample_batch(tokenizer, batch_size, device, model, discard, manipulate) for _ in range(num_batches)]
 
 
 def load_from_syntaxgym():

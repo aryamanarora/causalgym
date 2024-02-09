@@ -17,7 +17,7 @@ def run_command(
     das_label: str,
     revision: str,
     folder: str,
-    invert_labels: bool,
+    manipulate: str,
 ):
     # command = f"python das.py --model EleutherAI/pythia-70m --intervention {method} --dataset {dataset} --position each --num-tokens 1 --num-dims 1 --steps {steps}"
     print(dataset)
@@ -36,7 +36,7 @@ def run_command(
         das_label=das_label,
         revision=revision,
         log_folder=folder,
-        invert_labels=invert_labels,
+        manipulate=manipulate,
         tokenizer=tokenizer,
         gpt=gpt,
     )
@@ -44,7 +44,7 @@ def run_command(
 def main(
     model: str, lr: float=5e-3, hparam_non_das: bool=False, only_das: bool=False,
     das_label: str=None, start: int=None, end: int=None, folder: str="das", revision: str="main",
-    invert_labels: bool=False):
+    manipulate: str=False):
 
     # load model + tokenizer
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -71,7 +71,7 @@ def main(
         os.makedirs(f"logs/{folder}")
 
     for dataset in datasets[start:end]:
-        run_command(tokenizer, gpt, model, dataset, lr, only_das, hparam_non_das, das_label, revision, folder, invert_labels)
+        run_command(tokenizer, gpt, model, dataset, lr, only_das, hparam_non_das, das_label, revision, folder, manipulate)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -84,6 +84,6 @@ if __name__ == "__main__":
     parser.add_argument("--end", type=int, default=None)
     parser.add_argument("--folder", type=str, default="das")
     parser.add_argument("--revision", type=str, default="main")
-    parser.add_argument("--invert-labels", action="store_true")
+    parser.add_argument("--manipulate", type=str, default=None)
     args = parser.parse_args()
     main(**vars(args))
