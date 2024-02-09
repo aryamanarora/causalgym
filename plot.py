@@ -13,8 +13,7 @@ import pandas as pd
 import glob
 import argparse
 from data import Dataset
-from itertools import combinations
-import torch
+import numpy as np
 from utils import parameters
 from tqdm import tqdm
 import multiprocessing
@@ -132,6 +131,8 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
                 df["acc"] = df["base_p_src"] < df["base_p_base"]
                 df["iia"] = (df["p_src"] > df["p_base"]) * 100
                 df["odds"] = df['base_p_base'] - df['base_p_src'] + df['p_src'] - df['p_base']
+                if "accuracy" not in df.columns:
+                    df["accuracy"] = np.nan
                 df = df[["dataset", "step", "model", "method", "layer",
                          "base_p_base", "base_p_src", "p_src", "p_base",
                          "pos", "odds", "iia", "acc", "accuracy"]]
@@ -474,16 +475,41 @@ def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"
 
     # pos names
     for dataset in df["dataset"].unique():
-        dataset_src = Dataset.load_from(f"syntaxgym/{dataset}")
-        print(df[df["dataset"] == dataset])
-        df.loc[df["dataset"] == dataset, "pos_name"] = df.loc[df["dataset"] == dataset, "pos"].apply(lambda x: dataset_src.span_names[x])
 
         # select pos
-        if dataset == "npi_any_subj-relc":
+        if dataset.startswith("npi_any_subj-relc"):
             df = df[((df["dataset"] == dataset) & (df["pos"].isin([1, 2, 3, 7, 8]))) | (df["dataset"] != dataset)]
+        
+        # add diff
+        if "_inverted" in dataset:
+            diff_name = dataset.replace("_inverted", "_diff")
+            # find non-inverted and subtract to find diff
+            non_inverted = dataset.replace("_inverted", "")
+            das_df = df[df["method"] == "das"]
+            if len(das_df) == 0:
+                continue
+            inverted_df = das_df[das_df["dataset"] == dataset].drop(columns=["dataset"])
+            non_inverted_df = das_df[das_df["dataset"] == non_inverted].drop(columns=["dataset"])
+            merged = inverted_df.merge(non_inverted_df, on=["model", "trainstep", "method", "layer", "pos"], suffixes=("_inverted", "_orig"))
+            merged.dropna(inplace=True)
+            merged[metric] = merged[f"{metric}_orig"] - merged[f"{metric}_inverted"]
+            merged["dataset"] = diff_name
+            print(merged)
+            df = pd.concat([df, merged[["dataset", "model", "trainstep", "method", "layer", "pos", metric]]], ignore_index=True)
+    
+    # pos names
+    for dataset in df["dataset"].unique():
+        if "_diff" in dataset or "_inverted" in dataset:
+            continue
+        dataset_src = Dataset.load_from(f"syntaxgym/{dataset}")
+        df.loc[df["dataset"].str.startswith(dataset), "pos_name"] = df.loc[df["dataset"].str.startswith(dataset), "pos"].apply(lambda x: dataset_src.span_names[x])
     
     # change trainstep 0 to 0.5
     df["trainstep"] = df["trainstep"].apply(lambda x: 0.5 if x == 0 else x)
+    df["dataset"] = df["dataset"].apply(lambda x: x.replace("_inverted", "\ninverted"))
+    df["dataset"] = df["dataset"].apply(lambda x: x.replace("_diff", "\ndiff"))
+    df["dataset"] = df["dataset"].apply(lambda x: x.replace("npi_any_subj-relc\n", ""))
+    df["dataset"] = df["dataset"].apply(lambda x: x.replace("npi_any_subj-relc", "orig"))
 
     # plot over trainsteps
     plot = (
