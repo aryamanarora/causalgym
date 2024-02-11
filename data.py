@@ -314,19 +314,24 @@ class Dataset:
                 self._sample_doable_pair(model, tokenizer, device, discard)
                 for _ in range(batch_size // 2)
             ]
+
+        # control tasks
+        if manipulate == "invert":
+            for i in range(len(pairs)):
+                pairs[i].base_label, pairs[i].src_label = pairs[i].src_label, pairs[i].base_label
+        elif manipulate == "dog-give":
+            for i in range(len(pairs)):
+                pairs[i].base_label = " dog" if pairs[i].base_type == self.types[0] else " give"
+                pairs[i].src_label = " dog" if pairs[i].src_type == self.types[0] else " give"
+        elif manipulate == "random":
+            for i in range(len(pairs)):
+                if random.random() < 0.5:
+                    pairs[i].base_label = pairs[i].src_label
+                    pairs[i].base_type = pairs[i].src_type
         
         # add flipped pairs
         for i in range(batch_size // 2):
             pairs.append(pairs[i].swap())
-
-        # manipulate labels
-        if manipulate == "invert":
-            for i in range(len(pairs)):
-                pairs[i].base_label, pairs[i].src_label = pairs[i].src_label, pairs[i].base_label
-        elif manipulate == "dog-cat":
-            for i in range(len(pairs)):
-                pairs[i].base_label = " dog" if pairs[i].base_type == self.types[0] else " cat"
-                pairs[i].src_label = " dog" if pairs[i].src_type == self.types[0] else " cat"
         
         # make batch
         return Batch(pairs, tokenizer, device)
