@@ -53,7 +53,7 @@ def experiment(
     # load model
     total_data = []
     diff_vectors = []
-    NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    NOW = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     if tokenizer is None:
         tokenizer = AutoTokenizer.from_pretrained(model)
@@ -172,7 +172,9 @@ def experiment(
     }
 
     # log
-    log_file = f"logs/{log_folder}/{NOW}__{short_model_name}__{short_dataset_name}.json"
+    if manipulate is None:
+        manipulate = "orig"
+    log_file = f"logs/{log_folder}/{NOW}__{short_model_name}__{short_dataset_name}__{manipulate}.json"
     print(f"logging to {log_file}")
     with open(log_file, "w") as f:
         json.dump(filedump, f)
