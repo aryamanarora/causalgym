@@ -326,8 +326,8 @@ class Dataset:
         elif manipulate == "random":
             for i in range(len(pairs)):
                 if random.random() < 0.5:
-                    pairs[i].base_label = pairs[i].src_label
-                    pairs[i].base_type = pairs[i].src_type
+                    pairs[i].base_label, pairs[i].src_label = pairs[i].src_label, pairs[i].base_label
+                    pairs[i].base_type, pairs[i].src_type = pairs[i].src_type, pairs[i].base_type
         
         # add flipped pairs
         for i in range(batch_size // 2):
