@@ -61,39 +61,19 @@ classification = {
     'filler_gap_pp': 'Long-distance',
     'filler_gap_subj': 'Long-distance',
 }
-for key in list(classification.keys()):
-    classification[key + "_inverted"] = classification[key]
 classification_order = ['Agreement', 'Licensing', 'Garden path effects', 'Gross syntactic state', 'Long-distance']
 model_order = [x for x in list(parameters.keys())[::-1]]
 method_order = ["das", "das_inverted", "probe", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
 
 
 def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
-    # get average iia over layers, max'd
-    df = orig_df.copy()
-    df = df[["dataset", "model", "method", "layer", "pos"] + metrics]
-    df.drop(columns=["pos"], inplace=True)
-    df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
-    df.drop(columns=["dataset"], inplace=True)
-    df = df.groupby(["model", "method", "layer"]).mean().reset_index()
-
-    # remove nans
-    df = df.dropna()
-
-    # pick overall better from probe_0 and probe_1
-    per_method_avg = df.groupby(["model", "method"]).mean().reset_index()
-    for model in per_method_avg["model"].unique():
-        if model in ["pythia-14m", "pythia-31m", "pythia-70m"]:
+    for model in orig_df["model"].unique():
+        if model not in ["pythia-410m"]:
             orig_df.loc[orig_df["model"] == model, "method"] = orig_df[orig_df["model"] == model]["method"].apply(lambda x: "probe" if x == "probe_0" else x)
-            continue
-        probe_0 = per_method_avg[(per_method_avg["model"] == model) & (per_method_avg["method"] == "probe_0")][metrics[0]].values[0]
-        probe_1 = per_method_avg[(per_method_avg["model"] == model) & (per_method_avg["method"] == "probe_1")][metrics[0]].values[0]
-        if math.isnan(probe_0) or math.isnan(probe_1):
-            continue
-        elif probe_0 > probe_1:
-            orig_df.loc[orig_df["model"] == model, "method"] = orig_df[orig_df["model"] == model]["method"].apply(lambda x: "probe" if x == "probe_0" else x)
+            orig_df = orig_df[(orig_df["method"] != "probe_1") | (orig_df["model"] != model)]
         else:
             orig_df.loc[orig_df["model"] == model, "method"] = orig_df[orig_df["model"] == model]["method"].apply(lambda x: "probe" if x == "probe_1" else x)
+            orig_df = orig_df[(orig_df["method"] != "probe_0") | (orig_df["model"] != model)]
     return orig_df
 
 
@@ -103,19 +83,19 @@ def load_file(file_path):
 
         # model name
         model_name = j["metadata"]["model"]
-        if file_path.split("_")[-1].startswith("step"):
-            model_name += "_" + file_path.split("_")[-1].split(".json")[0]
         model_name = model_name.replace("_step", "\nstep")
 
         # dataset name
         dataset_name = j["metadata"]["dataset"].split("/")[1]
-        if j["metadata"].get("invert_labels", False):
-            dataset_name += "_inverted"
+        manipulate = j["metadata"].get("manipulate", "none")
+        if manipulate is None:
+            manipulate = "none"
 
         data = j['data']
         df = pd.DataFrame(data)
         df["dataset"] = dataset_name
         df["model"] = model_name
+        df["manipulate"] = manipulate
         return df
 
 
@@ -131,22 +111,26 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
                 df["acc"] = df["base_p_src"] < df["base_p_base"]
                 df["iia"] = (df["p_src"] > df["p_base"]) * 100
                 df["odds"] = df['base_p_base'] - df['base_p_src'] + df['p_src'] - df['p_base']
+                df["diff"] = df['p_src'] - df['base_p_src']
                 if "accuracy" not in df.columns:
                     df["accuracy"] = np.nan
                 df = df[["dataset", "step", "model", "method", "layer",
-                         "base_p_base", "base_p_src", "p_src", "p_base",
-                         "pos", "odds", "iia", "acc", "accuracy"]]
-                df["base_p_base"] = df["base_p_base"].apply(lambda x: math.exp(x))
-                df["base_p_src"] = df["base_p_src"].apply(lambda x: math.exp(x))
+                         "p_src", "p_base", "diff", "pos", "odds", "iia",
+                         "acc", "accuracy", "manipulate"]].reset_index()
+                # df["base_p_base"] = df["base_p_base"].apply(lambda x: math.exp(x))
+                # df["base_p_src"] = df["base_p_src"].apply(lambda x: math.exp(x))
                 df["p_base"] = df["p_base"].apply(lambda x: math.exp(x))
                 df["p_src"] = df["p_src"].apply(lambda x: math.exp(x))
+
+                # drop random for manipulate
+                df = df[df["manipulate"] != "random"].reset_index()
 
                 # store
                 dfs.append(df)
         
         # merge
         df = pd.concat(dfs, ignore_index=True)
-        df = df.groupby(["dataset", "step", "model", "method", "layer", "pos"]).mean().reset_index()
+        df = df.groupby(["dataset", "step", "model", "method", "layer", "pos", "manipulate"]).mean().reset_index()
 
         # final formatting
         df["model"] = df["model"].apply(lambda x: x.split("/")[-1])
@@ -160,7 +144,6 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
         df = df[(df["step"] == last_step) | (df["step"] == -1)]
         df.drop(columns=["step"], inplace=True)
     for model in sorted(list(df["model"].unique()), key=lambda x: int(x.split("step")[-1]) if "step" in x else 143000):
-        print(model)
         if model not in model_order:
             model_order.append(model)
     df["model"] = pd.Categorical(df["model"], categories=model_order, ordered=True)
@@ -201,21 +184,33 @@ def plot_acc(directory: str, reload: bool=False):
     plot.save(f"{directory}/figs_acc.pdf", width=8, height=2.5)
 
 
-def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all: bool=False):
+def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all: bool=False, per_task: bool=False):
     """Plot position iia for DAS."""
 
     # load
     df = load_directory(directory, reload)
-    df = df[["dataset", "model", "method", "layer", "pos", "acc", metric]]
+    df = df[["dataset", "model", "method", "layer", "pos", "acc", "manipulate", metric]]
+
+    # get model/task acc
+    task_acc = df[df["manipulate"] == "none"][["dataset", "model", "acc"]]
+    task_acc = task_acc.groupby(["dataset", "model"]).mean().reset_index()
 
     # pick overall better from probe_0 and probe_1
     df = pick_better_probe(df, [metric])
     if not plot_all:
-        if metric in ["iia", "odds"]:
-            df = df[df["method"].isin(["das"])]
+        if metric in ["iia", "odds", "diff"]:
+            df = df[df["method"].isin(["das", "probe"])]
         else:
-            df = df[df["method"].isin(["probe", "lda"])]
-    print(len(df))
+            df = df[df["method"].isin(["probe"])]
+    df = df.dropna().reset_index()
+    print(df)
+
+    # pivot on manipulate types
+    df = df[["dataset", "model", "method", "layer", "pos", "manipulate", metric]]
+    df = df.pivot_table(index=["dataset", "model", "method", "layer", "pos"], 
+                        columns="manipulate", 
+                        values=metric).reset_index()
+    df[metric] = df["none"]
 
     # plot
     for dataset in df["dataset"].unique():
@@ -223,7 +218,7 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
         dataset_src = Dataset.load_from(f"syntaxgym/{dataset}")
         pair = dataset_src.sample_pair()
         sentence = [pair.base[i] if pair.base[i] == pair.src[i] else pair.base[i] + ' / ' + pair.src[i] for i in range(len(pair.base))]
-        dataset_df = df[df["dataset"] == dataset]
+        dataset_df = df[df["dataset"] == dataset].copy()
 
         # check sentence length
         rows = []
@@ -231,26 +226,32 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
             if len(dataset_df[dataset_df["pos"] == i]) == 0:
                 for model in dataset_df["model"].unique():
                     default_val = 0
-                    acc = dataset_df[dataset_df["model"] == model]["acc"].mean()
+                    acc = task_acc[(task_acc["model"] == model) & (task_acc["dataset"] == dataset)]["acc"].values[0]
+                    acc = f"{acc:.2f}"
+                    dataset_df.loc[(dataset_df["model"] == model) & (dataset_df["dataset"] == dataset), "acc"] = acc
                     if metric == "iia":
                         default_val = (1 - acc) * 100
                     elif metric == "accuracy":
                         default_val = 0.5
                     for layer in dataset_df[dataset_df["model"] == model]["layer"].unique():
                         for method in dataset_df["method"].unique():
-                            row = {"dataset": dataset, "model": model, "layer": layer, "pos": i, "method": method, "acc": acc, metric: default_val}
+                            row = {"dataset": dataset, "model": model, "layer": layer,
+                                    "pos": i, "method": method, "acc": acc, metric: default_val}
                             rows.append(row)
 
         # add rows to df
         dataset_df = pd.concat([dataset_df, pd.DataFrame(rows)])
         dataset_df = dataset_df[dataset_df["method"].isin(["vanilla", "das", "probe", "mean", "pca", "kmeans", "lda", "random"])]
-        dataset_df["model"] = pd.Categorical(dataset_df["model"], categories=model_order, ordered=True)
+        if "\nstep" in list(dataset_df["model"].unique())[0]:
+            dataset_df["model"] = dataset_df["model"].apply(lambda x: x.split("\nstep")[-1]).astype(int)
+        else:
+            dataset_df["model"] = pd.Categorical(dataset_df["model"], categories=model_order, ordered=True)
         dataset_df["method"] = pd.Categorical(dataset_df["method"], categories=method_order, ordered=True)
 
         plot = (
             ggplot(dataset_df, aes(x="layer", y="pos"))
             + geom_tile(aes(fill=metric, color=metric))
-            + facet_grid("method~model", scales="free_x")
+            + facet_grid("method~model+acc", scales="free_x")
         )
         if metric == "iia":
             plot += scale_fill_cmap("Purples", limits=[0,100])
@@ -267,18 +268,25 @@ def plot_per_pos(directory: str, reload: bool=False, metric: str="iia", plot_all
             plot += scale_x_continuous(expand=[0, 0])
             plot += theme(
                 axis_text_x=element_text(rotation=90, hjust=0.5),
-                axis_text_y=element_text(size=8),
+                axis_text_y=element_text(size=7),
                 panel_border=element_rect(fill="None", color="#000", size=1),
                 strip_background=element_rect(color="None", fill="None"),
                 strip_text_x=element_text(size=9),
                 legend_key_height=10,
             )
-        height = 1.8
-        if metric == "accuracy" and not plot_all:
-            height = 2.5
-        if plot_all:
-            height = 6
-        plot.save(f"{directory}/figs_{dataset.replace('/', '_')}_{metric}{'_all' if plot_all else ''}.pdf", width=8, height=height)
+        if per_task:
+            plot += theme(legend_position='none')
+
+        height = 2.5
+        if metric == "accuracy" and not plot_all: height = 2.5
+        if plot_all: height = 6
+
+        width = 8
+        if per_task:
+            if 'npi' in dataset: width = 2
+            else: width = 2.2
+
+        plot.save(f"{directory}/figs_{dataset.replace('/', '_')}_{metric}{'_all' if plot_all else ''}.pdf", width=width, height=height)
 
 
 def summarise(directory: str, reload: bool=False, metric: str="odds"):
@@ -286,86 +294,82 @@ def summarise(directory: str, reload: bool=False, metric: str="odds"):
     df = load_directory(directory, reload)
 
     # get model/task acc
-    task_acc = df[~df["dataset"].str.contains("_inverted")][["dataset", "model", "acc"]]
+    task_acc = df[df["manipulate"] == "none"][["dataset", "model", "acc"]]
     task_acc = task_acc.groupby(["dataset", "model"]).mean().reset_index()
 
+    # pivot on manipulate types
+    df = df[["dataset", "model", "method", "layer", "pos", "manipulate", metric]]
+    df = df.pivot_table(index=["dataset", "model", "method", "layer", "pos"], 
+                        columns="manipulate", 
+                        values=metric).reset_index()
+    df[metric] = df["none"]
+    df[metric + "_adj"] = df["none"] - df["dog-give"]
+    df.drop(columns=["none", "dog-give"], inplace=True)
+
     # get average iia over layers, max'd 
-    df = df[["dataset", "model", "method", "layer", "pos", metric]]
     df.drop(columns=["pos"], inplace=True)
+    # df = df.sort_values(by=["dataset", "model", "method", "layer", metric], ascending=False)
     df = df.groupby(["dataset", "model", "method", "layer"]).max().reset_index()
     df.drop(columns=["layer"], inplace=True)
     df = df.groupby(["dataset", "model", "method"]).mean().reset_index()
     df.dropna(inplace=True)
 
-    # collect inverted
-    mask = (df["dataset"].str.contains("_inverted")) & (df["method"] == "das")
-    inverted = df[mask]
-    remaining = df[~mask]
-    inverted["dataset"] = inverted["dataset"].apply(lambda x: x.replace("_inverted", ""))
-    inverted["method"] = inverted["method"].apply(lambda x: x + "_inverted")
-    df = pd.concat([remaining, inverted])
-    df["dataset"] = pd.Categorical(df["dataset"], categories=list(classification.keys()), ordered=True)
-    inverted_len = len(inverted)
-    
-    # drop inverted rows in df
-    df = df[~df["dataset"].str.contains("_inverted")]
-
     # make latex table
     for model in df["model"].unique():
-        split = df[df["model"] == model][["dataset", "method", metric]]
-        split["dataset"] = split["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
+        print(model)
+        for metric_foc in [metric, metric + "_adj"]:
+            split = df[df["model"] == model][["dataset", "method", metric_foc]]
+            split["dataset"] = split["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
 
-        # make table with rows = method, cols = dataset
-        split = split.pivot(index="dataset", columns="method", values=metric)
-        split = split.reset_index()
-        
-        # take average over rows and append to bottom
-        avg = split.drop(columns=["dataset"]).mean(axis=0)
-        avg["dataset"] = "Average"
-        avg = avg[["dataset"] + list(avg.drop(columns=["dataset"]).index)]
+            # make table with rows = method, cols = dataset
+            split = split.pivot(index="dataset", columns="method", values=metric_foc)
+            split = split.reset_index()
+            
+            # take average over rows and append to bottom
+            avg = split.drop(columns=["dataset"]).mean(axis=0)
+            avg["dataset"] = "Average"
+            avg = avg[["dataset"] + list(avg.drop(columns=["dataset"]).index)]
 
-        # to dict
-        avg = avg.to_dict()
-        split = pd.concat([split, pd.DataFrame([avg])], ignore_index=True)
-        
-        # reorder columns by avg, high to low
-        order = ["das", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
-        if inverted_len != 0:
-            order.insert(1, "das_inverted")
-        if model in ["pythia-14m", "pythia-31m", "pythia-70m"]:
-            order.remove("probe_1")
-        split = split[["dataset"] + list(order)]
+            # to dict
+            avg = avg.to_dict()
+            split = pd.concat([split, pd.DataFrame([avg])], ignore_index=True)
+            
+            # reorder columns by avg, high to low
+            order = ["das", "probe_0", "probe_1", "mean", "pca", "kmeans", "lda", "random", "vanilla"]
+            if model in ["pythia-14m", "pythia-31m", "pythia-70m"]:
+                order.remove("probe_1")
+            split = split[["dataset"] + list(order)]
 
-        # add an acc column using task_acc
-        acc = task_acc[task_acc["model"] == model]
-        acc = acc[["dataset", "acc"]]
-        acc["dataset"] = acc["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
-        split = split.merge(acc, on="dataset", how="left")
-        split = split[["dataset", "acc"] + list(order)]
+            # add an acc column using task_acc
+            acc = task_acc[task_acc["model"] == model]
+            acc = acc[["dataset", "acc"]]
+            acc["dataset"] = acc["dataset"].apply(lambda x: "\\texttt{" + x.replace("_", "\\_") + "}")
+            split = split.merge(acc, on="dataset", how="left")
+            split = split[["dataset", "acc"] + list(order)]
 
-        # add avg acc to the last row
-        avg_acc = acc["acc"].mean()
-        split.loc[split.index[-1], "acc"] = round(avg_acc, 2)
-        
-        # bold the largest per row
-        for i, row in split.iterrows():
-            # ignore dataset col
-            max_val = row[2:].max()
-            for col in split.columns:
-                # format as percentage
-                if col != "dataset":
-                    split.loc[i, col] = f"{float(row[col]):.2f}"
-                if row[col] == max_val:
-                    split.loc[i, col] = "\\textbf{" + split.loc[i, col] + "}"
-        
-        # prepend "\rowcolor{Gainsboro!60}" if the acc is below 60
-        for i, row in split.iterrows():
-            if float(row["acc"]) <= 0.6:
-                split.loc[i, "dataset"] = "\\rowcolor{Gainsboro!60}" + split.loc[i, "dataset"]
+            # add avg acc to the last row
+            avg_acc = acc["acc"].mean()
+            split.loc[split.index[-1], "acc"] = round(avg_acc, 2)
+            
+            # bold the largest per row
+            for i, row in split.iterrows():
+                # ignore dataset col
+                max_val = row[2:].max()
+                for col in split.columns:
+                    # format as percentage
+                    if col != "dataset":
+                        split.loc[i, col] = f"{split.loc[i, col]:.2f}"
+                    if row[col] == max_val:
+                        split.loc[i, col] = "\\textbf{" + str(split.loc[i, col]) + "}"
+            
+            # prepend "\rowcolor{Gainsboro!60}" if the acc is below 60
+            for i, row in split.iterrows():
+                if float(row["acc"]) <= 0.6:
+                    split.loc[i, "dataset"] = "\\rowcolor{Gainsboro!60}" + split.loc[i, "dataset"]
 
-        with open(f"{directory}/{model.replace('/', '_')}__{metric}.txt", "w") as f:
-            f.write(split.to_latex(index=False))
-            print("wrote", model, metric)
+            with open(f"{directory}/{model.replace('/', '_')}__{metric_foc}.txt", "w") as f:
+                f.write(split.to_latex(index=False))
+                print("wrote", model, metric_foc)
 
 
 def average_per_method(directory: str, reload: bool=False, metric: str="odds"):
@@ -393,6 +397,15 @@ def average_per_method(directory: str, reload: bool=False, metric: str="odds"):
 def plot_per_layer(directory: str, reload: bool=False, metric: str="odds"):
     # collect all data
     df = load_directory(directory, reload)
+
+    # pivot on manipulate
+    df = df[["dataset", "model", "trainstep", "method", "layer", "pos", "manipulate", metric]]
+    df = df.pivot_table(index=["dataset", "model", "trainstep", "method", "layer", "pos"], 
+                        columns="manipulate", 
+                        values=metric).reset_index()
+    df[metric] = df["none"]
+    df[metric + "_adj"] = df["none"] - df["dog-give"]
+    df.drop(columns=["none", "dog-give"], inplace=True)
 
     # get average iia over layers, max'd
     df = df[["dataset", "model", "method", "layer", "pos", metric]]
@@ -476,13 +489,22 @@ def plot_accuracy_vs_metric(directory: str, reload: bool=False, metric: str="odd
     plot.save(f"{directory}/figs_accuracy_vs_{metric}.png", width=8, height=2.5, dpi=300)
 
 
-def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"):
+def plot_metric_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"):
     # load
     df = load_directory(directory, reload)
 
     # pick overall better from probe_0 and probe_1
-    df = pick_better_probe(df, [metric, "accuracy"])
-    df = df[df["method"].isin(["das"])]
+    df = df[df["method"].isin(["das", "probe_0", "mean"])]
+    df.loc[df["method"] == "probe_0", "method"] = "probe"
+
+    # pivot on manipulate types
+    df = df[["dataset", "model", "trainstep", "method", "layer", "pos", "manipulate", metric]]
+    df = df.pivot_table(index=["dataset", "model", "trainstep", "method", "layer", "pos"], 
+                        columns="manipulate", 
+                        values=metric).reset_index()
+    df[metric] = df["none"]
+    df[metric + "_adj"] = df["none"] - df["dog-give"]
+    df.drop(columns=["none", "dog-give"], inplace=True)
 
     # drop layer
     df = df[["dataset", "model", "trainstep", "method", "layer", "pos", metric]]
@@ -491,32 +513,12 @@ def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"
 
     # pos names
     for dataset in df["dataset"].unique():
-
         # select pos
         if dataset.startswith("npi_any_subj-relc"):
             df = df[((df["dataset"] == dataset) & (df["pos"].isin([1, 2, 3, 7, 8]))) | (df["dataset"] != dataset)]
         
-        # add diff
-        if "_inverted" in dataset:
-            diff_name = dataset.replace("_inverted", "_diff")
-            # find non-inverted and subtract to find diff
-            non_inverted = dataset.replace("_inverted", "")
-            das_df = df[df["method"] == "das"]
-            if len(das_df) == 0:
-                continue
-            inverted_df = das_df[das_df["dataset"] == dataset].drop(columns=["dataset"])
-            non_inverted_df = das_df[das_df["dataset"] == non_inverted].drop(columns=["dataset"])
-            merged = inverted_df.merge(non_inverted_df, on=["model", "trainstep", "method", "layer", "pos"], suffixes=("_inverted", "_orig"))
-            merged.dropna(inplace=True)
-            merged[metric] = merged[f"{metric}_orig"] - merged[f"{metric}_inverted"]
-            merged["dataset"] = diff_name
-            print(merged)
-            df = pd.concat([df, merged[["dataset", "model", "trainstep", "method", "layer", "pos", metric]]], ignore_index=True)
-    
     # pos names
     for dataset in df["dataset"].unique():
-        if "_diff" in dataset or "_inverted" in dataset:
-            continue
         dataset_src = Dataset.load_from(f"syntaxgym/{dataset}")
         df.loc[df["dataset"].str.startswith(dataset), "pos_name"] = df.loc[df["dataset"].str.startswith(dataset), "pos"].apply(lambda x: dataset_src.span_names[x])
     
@@ -531,10 +533,10 @@ def plot_pos_vs_trainstep(directory: str, reload: bool=False, metric: str="odds"
     plot = (
         ggplot(df, aes(x="layer", y=metric, group="pos_name", color="pos_name"))
         + geom_line()
-        + facet_grid("dataset~trainstep")
+        + facet_grid("method~trainstep")
         # + scale_x_log10()
     )
-    plot.save(f"{directory}/figs_{metric}_vs_trainstep.pdf", width=10, height=3)
+    plot.save(f"{directory}/figs_{metric}_vs_trainstep.pdf", width=10, height=4)
 
 
 if __name__ == "__main__":
@@ -554,6 +556,8 @@ if __name__ == "__main__":
         average_per_method(args.file, args.reload, args.metric)
     elif args.plot == "pos":
         plot_per_pos(args.file, args.reload, args.metric)
+    elif args.plot == "pos_t":
+        plot_per_pos(args.file, args.reload, args.metric, per_task=True)
     elif args.plot == "pos_all":
         plot_per_pos(args.file, args.reload, args.metric, plot_all=True)
     elif args.plot == "probe_hyperparam":
@@ -563,4 +567,4 @@ if __name__ == "__main__":
     elif args.plot == "accuracy_vs_metric":
         plot_accuracy_vs_metric(args.file, args.reload, args.metric)
     elif args.plot == "pos_vs_trainstep":
-        plot_pos_vs_trainstep(args.file, args.reload, args.metric)
+        plot_metric_vs_trainstep(args.file, args.reload, args.metric)
