@@ -7,6 +7,7 @@ import json
 import glob
 from typing import Union
 import re
+from tqdm import tqdm
 
 random.seed(42)
 Tokenized = namedtuple("Tokenized", ["base", "src", "alignment_base", "alignment_src"])
@@ -376,5 +377,45 @@ def list_datasets() -> list[str]:
     return datasets
 
 
+def convert_to_huggingface_format():
+    """Generate dataset files for HuggingFace upload."""
+    tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
+    tokenizer.pad_token = tokenizer.eos_token
+    datasets = [x for x in list_datasets() if x.startswith("syntaxgym/")]
+    all_data = defaultdict(list)
+    for dataset in tqdm(datasets):
+        data = Dataset.load_from(dataset)
+        
+        # sample trainset
+        trainset = data.sample_batches(tokenizer, 4, 100, "cpu", seed=42, manipulate=None)
+        discard = set()
+        for batch in trainset:
+            for pair in batch.pairs:
+                discard.add(''.join(pair.base))
+        
+        # dev + test exclude trainset
+        devset = data.sample_batches(tokenizer, 4, 25, "cpu", seed=420, manipulate=None, discard=discard)
+        testset = data.sample_batches(tokenizer, 4, 25, "cpu", seed=1, manipulate=None, discard=discard)
+
+        # get pairs from each batch
+        groups = {"train": trainset, "dev": devset, "test": testset}
+        for split, batches in groups.items():
+            pairs = [pair for batch in batches for pair in batch.pairs]
+            all_data[split].extend([{
+                "base": pair.base,
+                "src": pair.src,
+                "base_type": pair.base_type,
+                "src_type": pair.src_type,
+                "base_label": pair.base_label,
+                "src_label": pair.src_label,
+                "task": dataset.split('/')[1]
+            } for pair in pairs])
+    
+    # dump
+    for split in all_data:
+        with open(f"data/huggingface/{split}.json", "w") as f:
+            json.dump(all_data[split], f, indent=2)
+
+
 if __name__ == "__main__":
-    print(load_from_syntaxgym())
+    convert_to_huggingface_format()

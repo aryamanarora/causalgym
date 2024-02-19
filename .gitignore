@@ -8,3 +8,4 @@ logs/
 figs/
 deprecated/figs/
 *.profile
+data/huggingface/
