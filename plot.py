@@ -79,7 +79,10 @@ def pick_better_probe(orig_df: pd.DataFrame, metrics: list[str]):
 
 def load_file(file_path):
     with open(file_path, 'r') as f:
-        j = json.load(f)
+        try:
+            j = json.load(f)
+        except:
+            print("failed to parse", file_path)
 
         # model name
         model_name = j["metadata"]["model"]
@@ -103,7 +106,7 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
     if reload or not glob.glob(f"{directory}/combined.csv"):
         print(f"reloading {directory}")
         # load all files (in parallel for speedup)
-        file_paths = glob.glob(f"{directory}/*.json")
+        file_paths = sorted(list(glob.glob(f"{directory}/*.json")))
         dfs = []
         with multiprocessing.Pool() as pool:
             for df in tqdm(pool.imap_unordered(load_file, file_paths), total=len(file_paths)):
@@ -115,12 +118,11 @@ def load_directory(directory: str, reload: bool=False, filter_step: bool=True):
                 if "accuracy" not in df.columns:
                     df["accuracy"] = np.nan
                 df = df[["dataset", "step", "model", "method", "layer",
-                         "p_src", "p_base", "diff", "pos", "odds", "iia",
-                         "acc", "accuracy", "manipulate"]].reset_index()
+                         "pos", "odds", "iia", "acc", "accuracy", "manipulate"]].reset_index()
                 # df["base_p_base"] = df["base_p_base"].apply(lambda x: math.exp(x))
                 # df["base_p_src"] = df["base_p_src"].apply(lambda x: math.exp(x))
-                df["p_base"] = df["p_base"].apply(lambda x: math.exp(x))
-                df["p_src"] = df["p_src"].apply(lambda x: math.exp(x))
+                # df["p_base"] = df["p_base"].apply(lambda x: math.exp(x))
+                # df["p_src"] = df["p_src"].apply(lambda x: math.exp(x))
 
                 # drop random for manipulate
                 df = df[df["manipulate"] != "random"].reset_index()
@@ -159,6 +161,7 @@ def plot_acc(directory: str, reload: bool=False):
     # compute acc
     df = load_directory(directory, reload)
     df = df[df["method"] == "vanilla"]
+    df = df[df["manipulate"] == "none"]
     df = df[["dataset", "model", "acc"]]
     df = df.groupby(["dataset", "model"]).mean().reset_index()
     df["params"] = df["model"].apply(lambda x: parameters[x])
