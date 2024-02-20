@@ -17,7 +17,13 @@ If you are having trouble getting anything running, do not hesitate to file an i
 > [!IMPORTANT]  
 > The implementations in this repo are only for `GPTNeoX`-type language models (e.g. the `pythia` series) and will probably not work for other architectures without some modifications.
 
-To train every method, layer, region, and task for `pythia-70m`:
+First install the requirements (a fresh environment is probably best):
+
+```bash
+pip install -r requirements.txt
+```
+
+To train every method, layer, region, and task for `pythia-70m` (results are logged to the directory `logs/das/`):
 
 ```bash
 python test_all.py --model EleutherAI/pythia-70m
@@ -29,7 +35,7 @@ To do the same but with the dog-give control task used to compute selectivity:
 python test_all.py --model EleutherAI/pythia-70m --manipulate dog-give
 ```
 
-Results are logged to the directory `logs/das/`. Once you have run this for several models, you can create results tables with:
+Once you have run this for several models, you can create results tables with:
 
 ```bash
 python plot.py --file logs/das/ --plot summary --metrics odds --reload
