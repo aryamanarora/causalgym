@@ -8,9 +8,14 @@ This repository includes code for:
 - Template specifications for every task in the benchmark and utils for generating examples, tokenizing, generating non-overlapping train/test sets, and so on.
 - Testing model outputs on the task templates; this was used to design the benchmark tasks.
 
-You can also download the train/dev/test splits for each task as used in the paper via HuggingFace [here](https://huggingface.co/datasets/aryaman/causalgym).
+You can also download the train/dev/test splits for each task as used in the paper via [HuggingFace](https://huggingface.co/datasets/aryaman/causalgym).
+
+If you are having trouble getting anything running, do not hesitate to file an issue! We would love to help you benchmark your new method or help you replicate the results from our paper.
 
 ## Instructions
+
+> [!IMPORTANT]  
+> The implementations in this repo are only for `GPTNeoX`-type language models (e.g. the `pythia` series) and will probably not work for other architectures without some modifications.
 
 To train every method, layer, region, and task for `pythia-70m`:
 
@@ -22,6 +27,18 @@ To do the same but with the dog-give control task used to compute selectivity:
 
 ```bash
 python test_all.py --model EleutherAI/pythia-70m --manipulate dog-give
+```
+
+Results are logged to the directory `logs/das/`. Once you have run this for several models, you can create results tables with:
+
+```bash
+python plot.py --file logs/das/ --plot summary --metrics odds --reload
+```
+
+This caches intermediate results in csv file in the directory. To produce the causal tracing-style plots:
+
+```bash
+python plot.py --file logs/das/ --plot pos_all --metrics odds
 ```
 
 ## Citation
