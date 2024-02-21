@@ -1,5 +1,9 @@
 # CausalGym
 
+<div align="center">
+  <a href="https://arxiv.org/abs/2402.12560"><strong>Arora et al. (2024)</strong></a>
+</div> 
+
 **CausalGym** is a benchmark for comparing the performance of causal interpretability methods on a variety of simple linguistic tasks taken from the SyntaxGym evaluation set ([Gauthier et al., 2020](https://aclanthology.org/2020.acl-demos.10/), [Hu et al., 2020](https://aclanthology.org/2020.acl-main.158/)) and converted into a format suitable for interventional interpretability.
 
 This repository includes code for:
@@ -49,7 +53,19 @@ python plot.py --file logs/das/ --plot pos_all --metrics odds
 
 ## Citation
 
-Paper TBA. Please cite the SyntaxGym papers too:
+Please cite the CausalGym preprint:
+
+```bibtex
+@article{arora-etal-2024-causalgym,
+    title = "{C}ausal{G}ym: Benchmarking causal interpretability methods on linguistic tasks",
+    author = "Arora, Aryaman and Jurafsky, Dan and Potts, Christopher",
+    journal = "arXiv:2402.12560",
+    year = "2024",
+    url = "https://arxiv.org/abs/2402.12560"
+}
+```
+
+Also cite the earlier SyntaxGym papers:
 
 ```bibtex
 @inproceedings{gauthier-etal-2020-syntaxgym,
