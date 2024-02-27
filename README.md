@@ -1,6 +1,13 @@
+<center>
+
 # CausalGym
 
-*Paper*: **[Arora et al. (2024)](https://arxiv.org/abs/2402.12560)**
+**[CausalGym: Benchmarking causal interpretability methods on linguistic tasks](https://arxiv.org/abs/2402.12560)**\
+(Arora et al., 2024)
+  
+*HuggingFace dataset*: [aryaman/causalgym](https://huggingface.co/datasets/aryaman/causalgym)
+
+</center>
 
 **CausalGym** is a benchmark for comparing the performance of causal interpretability methods on a variety of simple linguistic tasks taken from the SyntaxGym evaluation set ([Gauthier et al., 2020](https://aclanthology.org/2020.acl-demos.10/), [Hu et al., 2020](https://aclanthology.org/2020.acl-main.158/)) and converted into a format suitable for interventional interpretability.
 
@@ -25,6 +32,8 @@ First install the requirements (a fresh environment is probably best):
 pip install -r requirements.txt
 ```
 
+### Training
+
 To train every method, layer, region, and task for `pythia-70m` (results are logged to the directory `logs/das/`):
 
 ```bash
@@ -37,13 +46,17 @@ To do the same but with the dog-give control task used to compute selectivity:
 python test_all.py --model EleutherAI/pythia-70m --manipulate dog-give
 ```
 
-Once you have run this for several models, you can create results tables with:
+### Analysis + plots
+
+Once you have run this for several models, you can create results tables (like those found in the appendix) with:
 
 ```bash
 python plot.py --file logs/das/ --plot summary --metrics odds --reload
 ```
 
-This caches intermediate results in csv file in the directory. To produce the causal tracing-style plots:
+This also caches intermediate results in csv file in the directory, so you don't need to use the `--reload` option again unless you need to recompute statistics.
+
+To produce the causal tracing-style plots for all methods:
 
 ```bash
 python plot.py --file logs/das/ --plot pos_all --metrics odds
