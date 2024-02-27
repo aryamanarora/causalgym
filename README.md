@@ -1,4 +1,4 @@
-<center>
+<div align="center">
 
 # CausalGym
 
@@ -7,7 +7,7 @@
   
 *HuggingFace dataset*: [aryaman/causalgym](https://huggingface.co/datasets/aryaman/causalgym)
 
-</center>
+</div>
 
 **CausalGym** is a benchmark for comparing the performance of causal interpretability methods on a variety of simple linguistic tasks taken from the SyntaxGym evaluation set ([Gauthier et al., 2020](https://aclanthology.org/2020.acl-demos.10/), [Hu et al., 2020](https://aclanthology.org/2020.acl-main.158/)) and converted into a format suitable for interventional interpretability.
 
