@@ -1,13 +1,12 @@
 <div align="center">
-
 # CausalGym
+</div>
 
-**[CausalGym: Benchmarking causal interpretability methods on linguistic tasks](https://arxiv.org/abs/2402.12560)**\
-(Arora et al., 2024)
-  
+Aryaman Arora, Dan Jurafsky, and Christopher Potts. 2024. [CausalGym: Benchmarking causal interpretability methods on linguistic tasks](https://aclanthology.org/2024.acl-long.785/). In _Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)_, pages 14638–14663, Bangkok, Thailand. Association for Computational Linguistics.
+
 *HuggingFace dataset*: [aryaman/causalgym](https://huggingface.co/datasets/aryaman/causalgym)
 
-</div>
+
 
 **CausalGym** is a benchmark for comparing the performance of causal interpretability methods on a variety of simple linguistic tasks taken from the SyntaxGym evaluation set ([Gauthier et al., 2020](https://aclanthology.org/2020.acl-demos.10/), [Hu et al., 2020](https://aclanthology.org/2020.acl-main.158/)) and converted into a format suitable for interventional interpretability.
 
@@ -23,7 +22,7 @@ If you are having trouble getting anything running, do not hesitate to file an i
 
 ## Instructions
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > The implementations in this repo are only for `GPTNeoX`-type language models (e.g. the `pythia` series) and will probably not work for other architectures without some modifications.
 
 First install the requirements (a fresh environment is probably best):
@@ -46,12 +45,19 @@ To do the same but with the dog-give control task used to compute selectivity:
 python test_all.py --model EleutherAI/pythia-70m --manipulate dog-give
 ```
 
+To run just the Preposing in PP extension:
+
+```bash
+python test_all.py --model EleutherAI/pythia-70m --datasets preposing_in_pp/preposing_in_pp preposing_in_pp/preposing_in_pp_embed_1
+```
+
+
 ### Analysis + plots
 
 Once you have run this for several models, you can create results tables (like those found in the appendix) with:
 
 ```bash
-python plot.py --file logs/das/ --plot summary --metrics odds --reload
+python plot.py --file logs/das/ --plot summary --metric odds --reload
 ```
 
 This also caches intermediate results in csv file in the directory, so you don't need to use the `--reload` option again unless you need to recompute statistics.
@@ -59,21 +65,41 @@ This also caches intermediate results in csv file in the directory, so you don't
 To produce the causal tracing-style plots for all methods:
 
 ```bash
-python plot.py --file logs/das/ --plot pos_all --metrics odds
+python plot.py --file logs/das/ --plot pos_all --metric odds
 ```
+
+To visualize just runs from the Preposing in PP extension:
+
+```bash
+python plot.py --file logs/das/ --plot pos_all --metric odds --template_filename preposing_in_pp
+```
+
+You can also specify a subset of methods:
+
+```bash
+python plot.py --file logs/das/ --plot pos_t --metric odds --methods das vanilla probe
+```
+
 
 ## Citation
 
-Please cite the CausalGym preprint:
+Please cite the CausalGym publication:
 
 ```bibtex
-@article{arora-etal-2024-causalgym,
+@inproceedings{arora-etal-2024-causalgym,
     title = "{C}ausal{G}ym: Benchmarking causal interpretability methods on linguistic tasks",
     author = "Arora, Aryaman and Jurafsky, Dan and Potts, Christopher",
-    journal = "arXiv:2402.12560",
+    editor = "Ku, Lun-Wei and Martins, Andre and Srikumar, Vivek",
+    booktitle = "Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)",
+    month = aug,
     year = "2024",
-    url = "https://arxiv.org/abs/2402.12560"
+    address = "Bangkok, Thailand",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.acl-long.785",
+    doi = "10.18653/v1/2024.acl-long.785",
+    pages = "14638--14663"
 }
+
 ```
 
 Also cite the earlier SyntaxGym papers:
