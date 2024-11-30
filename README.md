@@ -1,5 +1,7 @@
 <div align="center">
+    
 # CausalGym
+
 </div>
 
 Aryaman Arora, Dan Jurafsky, and Christopher Potts. 2024. [CausalGym: Benchmarking causal interpretability methods on linguistic tasks](https://aclanthology.org/2024.acl-long.785/). In _Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)_, pages 14638–14663, Bangkok, Thailand. Association for Computational Linguistics.
