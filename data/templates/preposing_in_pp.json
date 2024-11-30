@@ -1,0 +1,74 @@
+{
+    "preposing_in_pp": {
+        "templates": [
+            "{prefix}{filler} though {subj} {verb}"
+        ],
+        "label": "filler",
+        "result_prepend_space": false,
+        "labels": {
+            "pp": [" happy", " sad", " anxious", " afraid", " nervous", " wary", " weary",
+		   " suspicious", " doubtful", " clever", " witty", " young", " old",
+		   " sharp", " bright", " intelligent"
+		  ],
+            "pipp": ["."]
+        },
+        "variables": {
+	    "prefix": ["The work continued,", "The plan was in motion,"],
+	    "subj": ["the mother", "the security guard", "the man", "the delivery boy",
+		      "the judge", "the reporter", "the accountant", "the secretary",
+		      "the investigator", "the businessman", "the friend", "the painter",
+		      "the neighbor", "the woman", "the politician", "the old man"
+		     ],
+
+            "filler": {
+                "pp": [""],
+                "pipp": [" happy", " sad", " anxious", " afraid", " nervous", " wary", " weary",
+			 " suspicious", " doubtful", " clever", " witty", " young", " old",
+			 " sharp", " bright", " intelligent"
+			]
+            },
+            "verb": ["seemed", "seems"]
+        }
+    },
+    "preposing_in_pp_embed_1": {
+        "templates": [
+             "{prefix}{filler} though {subj1} {verb1} that {subj2} {verb2}"
+        ],
+        "label": "filler",
+        "result_prepend_space": false,
+        "labels": {
+            "pp": [" happy", " sad", " anxious", " afraid", " nervous", " wary", " weary",
+		   " suspicious", " doubtful", " clever", " witty", " young", " old",
+		   " sharp", " bright", " intelligent"
+		  ],
+            "pipp": ["."]
+        },
+        "variables": {
+	        "prefix": ["The work continued,", "The plan was in motion,"],
+	        "subj1": ["the mother", "the security guard", "the man", "the delivery boy",
+		      "the judge", "the reporter", "the accountant", "the secretary",
+		      "the investigator", "the businessman", "the friend", "the painter",
+		      "the neighbor", "the woman", "the politician", "the old man"
+		     ],
+	        "verb1": ["said", "believed", "knew", "remarked", "heard",
+			"thought", "stated", "said", "said", "thought",
+			"believes", "believed", "said", "said", "said",
+			"thinks", "said", "stated", "believed", "stated"
+		       ],
+            "subj2": ["the friend", "the assistant", "the woman", "the worker", "the newspaper",
+		      "the cop", "the television host", "the colleague", "the journalist",
+		      "the banker", "the colleague", "the rival", "the reporter", "the associate",
+		      "the worker", "the cop", "the mother", "the secretary", "the friend",
+		      "the press secretary", "the woman"
+              ],
+            "filler": {
+                "pp": [""],
+                "pipp": [" happy", " sad", " anxious", " afraid", " nervous", " wary", " weary",
+			 " suspicious", " doubtful", " clever", " witty", " young", " old",
+			 " sharp", " bright", " intelligent"
+			]
+            },
+            "verb2": ["seemed", "seems"]
+        }
+    }
+}

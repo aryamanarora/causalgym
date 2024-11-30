@@ -44,7 +44,7 @@ def run_command(
 def main(
     model: str, lr: float=5e-3, hparam_non_das: bool=False, only_das: bool=False,
     das_label: str=None, start: int=None, end: int=None, folder: str="das", revision: str="main",
-    manipulate: str=False):
+    manipulate: str=False, datasets: str=None):
 
     # load model + tokenizer
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -57,7 +57,8 @@ def main(
     ).to(device)
 
     # run commands
-    datasets = [d for d in list_datasets() if d.startswith("syntaxgym/")]
+    if datasets is None:
+        datasets = [d for d in list_datasets() if d.startswith("syntaxgym/")]
     print(len(datasets))
 
     # start/end
@@ -85,5 +86,6 @@ if __name__ == "__main__":
     parser.add_argument("--folder", type=str, default="das")
     parser.add_argument("--revision", type=str, default="main")
     parser.add_argument("--manipulate", type=str, default=None)
+    parser.add_argument("--datasets", nargs='+', default=None)
     args = parser.parse_args()
     main(**vars(args))

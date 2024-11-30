@@ -29,6 +29,7 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
             batch.base,
             [None, batch.src],
             {"sources->base": ([None, pos_interv[1]], pos_interv)},
+            output_original_output=True
         )
 
         # store activations/labels for training non-causal methods
@@ -63,7 +64,7 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
                 "layer": layer_i,
                 "pos": pos_i
             })
-    
+
     # summary metrics
     summary = {
         "iia": sum([d['p_src'] > d['p_base'] for d in data]) / len(data),
@@ -71,7 +72,7 @@ def eval(intervenable: pv.IntervenableModel, evalset: list[Batch],
         "odds_ratio": sum([d['base_p_base'] - d['base_p_src'] + d['p_src'] - d['p_base'] for d in data]) / len(data),
         "eval_loss": sum([d['loss'] for d in data]) / len(data),
     }
-    
+
     # update iterator
     return data, summary, activations
 
